@@ -43,7 +43,7 @@ php -S localhost:8080
 ```
 
 Dann `http://localhost:8080/login.php` und eine der 12 Figuren wählen (Max Mustermann … Rolf Ehemals, wie in der Sitzungsverwaltung).
-`tools/demo_data.json` ist der erzeugte Datenstand und wird mit eingecheckt, damit wir beide über dieselben Fälle sprechen.
+Die Demo-Daten entstehen deterministisch aus `tools/demo_build.php` (Datumsangaben beziehen sich auf den Tag des Aufrufs); die erzeugte Datei `tools/demo_data.json` liegt nicht im Repo (`.gitignore`) und wird bei Bedarf neu erzeugt. So sehen wir beide dieselben Fälle, ohne dass beim Pull Konflikte entstehen.
 Bewusste Sonderfälle: Lukas (alte Fassung der Bedingungen, offene Mahnung), Mia (keine Zustimmung, offene Erstattung, E-Mail fehlt), Karl (schriftliche Zustimmung), Rolf (ausgetreten, Zustimmung widerrufen), Hans/Anna (Übungsleiterpauschale).
 
 ## Einbindung in die Sitzungsverwaltung

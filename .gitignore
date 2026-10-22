@@ -7,3 +7,6 @@ config.php
 storage/*
 !storage/.gitkeep
 !storage/.htaccess
+
+# Erzeugter Demo-Datenstand (php tools/demo_setup.php bzw. tools/demo_build.php), bezieht sich auf das heutige Datum
+tools/demo_data.json
