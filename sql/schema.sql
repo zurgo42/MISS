@@ -140,6 +140,7 @@ CREATE TABLE IF NOT EXISTS md_ledger (
     cancelled_by INT DEFAULT NULL,
     cancel_reason VARCHAR(255) DEFAULT NULL,
     receipt_id INT DEFAULT NULL,                   -- Spende: durch diese Zuwendungsbestätigung abgedeckt (md_receipts)
+    sepa_item_id INT DEFAULT NULL,                 -- Lastschriftlauf (md_sepa_items), in dem diese Forderung eingezogen wird
     run_id INT DEFAULT NULL,                       -- Beitragslauf (md_fee_runs), der diese Forderung erzeugt hat
     fee_period VARCHAR(10) DEFAULT NULL,           -- Beitragslauf: Zeitraum, z. B. 2027, 2027-H1, 2027-Q2, 2027-03
     dunning_level INT NOT NULL DEFAULT 0,          -- erreichte Mahnstufe (0 = keine)
@@ -347,4 +348,73 @@ CREATE TABLE IF NOT EXISTS md_dunning_letters (
     void_reason VARCHAR(255) DEFAULT NULL,
     snapshot TEXT NOT NULL,
     FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 18. SEPA-Lastschrift: Mandate (IBAN verschlüsselt), Einzugsläufe, Einzelposten, Ereignisse
+CREATE TABLE IF NOT EXISTS md_sepa_mandates (
+    mandate_id INT PRIMARY KEY AUTO_INCREMENT,
+    member_id INT NOT NULL,
+    mandate_ref VARCHAR(35) NOT NULL UNIQUE,       -- Mandatsreferenz
+    signed_on DATE NOT NULL,                       -- Datum der Unterschrift
+    debtor_name VARCHAR(100) NOT NULL,             -- Kontoinhaber
+    iban_enc TEXT NOT NULL,                        -- verschlüsselt (AES-256-GCM, Schlüssel MD_ENCRYPTION_KEY in config.php)
+    iban_last4 VARCHAR(4) DEFAULT NULL,
+    bic VARCHAR(11) DEFAULT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'active',  -- active, suspended, revoked
+    status_reason VARCHAR(255) DEFAULT NULL,
+    document_note VARCHAR(255) DEFAULT NULL,       -- Ablageort der Mandatsunterlage
+    created_at DATETIME NOT NULL,
+    created_by INT DEFAULT NULL,
+    status_at DATETIME DEFAULT NULL,
+    FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_sepa_batches (
+    batch_id INT PRIMARY KEY AUTO_INCREMENT,
+    batch_no VARCHAR(20) NOT NULL UNIQUE,          -- z. B. L2027-0001
+    created_at DATETIME NOT NULL,
+    created_by INT DEFAULT NULL,
+    collection_date DATE NOT NULL,                 -- Fälligkeitstag der Lastschrift (ReqdColltnDt)
+    format VARCHAR(20) NOT NULL,                   -- pain.008.001.08 oder pain.008.001.02
+    status VARCHAR(10) NOT NULL DEFAULT 'created', -- created (Datei erzeugt), submitted (bei der Bank eingereicht), closed (Einzug bestätigt), void
+    items INT NOT NULL DEFAULT 0,
+    total_cents INT NOT NULL DEFAULT 0,
+    creditor TEXT NOT NULL,                        -- JSON: Name, IBAN, BIC, Gläubiger-ID zum Zeitpunkt der Erstellung
+    submitted_at DATETIME DEFAULT NULL,
+    submitted_by INT DEFAULT NULL,
+    closed_at DATETIME DEFAULT NULL,
+    void_reason VARCHAR(255) DEFAULT NULL,
+    note VARCHAR(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_sepa_items (
+    item_id INT PRIMARY KEY AUTO_INCREMENT,
+    batch_id INT NOT NULL,
+    member_id INT NOT NULL,
+    mandate_id INT DEFAULT NULL,
+    mandate_ref VARCHAR(35) NOT NULL,
+    signed_on DATE NOT NULL,
+    debtor_name VARCHAR(100) NOT NULL,
+    iban_enc TEXT NOT NULL,
+    bic VARCHAR(11) DEFAULT NULL,
+    amount_cents INT NOT NULL,
+    seq_type VARCHAR(4) NOT NULL,                  -- FRST, RCUR
+    end_to_end_id VARCHAR(35) NOT NULL,
+    purpose VARCHAR(140) NOT NULL,
+    entry_ids TEXT NOT NULL,                       -- Komma-getrennte md_ledger.entry_id
+    status VARCHAR(10) NOT NULL DEFAULT 'pending', -- pending, collected, returned, cancelled
+    returned_at DATE DEFAULT NULL,
+    return_code VARCHAR(6) DEFAULT NULL,
+    return_text VARCHAR(255) DEFAULT NULL,
+    return_fee_cents INT DEFAULT NULL,
+    FOREIGN KEY (batch_id) REFERENCES md_sepa_batches(batch_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_sepa_events (
+    event_id INT PRIMARY KEY AUTO_INCREMENT,
+    batch_id INT NOT NULL,
+    event VARCHAR(12) NOT NULL,                    -- created, downloaded, submitted, closed, returned, void
+    event_at DATETIME NOT NULL,
+    event_by INT DEFAULT NULL,
+    note VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

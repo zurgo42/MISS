@@ -275,6 +275,23 @@ if (!$staff || md_can($actor, 'fees', 'view')) {
     echo '</section>';
 }
 
+// ---- Lastschrift (eigene Daten bzw. Verwaltung mit Recht "SEPA")
+if (!$staff || md_can($actor, 'sepa', 'view')) {
+    $mandates = md_q('SELECT * FROM md_sepa_mandates WHERE member_id = ? ORDER BY mandate_id DESC', [$mid]);
+    if ($mandates || ($staff && md_can($actor, 'sepa', 'edit'))) {
+        echo '<section class="card" id="sepa"><h2>Lastschrift</h2>';
+        if (!$mandates) echo '<p class="muted">Kein Lastschriftmandat. Beiträge werden per Überweisung bezahlt.</p>';
+        foreach ($mandates as $mn) {
+            [$usable, $why] = md_sepa_mandate_usable($mn, date('Y-m-d'));
+            echo '<p' . ($mn['status'] === 'revoked' ? ' class="muted"' : '') . '><strong>' . h($mn['mandate_ref']) . '</strong> · IBAN …' . h($mn['iban_last4']) . ' · unterschrieben ' . h(md_date($mn['signed_on'])) . ' · ' . h(MD_SEPA_STATUS[$mn['status']])
+                . ($mn['status_reason'] ? ' (' . h($mn['status_reason']) . ')' : '') . ($mn['status'] === 'active' && !$usable ? ' <span class="bad">– ' . h($why) . '</span>' : '') . '</p>';
+        }
+        if ($staff && md_can($actor, 'sepa', 'edit')) echo '<p><a href="admin/sepa.php#mandates">Mandate verwalten</a></p>';
+        elseif (!$staff && $mandates) echo '<p class="muted">Zum Ändern oder Widerrufen des Mandats wende dich bitte an die Verwaltung.</p>';
+        echo '</section>';
+    }
+}
+
 // ---- Protokoll
 echo '<section class="card" id="log"><h2>Änderungsprotokoll</h2><table><thead><tr><th>Wann</th><th>Was</th><th>Alt</th><th>Neu</th><th>Wer</th></tr></thead><tbody>';
 foreach ($changes as $c) {

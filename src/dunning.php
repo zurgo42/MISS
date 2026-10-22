@@ -54,7 +54,7 @@ function md_dunning_candidates(?string $today = null): array
     $levels = md_dunning_levels();
     if (!$levels) return [];
     $rows = md_q("SELECT l.*, s.first_name, s.last_name, s.membership_number FROM md_ledger l JOIN svmembers s ON s.member_id = l.member_id
-                  WHERE l.status = 'open' AND l.direction = 'to_club' AND l.kind IN ('beitrag', 'eintritt') AND l.due_date IS NOT NULL AND s.membership_number NOT LIKE 'DEL-%'
+                  WHERE l.status = 'open' AND l.direction = 'to_club' AND l.kind IN ('beitrag', 'eintritt') AND l.due_date IS NOT NULL AND l.sepa_item_id IS NULL AND s.membership_number NOT LIKE 'DEL-%'
                   ORDER BY s.last_name, s.first_name, l.due_date");
     $out = [];
     foreach ($rows as $e) {

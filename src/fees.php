@@ -162,6 +162,7 @@ function md_fee_run_plan(string $periodKey): array
         if ($cents <= 0) { $row['note'] = trim('beitragsfrei ' . $row['note']); $plan[] = $row; continue; }
         if (md_one("SELECT 1 FROM md_ledger WHERE member_id = ? AND kind = 'beitrag' AND fee_period = ? AND status <> 'cancelled'", [(int)$m['member_id'], $periodKey])) { $row['note'] = 'für diesen Zeitraum schon berechnet'; $plan[] = $row; continue; }
         $row['action'] = 'create';
+        $row['debit'] = function_exists('md_sepa_active_mandate') && md_sepa_active_mandate((int)$m['member_id']) !== null;
         $plan[] = $row;
     }
     return $plan;
@@ -213,7 +214,7 @@ function md_letter_recipient(int $member): ?array
     return md_donor($member);
 }
 
-function md_invoice_html(array $e, array $club, array $conf, array $rcp): string
+function md_invoice_html(array $e, array $club, array $conf, array $rcp, ?array $sepa = null): string
 {
     $due = $e['due_date'] ? md_date($e['due_date']) : '';
     $o = '<article class="doc">';
@@ -225,9 +226,14 @@ function md_invoice_html(array $e, array $club, array $conf, array $rcp): string
     $o .= '<table class="list"><thead><tr><th>Leistung</th><th class="r">Betrag</th></tr></thead><tbody><tr><td>' . h($e['description']) . '</td><td class="r">' . h(md_money((int)$e['amount_cents'])) . '</td></tr>'
         . '<tr><td><strong>Gesamtbetrag</strong></td><td class="r"><strong>' . h(md_money((int)$e['amount_cents'])) . '</strong></td></tr></tbody></table>';
     if (trim($conf['tax_note']) !== '') $o .= '<p class="small">' . h($conf['tax_note']) . '</p>';
-    $o .= '<p>Bitte überweisen Sie den Betrag' . ($due ? ' bis zum <strong>' . h($due) . '</strong>' : '') . ' unter Angabe von <strong>' . h($e['reference']) . ' ' . h($e['membership_number']) . '</strong> auf folgendes Konto:</p>';
-    $o .= '<table class="meta"><tr><td>Empfänger</td><td>' . h($club['name']) . '</td></tr>' . ($conf['iban'] !== '' ? '<tr><td>IBAN</td><td>' . h($conf['iban']) . '</td></tr>' : '')
-        . ($conf['bic'] !== '' ? '<tr><td>BIC</td><td>' . h($conf['bic']) . '</td></tr>' : '') . ($conf['bank'] !== '' ? '<tr><td>Bank</td><td>' . h($conf['bank']) . '</td></tr>' : '') . '</table>';
+    if ($sepa) {
+        $o .= '<p>Der Betrag wird am <strong>' . h(md_date($sepa['date'])) . '</strong> per SEPA-Basislastschrift von Ihrem Konto <strong>' . h($sepa['iban_mask']) . '</strong> eingezogen (Vorabankündigung). '
+            . 'Gläubiger-Identifikationsnummer: ' . h($sepa['creditor_id']) . ', Mandatsreferenz: ' . h($sepa['mandate_ref']) . '. Bitte sorgen Sie für ausreichende Deckung; eine Überweisung ist nicht erforderlich.</p>';
+    } else {
+        $o .= '<p>Bitte überweisen Sie den Betrag' . ($due ? ' bis zum <strong>' . h($due) . '</strong>' : '') . ' unter Angabe von <strong>' . h($e['reference']) . ' ' . h($e['membership_number']) . '</strong> auf folgendes Konto:</p>';
+        $o .= '<table class="meta"><tr><td>Empfänger</td><td>' . h($club['name']) . '</td></tr>' . ($conf['iban'] !== '' ? '<tr><td>IBAN</td><td>' . h($conf['iban']) . '</td></tr>' : '')
+            . ($conf['bic'] !== '' ? '<tr><td>BIC</td><td>' . h($conf['bic']) . '</td></tr>' : '') . ($conf['bank'] !== '' ? '<tr><td>Bank</td><td>' . h($conf['bank']) . '</td></tr>' : '') . '</table>';
+    }
     $o .= '<p class="sign">' . h($club['place'] ?: $club['city']) . ', ' . h(md_date($e['entry_date'])) . '<br>' . h($club['signer']) . '</p></article>';
     return $o;
 }

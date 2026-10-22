@@ -70,4 +70,7 @@ foreach ([['ueb_freibetrag_cents', '330000', 'Jahresfreibetrag Übungsleiterpaus
           ['default_aktiv', '0', 'aktiv-Level für Mitglieder ohne gültige Funktion (nur bei Mitgliedern mit Funktionszuordnung)']] as [$k, $v, $d]) {
     if (!md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$k])) md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$k, $v, $d]);
 }
+if (!preg_match('/^[0-9a-fA-F]{64}$/', defined('MD_ENCRYPTION_KEY') ? (string)MD_ENCRYPTION_KEY : '')) {
+    $say("\nHinweis: MD_ENCRYPTION_KEY fehlt in config.php. Ohne ihn lassen sich keine SEPA-Mandate speichern.\n  Schlüssel erzeugen:  php tools/make_key.php   und in config.php eintragen:  define('MD_ENCRYPTION_KEY', '<Schlüssel>');\n  Den Schlüssel sicher aufbewahren und mit sichern.");
+}
 $say("\nFertig. Mitglieder-Dashboard: " . md_url('index.php') . "\nNächster Schritt (nur lokal/Demo): php tools/demo_load.php");

@@ -27,6 +27,10 @@ define('MD_LOGIN_URL',   '/Sitzungsverwaltung/login.php');   // Anmeldeseite der
 // ('standalone': svmembers ist führend). Im Adapterbetrieb ('adapter', Tabelle "berechtigte" führend) bleibt sie gesperrt.
 define('MD_SV_MODE', 'standalone');
 
+// Schlüssel zur Verschlüsselung der IBAN in den SEPA-Mandaten (AES-256). 64 Hex-Zeichen. Erzeugen: php tools/make_key.php
+// WICHTIG: Schlüssel sicher aufbewahren und sichern; ohne ihn sind die gespeicherten IBANs nicht mehr lesbar. Nie ändern, solange Mandate existieren.
+// define('MD_ENCRYPTION_KEY', '<64 Hex-Zeichen>');   // erst einkommentieren, wenn der Schlüssel erzeugt ist (die Demo trägt sich selbst einen ein)
+
 // Ablage für Fotos und Importdateien (außerhalb des Web-Roots empfohlen)
 define('MD_STORAGE_DIR', __DIR__ . '/storage');
 

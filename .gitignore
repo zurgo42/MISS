@@ -10,3 +10,4 @@ storage/*
 
 # Erzeugter Demo-Datenstand (php tools/demo_setup.php bzw. tools/demo_build.php), bezieht sich auf das heutige Datum
 tools/demo_data.json
+tools/xsd/

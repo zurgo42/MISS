@@ -123,7 +123,7 @@ if ($edit) {
 }
 $log = md_q('SELECT l.*, s.first_name, s.last_name, u.first_name ufn, u.last_name uln, s.membership_number FROM md_privacy_log l LEFT JOIN svmembers s ON s.member_id = l.member_id LEFT JOIN svmembers u ON u.member_id = l.event_by ORDER BY l.event_id DESC LIMIT 100');
 echo '<section class="card" id="log"><h2>Protokoll</h2><table><thead><tr><th>Wann</th><th>Mitglied</th><th>Vorgang</th><th>Durch</th><th>Vermerk</th></tr></thead><tbody>';
-$ev = ['export' => 'Auskunft/Export', 'request' => 'Anfrage eingegangen', 'handled' => 'Anfrage bearbeitet', 'hold_on' => 'Löschsperre gesetzt', 'hold_off' => 'Löschsperre aufgehoben', 'purged' => 'Profildaten gelöscht (Stufe 1)', 'anonymized' => 'Anonymisiert (Stufe 2)'];
+$ev = ['export' => 'Auskunft/Export', 'request' => 'Anfrage eingegangen', 'handled' => 'Anfrage bearbeitet', 'hold_on' => 'Löschsperre gesetzt', 'hold_off' => 'Löschsperre aufgehoben', 'purged' => 'Profildaten gelöscht (Stufe 1)', 'anonymized' => 'Anonymisiert (Stufe 2)', 'iban_view' => 'IBAN angezeigt'];
 foreach ($log as $l) {
     $anon = ($l['membership_number'] ?? '') !== '' && str_starts_with((string)$l['membership_number'], 'DEL-');
     echo '<tr><td>' . h(date('d.m.Y H:i', strtotime($l['event_at']))) . '</td><td>' . h($anon || !$l['first_name'] ? '#' . (int)$l['member_id'] . ' (anonymisiert)' : $l['first_name'] . ' ' . $l['last_name']) . '</td><td>' . h($ev[$l['event']] ?? $l['event']) . '</td><td>' . h(trim($l['ufn'] . ' ' . $l['uln'])) . '</td><td>' . h($l['note']) . '</td></tr>';

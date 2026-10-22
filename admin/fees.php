@@ -115,11 +115,11 @@ if ($pinfo) {
     $total = array_sum(array_column($create, 'cents'));
     $warn = array_filter($plan, fn($r) => $r['action'] === 'warn');
     echo '<p><span class="chip ok">' . count($create) . ' Rechnung(en), Summe ' . md_money($total) . '</span> <span class="chip' . ($warn ? ' warn' : '') . '">' . count($warn) . ' ohne Beitragsgruppe</span> <span class="chip">' . (count($plan) - count($create) - count($warn)) . ' übersprungen</span> – ' . h($pinfo['label']) . ' (' . h(md_date($pinfo['start'])) . ' bis ' . h(md_date($pinfo['end'])) . ')</p>';
-    echo '<table><thead><tr><th>Mitglied</th><th>Gruppe</th><th class="r">Betrag</th><th>Hinweis</th></tr></thead><tbody>';
+    echo '<table><thead><tr><th>Mitglied</th><th>Gruppe</th><th class="r">Betrag</th><th>Zahlweise</th><th>Hinweis</th></tr></thead><tbody>';
     foreach ($plan as $r) {
         if ($r['action'] === 'skip' && $r['note'] === 'ausgetreten') continue;
         $cls = $r['action'] === 'create' ? '' : ($r['action'] === 'warn' ? 'rowbad' : 'muted');
-        echo '<tr class="' . $cls . '"><td>' . h($r['name']) . ' <span class="muted">' . h($r['number']) . '</span></td><td>' . h($r['group']) . '</td><td class="r">' . ($r['action'] === 'create' ? md_money($r['cents']) : '') . '</td><td>' . h($r['note']) . '</td></tr>';
+        echo '<tr class="' . $cls . '"><td>' . h($r['name']) . ' <span class="muted">' . h($r['number']) . '</span></td><td>' . h($r['group']) . '</td><td class="r">' . ($r['action'] === 'create' ? md_money($r['cents']) : '') . '</td><td>' . ($r['action'] === 'create' ? (!empty($r['debit']) ? 'Lastschrift' : 'Überweisung') : '') . '</td><td>' . h($r['note']) . '</td></tr>';
     }
     echo '</tbody></table>';
     if ($edit && $create) {

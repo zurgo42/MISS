@@ -41,6 +41,7 @@ require_once __DIR__ . '/privacy.php';
 require_once __DIR__ . '/fees.php';
 require_once __DIR__ . '/dunning.php';
 require_once __DIR__ . '/payments.php';
+require_once __DIR__ . '/sepa.php';
 require_once __DIR__ . '/migrate.php';
 require_once __DIR__ . '/import.php';
 require_once __DIR__ . '/finance.php';

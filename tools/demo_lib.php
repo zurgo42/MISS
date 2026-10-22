@@ -49,3 +49,47 @@ function demo_issue_receipts(array $idmap = []): void
     [$rid, $err] = md_receipt_issue($julia, 'single', ['entry_id' => (int)$e['entry_id']], $max);
     echo $rid ? "Demo-Spendenquittung ausgestellt.\n" : "Demo-Spendenquittung nicht ausgestellt: $err\n";
 }
+
+/** Demo: Verschlüsselungsschlüssel anlegen, falls in config.php keiner steht (nur Demo, der Schlüssel schützt hier nichts Echtes). */
+function demo_ensure_key(string $root): void
+{
+    if (defined('MD_ENCRYPTION_KEY') && preg_match('/^[0-9a-fA-F]{64}$/', (string)MD_ENCRYPTION_KEY)) return;
+    $cfg = file_get_contents("$root/config.php");
+    $key = bin2hex(random_bytes(32));
+    $cfg = preg_replace("/^\\s*define\\('MD_ENCRYPTION_KEY'.*$/m", '', $cfg);
+    $cfg = rtrim($cfg) . "\n\ndefine('MD_ENCRYPTION_KEY', '$key');   // Demo-Schlüssel\n";
+    file_put_contents("$root/config.php", $cfg);
+    if (defined('MD_ENCRYPTION_KEY')) {   // leer definiert: neu starten, damit die Konstante den Schlüssel trägt
+        echo "Demo-Schlüssel in config.php eingetragen, starte neu …\n";
+        passthru(escapeshellarg(PHP_BINARY) . ' ' . implode(' ', array_map('escapeshellarg', $GLOBALS['argv'])), $rc);
+        exit($rc);
+    }
+    define('MD_ENCRYPTION_KEY', $key);
+}
+
+/** Demo-Lastschriftmandate (gültige Beispiel-IBANs). Ergebnis: Anzahl. */
+function demo_seed_sepa(array $idmap = []): int
+{
+    $id = fn(int $n) => $idmap[$n] ?? $n;
+    $actor = $id(1);
+    $set = [   // Nr, IBAN, unterschrieben vor Monaten, Status, Grund
+        [2, 'DE89370400440532013000', 20, 'active', null],
+        [3, 'DE02500105170137075030', 14, 'active', null],
+        [11, 'DE91100000000123456789', 2, 'active', null],
+        [7, 'DE02120300000000202051', 30, 'revoked', 'Widerruf des Mitglieds'],
+        [8, 'DE89370400440532013000', 12, 'suspended', 'Rücklastschrift AC04'],
+        [6, 'DE02500105170137075030', 48, 'active', null],   // abgelaufen (36-Monats-Regel)
+    ];
+    $n = 0;
+    foreach ($set as [$nr, $iban, $months, $status, $why]) {
+        $m = $id($nr);
+        if (md_one('SELECT 1 FROM md_sepa_mandates WHERE member_id = ?', [$m])) continue;
+        $row = md_one('SELECT first_name, last_name FROM svmembers WHERE member_id = ?', [$m]);
+        [$mid, $err] = md_sepa_mandate_add($m, ['iban' => $iban, 'signed_on' => date('d.m.Y', strtotime("-$months months")), 'debtor_name' => $row['first_name'] . ' ' . $row['last_name'], 'document_note' => 'Demo: Papiermandat im Ordner'], $actor);
+        if (!$mid) { echo "Demo-Mandat $nr nicht angelegt: $err\n"; continue; }
+        if ($status !== 'active') md_sepa_mandate_set_status((int)$mid, $status, $why, $actor);
+        $n++;
+    }
+    echo "Demo-Lastschriftmandate: $n\n";
+    return $n;
+}

@@ -9,6 +9,7 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
         if (md_can($me, 'members', 'view')) $nav['admin'] = ['admin/index.php', 'Mitglieder'];
         if (md_can($me, 'finance', 'view')) $nav['finance'] = ['admin/finance.php', 'Finanzen'];
         if (md_can($me, 'fees', 'view')) { $nav['fees'] = ['admin/fees.php', 'Beiträge']; $nav['dunning'] = ['admin/dunning.php', 'Mahnwesen']; }
+        if (md_can($me, 'sepa', 'view')) $nav['sepa'] = ['admin/sepa.php', 'SEPA'];
         if (md_can($me, 'receipts', 'view')) $nav['receipts'] = ['admin/receipts.php', 'Spendenbescheinigungen'];
         if (md_can($me, 'privacy', 'view')) $nav['privacy'] = ['admin/privacy.php', 'Datenschutz'];
         if (md_can($me, 'import', 'edit')) $nav['import'] = ['admin/import.php', 'CSV-Import'];

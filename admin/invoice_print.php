@@ -26,6 +26,6 @@ if (!$rows) { http_response_code(404); exit('Keine Rechnung gefunden.'); }
 <?php foreach ($rows as $e):
     $rcp = md_letter_recipient((int)$e['member_id']);
     if (!$rcp) { echo '<div class="err">Keine vollständige Anschrift: Rechnung ' . h($e['reference']) . ' (Mitgliedsnr. ' . h($e['membership_number']) . ') kann nicht gedruckt werden.</div>'; continue; }
-    echo md_invoice_html($e, $club, $conf, $rcp);
+    echo md_invoice_html($e, $club, $conf, $rcp, md_sepa_debit_info((int)$e['member_id'], $e['due_date']));
 endforeach; ?>
 </body></html>
