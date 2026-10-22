@@ -226,12 +226,16 @@ if ($fin['ueb_year'] > 0) {
     echo '<p class="muted">Übungsleiterpauschale ' . $year . ': ' . md_money($fin['ueb_year']) . ' von ' . md_money($fin['ueb_limit']) . ' Freibetrag</p><div class="bar"><i style="width:' . $pct . '%"></i></div>';
 }
 echo '<table><thead><tr><th>Datum</th><th>Art</th><th>Beschreibung</th><th class="r">Betrag</th><th>Status</th></tr></thead><tbody>';
+$dlevels = md_dunning_levels();
 foreach ($fin['rows'] as $r) {
     $out = $r['direction'] === 'to_club';
     $stat = $r['status'] === 'paid' ? 'bezahlt ' . md_date($r['paid_date']) : ($out ? 'offen' . ($r['due_date'] ? ', fällig ' . md_date($r['due_date']) : '') : 'Auszahlung offen');
     $overdue = $out && $r['status'] === 'open' && $r['due_date'] && $r['due_date'] < date('Y-m-d');
-    echo '<tr><td>' . h(md_date($r['entry_date'])) . '</td><td>' . h(md_ledger_label($r)) . '</td><td>' . h($r['description']) . ($r['reference'] ? ' <span class="muted">' . h($r['reference']) . '</span>' : '') . '</td>';
-    echo '<td class="r ' . ($out ? 'neg' : 'pos') . '">' . ($out ? '− ' : '+ ') . md_money((int)$r['amount_cents']) . '</td><td class="' . ($overdue ? 'bad' : '') . '">' . h($stat) . '</td></tr>';
+    $invLink = $r['reference'] && $out && in_array($r['kind'], ['beitrag', 'eintritt'], true) ? ' <a href="admin/invoice_print.php?id=' . (int)$r['entry_id'] . '" target="_blank">Rechnung</a>' : '';
+    $dun = (int)$r['dunning_level'] > 0 && $r['status'] === 'open' ? '<br><span class="bad">' . h($dlevels[(int)$r['dunning_level']]['name'] ?? 'Mahnung') . ' vom ' . h(md_date($r['last_dunned_at'])) . '</span>' : '';
+    $defer = !empty($r['deferred_until']) && $r['status'] === 'open' && $r['deferred_until'] >= date('Y-m-d') ? '<br><span class="muted">gestundet bis ' . h(md_date($r['deferred_until'])) . '</span>' : '';
+    echo '<tr><td>' . h(md_date($r['entry_date'])) . '</td><td>' . h(md_ledger_label($r)) . '</td><td>' . h($r['description']) . ($r['reference'] ? ' <span class="muted">' . h($r['reference']) . '</span>' : '') . $invLink . '</td>';
+    echo '<td class="r ' . ($out ? 'neg' : 'pos') . '">' . ($out ? '− ' : '+ ') . md_money((int)$r['amount_cents']) . '</td><td class="' . ($overdue ? 'bad' : '') . '">' . h($stat) . $dun . $defer . '</td></tr>';
 }
 if (!$fin['rows']) echo '<tr><td colspan="5" class="muted">Keine Buchungen.</td></tr>';
 echo '</tbody></table>';
@@ -241,9 +245,35 @@ if ($myReceipts) {
     foreach ($myReceipts as $rc) echo '<li><a href="admin/receipt_print.php?id=' . (int)$rc['receipt_id'] . '" target="_blank">Nr. ' . h($rc['receipt_no']) . '</a> · ' . ($rc['kind'] === 'annual' ? 'Sammelbestätigung ' . h(md_date($rc['period_from'])) . ' – ' . h(md_date($rc['period_to'])) : 'Zuwendung vom ' . h(md_date($rc['period_from']))) . ' · ' . md_money((int)$rc['total_cents']) . ' <span class="muted">ausgestellt ' . h(date('d.m.Y', strtotime($rc['issued_at']))) . '</span></li>';
     echo '</ul><p class="muted">Der Ausdruck ist eine Kopie der ausgestellten Bestätigung.</p>';
 }
+$myLetters = md_q("SELECT * FROM md_dunning_letters WHERE member_id = ? AND status = 'issued' ORDER BY letter_id DESC", [$mid]);
+if ($myLetters) {
+    echo '<h3>Mahnschreiben</h3><ul class="plain">';
+    foreach ($myLetters as $lt) { $ls = json_decode($lt['snapshot'], true); echo '<li><a href="admin/dunning_print.php?id=' . (int)$lt['letter_id'] . '" target="_blank">' . h($ls['level_name'] ?? 'Mahnung') . ' ' . h($lt['letter_no']) . '</a> · ' . md_money((int)$lt['total_cents']) . ' · Frist ' . h(md_date($lt['deadline'])) . '</li>'; }
+    echo '</ul>';
+}
 echo '</section>';
 }
 echo '</fieldset>';
+
+// ---- Beitrag (außerhalb des gesperrten Bereichs: Zuordnung braucht das Recht "Beiträge", nicht "Mitglieder bearbeiten")
+if (!$staff || md_can($actor, 'fees', 'view')) {
+    $fa = md_fee_assignment($mid, date('Y-m-d'), date('Y-m-d'));
+    $feeHist = md_q('SELECT f.*, g.name, g.amount_cents, g.rhythm FROM md_member_fees f JOIN md_fee_groups g ON g.group_id = f.group_id WHERE f.member_id = ? ORDER BY f.valid_from DESC, f.fee_id DESC LIMIT 6', [$mid]);
+    echo '<section class="card" id="fee"><h2>Beitrag</h2>';
+    if ($fa) {
+        $amt = $fa['amount_override_cents'] !== null ? (int)$fa['amount_override_cents'] : (int)$fa['group_cents'];
+        echo '<p><strong>' . h($fa['group_name']) . '</strong> · ' . md_money($amt) . ' ' . h(MD_RHYTHMS[$fa['rhythm']]) . ($fa['discount_percent'] !== null ? ', ' . (int)$fa['discount_percent'] . ' % Ermäßigung' : '') . ' <span class="muted">seit ' . h(md_date($fa['valid_from'])) . '</span></p>';
+        if ($fa['reason'] && ($fa['amount_override_cents'] !== null || $fa['discount_percent'] !== null)) echo '<p class="muted">Abweichung: ' . h($fa['reason']) . ($fa['approved_by'] ? ' (bewilligt von ' . h($fa['approved_by']) . ')' : '') . '</p>';
+    } else echo '<p class="muted">Keine Beitragsgruppe zugeordnet.</p>';
+    if ($staff && md_can($actor, 'fees', 'edit')) {
+        echo '<details><summary>Beitragsgruppe zuordnen oder ändern</summary><form method="post" action="save.php">' . $form('fee_assign', 'fee') . '<div class="addr"><label>Gruppe<select name="group_id">';
+        foreach (md_fee_groups(true) as $g) echo '<option value="' . (int)$g['group_id'] . '"' . ($fa && (int)$fa['group_id'] === (int)$g['group_id'] ? ' selected' : '') . '>' . h($g['name'] . ' (' . md_money((int)$g['amount_cents']) . ' ' . MD_RHYTHMS[$g['rhythm']] . ')') . '</option>';
+        echo '</select></label><label>Gültig ab<input name="valid_from" value="' . date('d.m.Y') . '"></label><label>Abweichender Betrag in €<input name="override" placeholder="optional"></label><label>oder Ermäßigung in %<input name="discount" size="4" placeholder="optional"></label>'
+            . '<label>Grund (bei Abweichung Pflicht)<input name="reason"></label><label>Bewilligt von<input name="approved_by" placeholder="Name/Funktion"></label></div><button>Speichern</button></form></details>';
+    }
+    if (count($feeHist) > 1) { echo '<p class="muted">Bisher: '; foreach (array_slice($feeHist, 1) as $fh) echo h($fh['name']) . ' (' . h(md_date($fh['valid_from'])) . ($fh['valid_to'] ? ' – ' . h(md_date($fh['valid_to'])) : '') . ') '; echo '</p>'; }
+    echo '</section>';
+}
 
 // ---- Protokoll
 echo '<section class="card" id="log"><h2>Änderungsprotokoll</h2><table><thead><tr><th>Wann</th><th>Was</th><th>Alt</th><th>Neu</th><th>Wer</th></tr></thead><tbody>';

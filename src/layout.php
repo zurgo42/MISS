@@ -8,6 +8,7 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
         if (md_can($me, 'directory', 'view')) $nav['directory'] = ['directory.php', 'Mitgliederverzeichnis'];
         if (md_can($me, 'members', 'view')) $nav['admin'] = ['admin/index.php', 'Mitglieder'];
         if (md_can($me, 'finance', 'view')) $nav['finance'] = ['admin/finance.php', 'Finanzen'];
+        if (md_can($me, 'fees', 'view')) { $nav['fees'] = ['admin/fees.php', 'Beiträge']; $nav['dunning'] = ['admin/dunning.php', 'Mahnwesen']; }
         if (md_can($me, 'receipts', 'view')) $nav['receipts'] = ['admin/receipts.php', 'Spendenbescheinigungen'];
         if (md_can($me, 'privacy', 'view')) $nav['privacy'] = ['admin/privacy.php', 'Datenschutz'];
         if (md_can($me, 'import', 'edit')) $nav['import'] = ['admin/import.php', 'CSV-Import'];
@@ -61,4 +62,17 @@ function md_vis_select(string $key, array $vmap): string
 function md_initials(array $m): string
 {
     return mb_strtoupper(mb_substr($m['first_name'], 0, 1) . mb_substr($m['last_name'], 0, 1));
+}
+
+/** Gemeinsames Druck-Stylesheet für Rechnungen und Mahnschreiben (A4, ein Schreiben je Seite). */
+function md_doc_css(): string
+{
+    return 'body{font:11pt/1.45 "Helvetica Neue",Arial,sans-serif;color:#000;background:#eee;margin:0}.bar{background:#005596;color:#fff;padding:10px 20px;font:14px system-ui,sans-serif;display:flex;gap:16px;align-items:center}'
+        . '.bar button{font:inherit;padding:6px 14px;cursor:pointer}.bar a{color:#8ECAF6}.doc{position:relative;background:#fff;width:190mm;min-height:270mm;margin:12px auto;padding:15mm 18mm;box-sizing:border-box;page-break-after:always}'
+        . '.doc:last-child{page-break-after:auto}.sender{font-size:8pt;border-bottom:1px solid #999;padding-bottom:1mm;margin:0 0 6mm;width:85mm}.rcp{margin:0 0 10mm;min-height:25mm}'
+        . '.doc h2{font-size:14pt;margin:8mm 0 3mm}table.meta{margin:0 0 6mm auto;border-collapse:collapse}table.meta td{padding:0.5mm 3mm;font-size:10pt}table.meta td:first-child{color:#555}'
+        . 'table.list{width:100%;border-collapse:collapse;margin:3mm 0 5mm;font-size:10.5pt}table.list th,table.list td{border-bottom:1px solid #999;padding:1.5mm 2mm;text-align:left}table.list th.r,table.list td.r{text-align:right}'
+        . '.small{font-size:9pt;color:#444}.sign{margin-top:10mm}.mark{position:absolute;top:12mm;right:15mm;border:2px solid #b00;color:#b00;font:bold 13pt system-ui,sans-serif;padding:1mm 4mm;transform:rotate(-4deg)}'
+        . '.err{background:#fff;border:2px solid #b00;padding:10px 14px;margin:12px auto;width:190mm;box-sizing:border-box;font:14px system-ui,sans-serif;color:#900}'
+        . '@media print{body{background:#fff}.bar,.err{display:none}.doc{margin:0;width:auto;min-height:0;padding:0}@page{size:A4;margin:18mm}}';
 }

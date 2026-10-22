@@ -10,7 +10,7 @@ if (!in_array($section, ['consent', 'consent_revoke', 'privacy_request'], true) 
     header('Location: ' . md_url('index.php#terms'));
     exit;
 }
-[$target, $via] = md_target_member($actor, $_POST['member'] ?? 0, 'edit');
+[$target, $via] = md_target_member($actor, $_POST['member'] ?? 0, $section === 'fee_assign' ? 'view' : 'edit');
 $mid = (int)$target['member_id'];
 $aid = (int)$actor['member_id'];
 $msg = 'Gespeichert.';
@@ -51,6 +51,12 @@ try {
                 md_record_consent($mid, (int)$cur['terms_id'], 'self', $aid, $_SERVER['REMOTE_ADDR'] ?? null);
                 $msg = 'Zustimmung dokumentiert.';
             } else { $msg = 'Bitte das Häkchen setzen.'; $kind = 'err'; }
+            break;
+        case 'fee_assign':
+            if ($via !== 'admin' || !md_can($actor, 'fees', 'edit')) { http_response_code(403); exit('Dafür fehlt die Berechtigung.'); }
+            $err = md_fee_assign($mid, (int)($_POST['group_id'] ?? 0), $_POST, $aid);
+            $msg = $err ?: 'Beitragszuordnung gespeichert.';
+            $kind = $err ? 'err' : 'ok';
             break;
         case 'privacy_request':
             // Auskunft und Löschantrag sind Rechte des Mitglieds und gelten auch ohne Zustimmung zu den Nutzungsbedingungen

@@ -61,6 +61,7 @@ const MD_LEDGER_KINDS = [
     'spende'        => ['Spende', 'to_club'],
     'erstattung'    => ['Kostenerstattung', 'to_member'],
     'uebungsleiter' => ['Übungsleiterpauschale', 'to_member'],
+    'gebuehr'       => ['Mahngebühr', 'to_club'],
 ];
 
 /** Sichtbarkeits-Schlüssel mit Standardwert und Anzeigename. */

@@ -64,6 +64,8 @@ if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) {
 }
 $n = md_seed_permissions();
 if ($n) $say("Rechtetabelle mit Voreinstellung gefüllt ($n Einträge, änderbar unter Einstellungen).");
+$n = md_dunning_seed();
+if ($n) $say("Mahnstufen mit Voreinstellung angelegt ($n, änderbar unter Mahnwesen).");
 foreach ([['ueb_freibetrag_cents', '330000', 'Jahresfreibetrag Übungsleiterpauschale in Cent (bitte jährlich prüfen)'],
           ['default_aktiv', '0', 'aktiv-Level für Mitglieder ohne gültige Funktion (nur bei Mitgliedern mit Funktionszuordnung)']] as [$k, $v, $d]) {
     if (!md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$k])) md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$k, $v, $d]);

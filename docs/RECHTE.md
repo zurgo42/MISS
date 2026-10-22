@@ -58,6 +58,7 @@ Unabhängig vom Abgleich nach `svmembers` (oben) regelt eine **einstellbare Tabe
 | Mitgliederverzeichnis | keine / ansehen | Das Verzeichnis mit den für andere freigegebenen Angaben |
 | Mitglieder | keine / ansehen / bearbeiten | Fremde Dashboards, Mitgliederliste, Vereinsdaten, Gruppen, Funktionen |
 | Finanzen | keine / ansehen / bearbeiten | Buchungen aller Mitglieder (Kassenseite) |
+| Beiträge | keine / ansehen / bearbeiten | Beitragsgruppen, Zuordnung, Beitragslauf, Rechnungen, Zahlungszuordnung, Mahnwesen |
 | Nutzungsbedingungen | keine / ansehen / bearbeiten | Versionen anlegen, Zustimmungen erfassen |
 | Spendenbescheinigungen | keine / ansehen / bearbeiten | Zuwendungsbestätigungen ausstellen (bearbeiten) bzw. nachdrucken als Duplikat (ansehen) |
 | Datenschutz | keine / ansehen / bearbeiten | Auskunft für andere Mitglieder erzeugen (ansehen); Anfragen bearbeiten, Löschung ausführen, Fristen ändern (bearbeiten) |
@@ -70,6 +71,6 @@ Unabhängig vom Abgleich nach `svmembers` (oben) regelt eine **einstellbare Tabe
   Das ist unabhängig von der Regel „höchstes Level gewinnt“ beim Abgleich nach `svmembers`, die nur `aktiv` und `funktion` für das Sitzungstool betrifft.
 - `svmembers.is_admin` darf immer alles, damit sich niemand aussperren kann.
 - **Nur ansehen** in fremden Dashboards: Angaben mit der Sichtbarkeit „Nur ich“ bleiben ausgeblendet; wer bearbeiten darf, sieht alles, was er zum Bearbeiten braucht.
-- Voreinstellung (bei `install.php` gesetzt, danach änderbar): Vorstand ansehen; Finanzvorstand und Kassenführung buchen und stellen Spendenbescheinigungen aus; Geschäftsführung, Mitgliederbetreuung und Sekretariat pflegen Mitglieder; Finanzprüfung sieht Mitglieder und Finanzen; Geschäftsführung führt den Datenschutz (Löschung), Vorstand, Mitgliederbetreuung und Assistenz erzeugen Auskünfte; technischer Admin ändert Einstellungen.
+- Voreinstellung (bei `install.php` gesetzt, danach änderbar): Vorstand ansehen; Finanzvorstand und Kassenführung buchen, führen Beitragslauf und Mahnwesen und stellen Spendenbescheinigungen aus; Geschäftsführung, Mitgliederbetreuung und Sekretariat pflegen Mitglieder; Finanzprüfung sieht Mitglieder und Finanzen; Geschäftsführung führt den Datenschutz (Löschung), Vorstand, Mitgliederbetreuung und Assistenz erzeugen Auskünfte; technischer Admin ändert Einstellungen.
 
 **Zustimmung zu den Nutzungsbedingungen:** Wer der aktuellen Fassung nicht zugestimmt hat, sieht nur die eigenen Daten und kann nichts ändern (auch nicht mit Funktion oder Admin-Flag) – außer eben zustimmen. Gibt es noch keine Version, gilt die Sperre nicht.

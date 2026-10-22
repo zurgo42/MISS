@@ -26,7 +26,7 @@ function md_ledger_kind(string $text): ?string
     foreach (MD_LEDGER_KINDS as $k => [$label]) if ($t === mb_strtolower($label)) return $k;
     $alias = ['beitrag' => 'beitrag', 'mitgliedsbeitrag' => 'beitrag', 'jahresbeitrag' => 'beitrag', 'eintritt' => 'eintritt', 'teilnahme' => 'eintritt', 'teilnahmegebühr' => 'eintritt',
               'veranstaltung' => 'eintritt', 'spende' => 'spende', 'erstattung' => 'erstattung', 'auslagen' => 'erstattung', 'kostenerstattung' => 'erstattung',
-              'reisekosten' => 'erstattung', 'übungsleiter' => 'uebungsleiter', 'übungsleiterpauschale' => 'uebungsleiter', 'uebungsleiterpauschale' => 'uebungsleiter', 'ül' => 'uebungsleiter'];
+              'reisekosten' => 'erstattung', 'übungsleiter' => 'uebungsleiter', 'übungsleiterpauschale' => 'uebungsleiter', 'uebungsleiterpauschale' => 'uebungsleiter', 'ül' => 'uebungsleiter', 'mahngebühr' => 'gebuehr', 'mahngebuehr' => 'gebuehr'];
     return $alias[$t] ?? null;
 }
 

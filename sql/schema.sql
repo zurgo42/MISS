@@ -140,6 +140,12 @@ CREATE TABLE IF NOT EXISTS md_ledger (
     cancelled_by INT DEFAULT NULL,
     cancel_reason VARCHAR(255) DEFAULT NULL,
     receipt_id INT DEFAULT NULL,                   -- Spende: durch diese Zuwendungsbestätigung abgedeckt (md_receipts)
+    run_id INT DEFAULT NULL,                       -- Beitragslauf (md_fee_runs), der diese Forderung erzeugt hat
+    fee_period VARCHAR(10) DEFAULT NULL,           -- Beitragslauf: Zeitraum, z. B. 2027, 2027-H1, 2027-Q2, 2027-03
+    dunning_level INT NOT NULL DEFAULT 0,          -- erreichte Mahnstufe (0 = keine)
+    last_dunned_at DATE DEFAULT NULL,
+    deferred_until DATE DEFAULT NULL,              -- Stundung: bis dahin keine Mahnung
+    deferred_reason VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -277,4 +283,68 @@ CREATE TABLE IF NOT EXISTS md_privacy_log (
     event_at DATETIME NOT NULL,
     event_by INT DEFAULT NULL,
     note VARCHAR(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 16. Beiträge: Gruppen, Zuordnung mit Abweichungen, Läufe
+CREATE TABLE IF NOT EXISTS md_fee_groups (
+    group_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    amount_cents INT NOT NULL,                     -- Betrag je Abrechnungszeitraum (siehe rhythm)
+    rhythm VARCHAR(12) NOT NULL DEFAULT 'yearly',  -- yearly, halfyearly, quarterly, monthly
+    entry_rule VARCHAR(10) NOT NULL DEFAULT 'full',-- full: voller Betrag, prorated: anteilig ab Eintrittsmonat bis Austrittsmonat
+    description VARCHAR(255) DEFAULT NULL,
+    active INT NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_member_fees (
+    fee_id INT PRIMARY KEY AUTO_INCREMENT,
+    member_id INT NOT NULL,
+    group_id INT NOT NULL,
+    valid_from DATE NOT NULL,
+    valid_to DATE DEFAULT NULL,
+    amount_override_cents INT DEFAULT NULL,        -- abweichender Betrag je Abrechnungszeitraum
+    discount_percent INT DEFAULT NULL,             -- oder Ermäßigung in Prozent
+    reason VARCHAR(255) DEFAULT NULL,              -- Pflicht bei Abweichung
+    approved_by VARCHAR(120) DEFAULT NULL,         -- wer hat es bewilligt (Nachvollziehbarkeit)
+    created_at DATETIME NOT NULL,
+    created_by INT DEFAULT NULL,
+    FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES md_fee_groups(group_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_fee_runs (
+    run_id INT PRIMARY KEY AUTO_INCREMENT,
+    period_key VARCHAR(10) NOT NULL,
+    run_at DATETIME NOT NULL,
+    run_by INT DEFAULT NULL,
+    due_date DATE NOT NULL,
+    entries INT NOT NULL DEFAULT 0,
+    total_cents INT NOT NULL DEFAULT 0,
+    note VARCHAR(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 17. Mahnwesen: Stufen und ausgestellte Mahnschreiben (mit Momentaufnahme)
+CREATE TABLE IF NOT EXISTS md_dunning_levels (
+    level INT PRIMARY KEY,                         -- 1..3
+    name VARCHAR(60) NOT NULL,                     -- z. B. Zahlungserinnerung, 1. Mahnung, 2. Mahnung
+    days INT NOT NULL,                             -- Stufe 1: Tage nach Fälligkeit; Stufe 2/3: Tage nach der vorherigen Mahnung
+    deadline_days INT NOT NULL DEFAULT 14,         -- Zahlungsfrist ab Mahnung
+    fee_cents INT NOT NULL DEFAULT 0,              -- Mahngebühr je Schreiben
+    body TEXT NOT NULL                             -- Text mit Platzhaltern {anrede} {name} {total} {deadline}
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_dunning_letters (
+    letter_id INT PRIMARY KEY AUTO_INCREMENT,
+    letter_no VARCHAR(20) NOT NULL UNIQUE,         -- z. B. M2027-0001
+    member_id INT NOT NULL,
+    level INT NOT NULL,
+    issued_at DATETIME NOT NULL,
+    issued_by INT DEFAULT NULL,
+    total_cents INT NOT NULL,
+    fee_cents INT NOT NULL DEFAULT 0,
+    deadline DATE NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'issued',  -- issued, void
+    void_reason VARCHAR(255) DEFAULT NULL,
+    snapshot TEXT NOT NULL,
+    FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

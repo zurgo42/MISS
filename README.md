@@ -12,6 +12,7 @@ gleiche Datenbank, gleiche Mitgliedertabelle (`svmembers`), gleiche Figuren in d
 | **Protokoll** | Jede Änderung (Feld, alt, neu, wer, wann, Weg: selbst/Admin/Import) in `md_changelog`. |
 | **Rechte** (`admin/settings.php`) | Einstellbare Tabelle: je Funktion und Bereich keine/ansehen/bearbeiten (Verzeichnis, Mitglieder, Finanzen, Nutzungsbedingungen, Import, Einstellungen). Höchste Stufe über alle gültigen Funktionen. Siehe [docs/RECHTE.md](docs/RECHTE.md). |
 | **Kasse** (`admin/finance.php`) | Buchungen pflegen (einzeln und per CSV-Import mit Spaltenzuordnung, Vorschau, Dublettenprüfung), Zahlung vermerken, Storno mit Grund, CSV-Export. Siehe [docs/FINANZEN.md](docs/FINANZEN.md). |
+| **Beiträge und Mahnwesen** (`admin/fees.php`, `admin/dunning.php`) | Beitragsgruppen (Rhythmus, anteilig/voll, Abweichung mit Grund), Beitragslauf mit Vorschau und Dublettenschutz, nummerierte Rechnungen (Druckansicht), Zahlungszuordnung aus dem Kontoauszug (CSV), dreistufiges Mahnwesen mit Gebühr, Stundung und dokumentierten Mahnschreiben. Siehe [docs/BEITRAEGE.md](docs/BEITRAEGE.md). |
 | **Spendenbescheinigungen** (`admin/receipts.php`) | Einzelquittung (beim Buchen oder später) und **Jahresbescheinigung für das Vorjahr** als Sammelbestätigung mit Anlage, nummeriert und dokumentiert, Duplikat-/Kopie-Kennzeichnung, ungültig erklären mit Grund, Druckansicht. Siehe [docs/SPENDEN.md](docs/SPENDEN.md). |
 | **Datenschutz** (`admin/privacy.php`, Dashboard „Meine Daten“) | Auskunft je Mitglied als HTML, JSON und ZIP mit Fotos (jeder Abruf protokolliert), Anfragen mit Monatsfrist, Löschung nach Austritt in zwei Stufen (Profildaten, dann Anonymisierung) mit Fristen, Löschsperre und Protokoll. Siehe [docs/DATENSCHUTZ.md](docs/DATENSCHUTZ.md). |
 | **Zustimmung als Voraussetzung** | Ohne Zustimmung zur aktuellen Fassung der Nutzungsbedingungen: nur eigene Daten sehen, nichts ändern. |
@@ -57,6 +58,6 @@ Bewusste Sonderfälle: Lukas (alte Fassung der Bedingungen, offene Mahnung), Mia
 ## Offen / nächste Schritte
 
 - Abgleich der Spalten von `svmembers` in der echten Datenbank (der Import legt Mitglieder nur mit Nummer, Name und E-Mail an). Der Rechteabgleich prüft vorab, ob `aktiv`, `funktion` und `role` existieren.
-- Beitragslauf, Mahnwesen, Spendenbescheinigung, DATEV-Importprofil (später, mit echter Beispieldatei).
+- SEPA-Lastschrift, E-Mail-Versand der Schreiben, DATEV-Importprofil (später, mit echter Beispieldatei).
 - Übungsleiter-Freibetrag steht in `md_settings.ueb_freibetrag_cents` (Voreinstellung 3.300 €); bitte jährlich prüfen.
 - Datenschutz: Löschkonzept mit dem Verein abstimmen (Fristen, Sicherungen, Daten in der Sitzungsverwaltung), siehe docs/DATENSCHUTZ.md.

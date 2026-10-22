@@ -154,14 +154,14 @@ function demo_build(string $anchor): array
     // Finanzen: [Mitglied, Art, Betrag €, Datum, Fällig, Bezahlt, Status, Beschreibung, Beleg]
     $L = [];
     $fee = function (int $id, float $amount, string $label) use (&$L, $Y, $d, $dt) {
-        $L[] = [$id, 'beitrag', $amount, ($Y - 1) . '-01-15', ($Y - 1) . '-02-15', ($Y - 1) . '-02-' . sprintf('%02d', 10 + $id), 'paid', "Mitgliedsbeitrag " . ($Y - 1) . " ($label)", 'R' . ($Y - 1) . sprintf('%04d', $id)];
+        $L[] = [$id, 'beitrag', $amount, ($Y - 1) . '-01-15', ($Y - 1) . '-02-15', ($Y - 1) . '-02-' . sprintf('%02d', 10 + $id), 'paid', "Mitgliedsbeitrag " . ($Y - 1) . " ($label)", 'RD' . ($Y - 1) . '-' . sprintf('%04d', $id)];
     };
     foreach ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as $id) $fee($id, in_array($id, [10, 11], true) ? 60.0 : 120.0, in_array($id, [10, 11], true) ? 'ermäßigt' : 'Vollmitglied');
     foreach ([1, 2, 4, 5, 6, 7, 8, 9, 10] as $id) {
-        $L[] = [$id, 'beitrag', $id === 10 ? 60.0 : 120.0, "$Y-01-15", "$Y-02-15", "$Y-02-" . sprintf('%02d', 8 + $id), 'paid', "Mitgliedsbeitrag $Y (" . ($id === 10 ? 'ermäßigt' : 'Vollmitglied') . ')', "R$Y" . sprintf('%04d', $id)];
+        $L[] = [$id, 'beitrag', $id === 10 ? 60.0 : 120.0, "$Y-01-15", "$Y-02-15", "$Y-02-" . sprintf('%02d', 8 + $id), 'paid', "Mitgliedsbeitrag $Y (" . ($id === 10 ? 'ermäßigt' : 'Vollmitglied') . ')', "RD$Y-" . sprintf('%04d', $id)];
     }
-    $L[] = [3, 'beitrag', 120.0, "$Y-01-15", $d(-45), null, 'open', "Mitgliedsbeitrag $Y (Vollmitglied) – 1. Zahlungserinnerung", "R$Y" . '0003'];
-    $L[] = [11, 'beitrag', 60.0, $d(-10), $d(20), null, 'open', "Mitgliedsbeitrag $Y (ermäßigt)", "R$Y" . '0011'];
+    $L[] = [3, 'beitrag', 120.0, "$Y-01-15", $d(-45), null, 'open', "Mitgliedsbeitrag $Y (Vollmitglied)", "RD$Y-0003"];
+    $L[] = [11, 'beitrag', 60.0, $d(-10), $d(20), null, 'open', "Mitgliedsbeitrag $Y (ermäßigt)", "RD$Y-0011"];
     // Eintrittsgelder
     foreach ([1, 2, 4, 5, 7, 8, 9] as $id) $L[] = [$id, 'eintritt', 45.0, "$Y-05-02", null, "$Y-05-02", 'paid', "Jahrestagung $Y – Teilnahmegebühr", "T$Y" . sprintf('%03d', $id)];
     foreach ([1, 3, 6, 9, 10] as $id) $L[] = [$id, 'eintritt', 15.0, "$Y-07-18", null, "$Y-07-18", 'paid', "Sommerfest $Y – Eintritt", "S$Y" . sprintf('%03d', $id)];
@@ -190,7 +190,8 @@ function demo_build(string $anchor): array
     $ledger = [];
     foreach ($L as $r) {
         $ledger[] = ['member_id' => $r[0], 'kind' => $r[1], 'direction' => in_array($r[1], ['erstattung', 'uebungsleiter'], true) ? 'to_member' : 'to_club',
-            'amount_cents' => (int)round($r[2] * 100), 'entry_date' => $r[3], 'due_date' => $r[4], 'paid_date' => $r[5], 'status' => $r[6], 'description' => $r[7], 'reference' => $r[8], 'source' => 'demo'];
+            'amount_cents' => (int)round($r[2] * 100), 'entry_date' => $r[3], 'due_date' => $r[4], 'paid_date' => $r[5], 'status' => $r[6], 'description' => $r[7], 'reference' => $r[8], 'source' => 'demo',
+            'fee_period' => $r[1] === 'beitrag' && preg_match('/^Mitgliedsbeitrag (\d{4})/', $r[7], $mm) ? $mm[1] : null];
     }
 
     // Nutzungsbedingungen
@@ -227,6 +228,23 @@ function demo_build(string $anchor): array
     ];
     $changelog = array_map(fn($r) => ['member_id' => $r[0], 'field_key' => $r[1], 'old_value' => $r[2], 'new_value' => $r[3], 'changed_by' => $r[4], 'changed_via' => $r[5], 'changed_at' => $r[6]], $log);
 
+    // Beitragsgruppen und Zuordnung (passend zu den Beiträgen im Demo-Ledger)
+    $feeGroups = [
+        ['group_id' => 1, 'name' => 'Vollmitglied', 'amount_cents' => 12000, 'rhythm' => 'yearly', 'entry_rule' => 'prorated', 'description' => 'Ordentliche Mitglieder', 'active' => 1],
+        ['group_id' => 2, 'name' => 'Ermäßigt', 'amount_cents' => 6000, 'rhythm' => 'yearly', 'entry_rule' => 'prorated', 'description' => 'Studierende, Rentner, geringes Einkommen', 'active' => 1],
+        ['group_id' => 3, 'name' => 'Ehrenmitglied', 'amount_cents' => 0, 'rhythm' => 'yearly', 'entry_rule' => 'full', 'description' => 'beitragsfrei', 'active' => 1],
+        ['group_id' => 4, 'name' => 'Vollmitglied (Quartal)', 'amount_cents' => 3000, 'rhythm' => 'quarterly', 'entry_rule' => 'full', 'description' => 'Zahlweise vierteljährlich', 'active' => 1],
+    ];
+    $feeOf = [1 => 1, 2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1, 7 => 1, 8 => 1, 9 => 1, 10 => 2, 11 => 2, 12 => 1];
+    $memberFees = [];
+    foreach ($feeOf as $id => $g) {
+        $row = ['member_id' => $id, 'group_id' => $g, 'valid_from' => $P[$id][11], 'valid_to' => $id === 12 ? ($Y - 1) . '-12-31' : null, 'amount_override_cents' => null, 'discount_percent' => null,
+                'reason' => null, 'approved_by' => null, 'created_at' => $dt(-400), 'created_by' => 1];
+        if ($id === 6) { $row['amount_override_cents'] = 9000; $row['reason'] = 'Sonderregelung wegen Teilzeit-Anstellung im Verein'; $row['approved_by'] = 'Max Mustermann, Finanzvorstand'; }
+        if ($id === 9) { $row['discount_percent'] = 50; $row['reason'] = 'Erstes Mitgliedsjahr nach Ausbildung'; $row['approved_by'] = 'Julia Sommer, Geschäftsführung'; }
+        $memberFees[] = $row;
+    }
+
     // Datenschutz: eine offene Löschanfrage (Frist überschritten) und eine erledigte Auskunft
     $privacyRequests = [
         ['member_id' => 11, 'kind' => 'erasure', 'received_at' => $dt(-40, '09:30:00'), 'received_via' => 'mail', 'recorded_by' => 5, 'note' => 'Bitte meine Daten löschen (per E-Mail eingegangen).', 'status' => 'open', 'handled_at' => null, 'handled_by' => null, 'response_note' => null],
@@ -253,11 +271,12 @@ function demo_build(string $anchor): array
         'md_profiles' => $profiles, 'md_addresses' => $addresses, 'md_contacts' => $contacts, 'md_visibility' => $visibility,
         'md_member_groups' => $memberGroups, 'md_member_functions' => $memberFunctions, 'md_ledger' => $ledger,
         'md_terms_versions' => $terms, 'md_terms_consents' => $consents, 'md_changelog' => $changelog, 'md_import_profiles' => $importProfiles,
+        'md_fee_groups' => $feeGroups, 'md_member_fees' => $memberFees,
         'md_privacy_requests' => $privacyRequests, 'md_privacy_log' => $privacyLog,
         'md_settings' => array_merge(array_map(fn($k, $v) => ['setting_key' => 'club.' . $k, 'setting_value' => $v, 'description' => 'Angaben für Spendenbescheinigungen (Demo)'],
             ['name', 'street', 'zip', 'city', 'tax_office', 'tax_number', 'exemption_kind', 'exemption_date', 'exemption_period', 'purposes', 'place', 'signer'],
             ['Musterverein e. V.', 'Vereinsstraße 1', '30159', 'Hannover', 'Finanzamt Musterstadt', '12/345/67890', 'feststellung', date('d.m.Y', strtotime(($Y - 1) . '-04-15')), '', 'Förderung der Bildung und Erziehung (§ 52 Abs. 2 Nr. 7 AO)', 'Hannover', 'Max Mustermann, Finanzvorstand']),
-            [['setting_key' => 'privacy.profile_months', 'setting_value' => '6', 'description' => 'Monate nach dem Austritt bis zur Löschung der Profildaten (Demo: 6)'], ['setting_key' => 'ueb_freibetrag_cents', 'setting_value' => '330000', 'description' => 'Jahresfreibetrag Übungsleiterpauschale in Cent (Stand 2026: 3.300 €, bitte jährlich prüfen)']]),
+            [['setting_key' => 'fees.iban', 'setting_value' => 'DE00 0000 0000 0000 0000 00', 'description' => 'Demo-IBAN (ungültig, nur Platzhalter)'], ['setting_key' => 'fees.bank', 'setting_value' => 'Musterbank Hannover', 'description' => 'Demo'], ['setting_key' => 'privacy.profile_months', 'setting_value' => '6', 'description' => 'Monate nach dem Austritt bis zur Löschung der Profildaten (Demo: 6)'], ['setting_key' => 'ueb_freibetrag_cents', 'setting_value' => '330000', 'description' => 'Jahresfreibetrag Übungsleiterpauschale in Cent (Stand 2026: 3.300 €, bitte jährlich prüfen)']]),
     ];
 }
 

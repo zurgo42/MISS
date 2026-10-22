@@ -31,7 +31,7 @@ if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) exit("Abbruch: md_
 
 if (in_array('--reset', $argv, true)) {
     $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
-    foreach (array_merge(['md_receipt_events', 'md_receipts', 'md_photos'], array_diff(DEMO_MD_TABLES, ['md_functions', 'md_settings'])) as $t) $pdo->exec("DELETE FROM $t");
+    foreach (array_merge(['md_dunning_letters', 'md_fee_runs', 'md_receipt_events', 'md_receipts', 'md_photos'], array_diff(DEMO_MD_TABLES, ['md_functions', 'md_settings'])) as $t) $pdo->exec("DELETE FROM $t");
     $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
     echo "md_-Tabellen geleert.\n";
 }
@@ -50,7 +50,7 @@ $pdo->beginTransaction();
 foreach (array_diff(DEMO_MD_TABLES, ['md_functions', 'md_settings']) as $t) demo_insert($pdo, $t, $data[$t], $idmap);
 $pdo->commit();
 demo_photos($pdo, $data['svmembers'], $idmap);
-if (function_exists('md_seed_permissions')) { md_seed_permissions(); }
+if (function_exists('md_seed_permissions')) { md_seed_permissions(); md_dunning_seed(); }
 // Vereinsangaben (md_settings) ergänzen, soweit noch nicht gesetzt
 foreach ($data['md_settings'] as $st) if (!md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$st['setting_key']])) md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$st['setting_key'], $st['setting_value'], $st['description']]);
 demo_issue_receipts($idmap);

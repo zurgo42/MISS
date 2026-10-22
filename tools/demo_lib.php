@@ -2,7 +2,7 @@
 /** Gemeinsame Hilfen für demo_setup.php (SQLite) und demo_load.php (MySQL, vorhandene Demo-Mitglieder). */
 
 const DEMO_MD_TABLES = ['md_functions', 'md_groups', 'md_profiles', 'md_addresses', 'md_contacts', 'md_visibility', 'md_member_groups', 'md_member_functions',
-                        'md_ledger', 'md_terms_versions', 'md_terms_consents', 'md_changelog', 'md_privacy_requests', 'md_privacy_log', 'md_import_profiles', 'md_settings'];
+                        'md_fee_groups', 'md_member_fees', 'md_ledger', 'md_terms_versions', 'md_terms_consents', 'md_changelog', 'md_privacy_requests', 'md_privacy_log', 'md_import_profiles', 'md_settings'];
 
 function demo_insert(PDO $pdo, string $table, array $rows, array $idmap = []): void
 {

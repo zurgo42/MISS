@@ -24,6 +24,12 @@ const MD_MIGRATIONS = [
     ['md_ledger', 'cancel_reason', 'VARCHAR(255) DEFAULT NULL'],
     ['md_import_profiles', 'target', "VARCHAR(10) NOT NULL DEFAULT 'members'"],
     ['md_ledger', 'receipt_id', 'INT DEFAULT NULL'],
+    ['md_ledger', 'run_id', 'INT DEFAULT NULL'],
+    ['md_ledger', 'fee_period', 'VARCHAR(10) DEFAULT NULL'],
+    ['md_ledger', 'dunning_level', 'INT NOT NULL DEFAULT 0'],
+    ['md_ledger', 'last_dunned_at', 'DATE DEFAULT NULL'],
+    ['md_ledger', 'deferred_until', 'DATE DEFAULT NULL'],
+    ['md_ledger', 'deferred_reason', 'VARCHAR(255) DEFAULT NULL'],
     ['md_profiles', 'retention_hold', 'INT NOT NULL DEFAULT 0'],
     ['md_profiles', 'hold_reason', 'VARCHAR(255) DEFAULT NULL'],
     ['md_profiles', 'purged_at', 'DATETIME DEFAULT NULL'],
@@ -52,7 +58,7 @@ function md_require_schema(): void
     static $checked = false;
     if ($checked) return;
     $checked = true;
-    $ok = md_table_exists('md_permissions') && md_table_exists('md_receipts') && md_table_exists('md_privacy_log');
+    $ok = md_table_exists('md_permissions') && md_table_exists('md_receipts') && md_table_exists('md_privacy_log') && md_table_exists('md_fee_groups') && md_table_exists('md_dunning_letters');
     if ($ok) foreach (MD_MIGRATIONS as [$t, $c]) if (md_table_exists($t) && !in_array($c, md_table_columns($t), true)) { $ok = false; break; }
     if (!$ok) {
         http_response_code(503);
