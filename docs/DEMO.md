@@ -1,6 +1,69 @@
-# Demo-Datenbank mit den 12 Figuren (Windows/XAMPP)
+# Demo mit den 12 Figuren (Windows/XAMPP)
 
-Ziel: Eine **eigene** Datenbank `md_demo` mit der Demo der Sitzungsverwaltung (12 Figuren, Passwort `test123`) plus den Demo-Daten der Mitgliederverwaltung.
+Es gibt zwei Wege. Beide laden die Demo der Sitzungsverwaltung (12 Figuren `DEMO0001`–`DEMO0012`, Passwort `test123`) und danach die Demo-Daten der Mitgliederverwaltung.
+
+| | Weg A: vorhandene Datenbank | Weg B: eigene Demo-Datenbank |
+|---|---|---|
+| Datenbank | die bestehende Entwicklungsdatenbank (z. B. `k126904_div`) | neue Datenbank `md_demo` |
+| Sitzungsverwaltung | die vorhandene Installation | eine zweite Kopie mit eigener `config.php` |
+| Vorhandene Daten | werden durch den Demo-Import der Sitzungsverwaltung **gelöscht** (Meeting-Daten und Mitglieder, ausgenommen einzelne Testkonten) | bleiben unberührt |
+| Aufwand | gering | höher |
+| Geeignet für | reine Entwicklungsdatenbank ohne wichtige Daten | wenn die bestehende Datenbank erhalten bleiben soll |
+
+Ob in der Datenbank etwas Wichtiges liegt, entscheidest du. Wenn ja: Weg B oder vorher einen Export (phpMyAdmin → Exportieren).
+
+---
+
+# Weg A: vorhandene Datenbank verwenden
+
+Voraussetzung: Die Datenbank ist eine reine Entwicklungs-/Testdatenbank, ein Export liegt vor.
+
+## A1. Demo der Sitzungsverwaltung laden
+
+In der vorhandenen Sitzungsverwaltung (z. B. `D:\xampp\htdocs\Sitzungsverwaltung`):
+- In `config.php`: `define('DEMO_MODE_ENABLED', true);`
+- `D:\xampp\php\php.exe tools\demo_build.php` (erzeugt `tools\demo_data.json`)
+- Im Browser `http://localhost/Sitzungsverwaltung/tools/demo_import.php`, System-Admin-Passwort, bestätigen. **Das löscht die Daten dieser Datenbank.**
+
+Danach stehen die 12 Figuren in `svmembers` (z. B. `max@example.com` / `test123`). Einzelne Testkonten außerhalb der Demo (z. B. ein Super-Admin) können stehen bleiben.
+
+## A2. Mitgliederverwaltung einrichten (im Ordner `D:\xampp\htdocs\Mitgliederverwaltung`)
+
+`config.php`: `MD_DB_DRIVER` `'mysql'`, `MD_DB_HOST` `'localhost'`, `MD_DB_USER` `'root'`, `MD_DB_PASS` `''`, `MD_DB_NAME` wie in der Sitzungsverwaltung,
+`MD_DEMO_MODE` `true`, `MD_SV_MODE` `'standalone'`, `MD_LOGIN_URL` `'/Sitzungsverwaltung/login.php'`.
+
+```
+cd /d D:\xampp\htdocs\Mitgliederverwaltung
+D:\xampp\php\php.exe tools\install.php --check
+D:\xampp\php\php.exe tools\install.php
+D:\xampp\php\php.exe tools\demo_load.php
+```
+
+## A3. Wenn `demo_load.php` Konten außerhalb der Demo meldet
+
+Das Skript listet sie mit Nummer, Name, E-Mail und Rolle und bricht ab. Das ist ein Schutz davor, dass Demo-Daten in echte Mitgliedsdaten geraten.
+Sind es nur Testkonten, die stehen bleiben sollen:
+
+```
+D:\xampp\php\php.exe tools\demo_load.php --ignore-others
+```
+Es werden dann nur die 12 Demo-Figuren befüllt. `svmembers` und die anderen Konten bleiben unverändert und haben danach ein leeres Profil;
+der Rechteabgleich fasst sie nicht an, weil sie keine Funktionszuordnung haben. **Bei echten Personen diesen Weg nicht gehen.**
+
+## A4. Kontrolle und Ansehen
+
+```
+D:\xampp\php\php.exe tools\sync_rights.php --dry-run
+```
+muss `0 Mitglied(er) würden angepasst` melden: Die Demo-Funktionen passen zu den Rechten (`aktiv`, `funktion`, `role`) der Sitzungsverwaltung.
+Vor `demo_load.php` ist dieser Test noch nicht aussagekräftig, weil es noch keine Funktionszuordnungen gibt.
+
+Dann `http://localhost/Mitgliederverwaltung/login.php` und eine Figur wählen. Zurücksetzen: `tools\demo_load.php --reset` (mit `--ignore-others`, falls nötig) leert nur die `md_`-Tabellen und lädt sie neu.
+
+---
+
+# Weg B: eigene Demo-Datenbank `md_demo`
+
 Die bestehende Entwicklungsdatenbank (`k126904_div`) bleibt unberührt.
 
 > **Achtung:** `tools/demo_import.php` der Sitzungsverwaltung **löscht alle Daten der Datenbank**, auf die ihre `config.php` zeigt.
