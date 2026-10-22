@@ -24,6 +24,10 @@ const MD_MIGRATIONS = [
     ['md_ledger', 'cancel_reason', 'VARCHAR(255) DEFAULT NULL'],
     ['md_import_profiles', 'target', "VARCHAR(10) NOT NULL DEFAULT 'members'"],
     ['md_ledger', 'receipt_id', 'INT DEFAULT NULL'],
+    ['md_profiles', 'retention_hold', 'INT NOT NULL DEFAULT 0'],
+    ['md_profiles', 'hold_reason', 'VARCHAR(255) DEFAULT NULL'],
+    ['md_profiles', 'purged_at', 'DATETIME DEFAULT NULL'],
+    ['md_profiles', 'anonymized_at', 'DATETIME DEFAULT NULL'],
     ['md_member_functions', 'aktiv_level', 'INT DEFAULT NULL'],
     ['md_member_functions', 'ressort_id', 'INT DEFAULT NULL'],
 ];
@@ -48,7 +52,7 @@ function md_require_schema(): void
     static $checked = false;
     if ($checked) return;
     $checked = true;
-    $ok = md_table_exists('md_permissions') && md_table_exists('md_receipts');
+    $ok = md_table_exists('md_permissions') && md_table_exists('md_receipts') && md_table_exists('md_privacy_log');
     if ($ok) foreach (MD_MIGRATIONS as [$t, $c]) if (md_table_exists($t) && !in_array($c, md_table_columns($t), true)) { $ok = false; break; }
     if (!$ok) {
         http_response_code(503);

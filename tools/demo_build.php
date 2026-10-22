@@ -227,6 +227,18 @@ function demo_build(string $anchor): array
     ];
     $changelog = array_map(fn($r) => ['member_id' => $r[0], 'field_key' => $r[1], 'old_value' => $r[2], 'new_value' => $r[3], 'changed_by' => $r[4], 'changed_via' => $r[5], 'changed_at' => $r[6]], $log);
 
+    // Datenschutz: eine offene Löschanfrage (Frist überschritten) und eine erledigte Auskunft
+    $privacyRequests = [
+        ['member_id' => 11, 'kind' => 'erasure', 'received_at' => $dt(-40, '09:30:00'), 'received_via' => 'mail', 'recorded_by' => 5, 'note' => 'Bitte meine Daten löschen (per E-Mail eingegangen).', 'status' => 'open', 'handled_at' => null, 'handled_by' => null, 'response_note' => null],
+        ['member_id' => 8, 'kind' => 'access', 'received_at' => $dt(-90, '14:10:00'), 'received_via' => 'self', 'recorded_by' => 8, 'note' => null, 'status' => 'done', 'handled_at' => $dt(-85, '10:00:00'), 'handled_by' => 5, 'response_note' => 'Auskunft als ZIP bereitgestellt'],
+    ];
+    $privacyLog = [
+        ['member_id' => 11, 'event' => 'request', 'event_at' => $dt(-40, '09:30:00'), 'event_by' => 5, 'note' => 'Löschung über mail'],
+        ['member_id' => 8, 'event' => 'request', 'event_at' => $dt(-90, '14:10:00'), 'event_by' => 8, 'note' => 'Auskunft über self'],
+        ['member_id' => 8, 'event' => 'export', 'event_at' => $dt(-85, '09:55:00'), 'event_by' => 5, 'note' => 'ZIP'],
+        ['member_id' => 8, 'event' => 'handled', 'event_at' => $dt(-85, '10:00:00'), 'event_by' => 5, 'note' => 'Auskunft erledigt'],
+    ];
+
     // Import-Profil als Beispiel
     $importProfiles = [['name' => 'Beispiel: Excel-Export Altverwaltung', 'source_software' => 'Excel', 'delimiter_char' => ';',
         'mapping' => json_encode(['map' => ['membership_number' => 'Mitgl-Nr', 'first_name' => 'Vorname', 'last_name' => 'Nachname', 'email' => 'E-Mail', 'birthdate' => 'Geb.-Datum',
@@ -241,10 +253,11 @@ function demo_build(string $anchor): array
         'md_profiles' => $profiles, 'md_addresses' => $addresses, 'md_contacts' => $contacts, 'md_visibility' => $visibility,
         'md_member_groups' => $memberGroups, 'md_member_functions' => $memberFunctions, 'md_ledger' => $ledger,
         'md_terms_versions' => $terms, 'md_terms_consents' => $consents, 'md_changelog' => $changelog, 'md_import_profiles' => $importProfiles,
+        'md_privacy_requests' => $privacyRequests, 'md_privacy_log' => $privacyLog,
         'md_settings' => array_merge(array_map(fn($k, $v) => ['setting_key' => 'club.' . $k, 'setting_value' => $v, 'description' => 'Angaben für Spendenbescheinigungen (Demo)'],
             ['name', 'street', 'zip', 'city', 'tax_office', 'tax_number', 'exemption_kind', 'exemption_date', 'exemption_period', 'purposes', 'place', 'signer'],
             ['Musterverein e. V.', 'Vereinsstraße 1', '30159', 'Hannover', 'Finanzamt Musterstadt', '12/345/67890', 'feststellung', date('d.m.Y', strtotime(($Y - 1) . '-04-15')), '', 'Förderung der Bildung und Erziehung (§ 52 Abs. 2 Nr. 7 AO)', 'Hannover', 'Max Mustermann, Finanzvorstand']),
-            [['setting_key' => 'ueb_freibetrag_cents', 'setting_value' => '330000', 'description' => 'Jahresfreibetrag Übungsleiterpauschale in Cent (Stand 2026: 3.300 €, bitte jährlich prüfen)']]),
+            [['setting_key' => 'privacy.profile_months', 'setting_value' => '6', 'description' => 'Monate nach dem Austritt bis zur Löschung der Profildaten (Demo: 6)'], ['setting_key' => 'ueb_freibetrag_cents', 'setting_value' => '330000', 'description' => 'Jahresfreibetrag Übungsleiterpauschale in Cent (Stand 2026: 3.300 €, bitte jährlich prüfen)']]),
     ];
 }
 

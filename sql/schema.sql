@@ -21,6 +21,10 @@ CREATE TABLE IF NOT EXISTS md_profiles (
     leave_date DATE DEFAULT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'aktiv',   -- interessent, aktiv, ruhend, ausgetreten, ehrenmitglied
     admin_note TEXT,                               -- nur Verwaltung, nie für Mitglieder sichtbar
+    retention_hold INT NOT NULL DEFAULT 0,         -- 1 = Löschsperre (z. B. offene Forderung, laufendes Verfahren)
+    hold_reason VARCHAR(255) DEFAULT NULL,
+    purged_at DATETIME DEFAULT NULL,               -- Stufe 1: Profildaten nach Austritt gelöscht
+    anonymized_at DATETIME DEFAULT NULL,           -- Stufe 2: nach Ablauf der Aufbewahrungsfristen vollständig anonymisiert
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
@@ -247,4 +251,30 @@ CREATE TABLE IF NOT EXISTS md_receipt_events (
     event_by INT DEFAULT NULL,
     note VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (receipt_id) REFERENCES md_receipts(receipt_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 15. Datenschutz: Anfragen (Auskunft, Löschung) mit Fristüberwachung und Protokoll der Vorgänge
+CREATE TABLE IF NOT EXISTS md_privacy_requests (
+    request_id INT PRIMARY KEY AUTO_INCREMENT,
+    member_id INT NOT NULL,
+    kind VARCHAR(10) NOT NULL,                     -- access (Auskunft), erasure (Löschung)
+    received_at DATETIME NOT NULL,
+    received_via VARCHAR(10) NOT NULL DEFAULT 'self', -- self (Dashboard), mail, letter, phone, other
+    recorded_by INT DEFAULT NULL,
+    note TEXT,
+    status VARCHAR(10) NOT NULL DEFAULT 'open',    -- open, done, refused
+    handled_at DATETIME DEFAULT NULL,
+    handled_by INT DEFAULT NULL,
+    response_note VARCHAR(500) DEFAULT NULL,
+    FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Protokoll ohne Fremdschlüssel: bleibt als Nachweis, auch wenn Daten gelöscht oder anonymisiert sind (enthält keine Klarnamen)
+CREATE TABLE IF NOT EXISTS md_privacy_log (
+    event_id INT PRIMARY KEY AUTO_INCREMENT,
+    member_id INT NOT NULL,
+    event VARCHAR(12) NOT NULL,                    -- export, request, handled, hold_on, hold_off, purged, anonymized
+    event_at DATETIME NOT NULL,
+    event_by INT DEFAULT NULL,
+    note VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -86,6 +86,24 @@ if ($terms['state'] !== 'none') {
     echo '</section>';
 }
 
+// ---- Meine Daten (Auskunft, Löschung) – nur für die eigenen Daten, unabhängig von der Zustimmung
+if (!$staff) {
+    $myReq = md_q("SELECT * FROM md_privacy_requests WHERE member_id = ? ORDER BY request_id DESC LIMIT 5", [$mid]);
+    $openErase = false;
+    foreach ($myReq as $rq) if ($rq['kind'] === 'erasure' && $rq['status'] === 'open') $openErase = true;
+    echo '<section class="card" id="privacy"><h2>Meine Daten</h2><p>Du kannst jederzeit alle über dich gespeicherten Daten ansehen oder herunterladen:</p><p>'
+        . '<a href="privacy_export.php?format=html" target="_blank">Ansehen und drucken</a> · <a href="privacy_export.php?format=json">JSON-Datei</a>' . (class_exists('ZipArchive') ? ' · <a href="privacy_export.php?format=zip">ZIP mit Fotos</a>' : '') . '</p>';
+    if ($openErase) echo '<div class="flash warn">Dein Löschantrag liegt der Verwaltung vor.</div>';
+    else echo '<details><summary>Löschung meiner Daten beantragen</summary><p class="muted">Die Verwaltung prüft den Antrag und antwortet innerhalb eines Monats. Während der Mitgliedschaft und aufgrund von Aufbewahrungspflichten (z. B. Buchungen, Spendenbescheinigungen) können nicht alle Daten sofort gelöscht werden.</p>'
+        . '<form method="post" action="save.php">' . $form('privacy_request', 'privacy') . '<label class="block">Anmerkung (optional)<input name="note"></label><button>Löschung beantragen</button></form></details>';
+    if ($myReq) {
+        echo '<ul class="plain">';
+        foreach ($myReq as $rq) echo '<li class="muted">' . ($rq['kind'] === 'access' ? 'Auskunft' : 'Löschantrag') . ' vom ' . h(md_date(substr($rq['received_at'], 0, 10))) . ': ' . ['open' => 'offen', 'done' => 'erledigt', 'refused' => 'abgelehnt'][$rq['status']] . ($rq['response_note'] ? ' – ' . h($rq['response_note']) : '') . '</li>';
+        echo '</ul>';
+    }
+    echo '</section>';
+}
+
 echo '<fieldset class="roset"' . ($canEdit ? '' : ' disabled') . '>';
 
 // ---- Fotos

@@ -5,7 +5,7 @@ $actor = md_require_login();
 md_csrf_check();
 $section = (string)($_POST['section'] ?? '');
 // Ohne Zustimmung zu den Nutzungsbedingungen kann man nichts ändern (außer eben zustimmen bzw. widerrufen)
-if (!in_array($section, ['consent', 'consent_revoke'], true) && !md_consent_ok((int)$actor['member_id'])) {
+if (!in_array($section, ['consent', 'consent_revoke', 'privacy_request'], true) && !md_consent_ok((int)$actor['member_id'])) {
     md_flash('Ändern ist erst nach der Zustimmung zu den Nutzungsbedingungen möglich.', 'warn');
     header('Location: ' . md_url('index.php#terms'));
     exit;
@@ -51,6 +51,13 @@ try {
                 md_record_consent($mid, (int)$cur['terms_id'], 'self', $aid, $_SERVER['REMOTE_ADDR'] ?? null);
                 $msg = 'Zustimmung dokumentiert.';
             } else { $msg = 'Bitte das Häkchen setzen.'; $kind = 'err'; }
+            break;
+        case 'privacy_request':
+            // Auskunft und Löschantrag sind Rechte des Mitglieds und gelten auch ohne Zustimmung zu den Nutzungsbedingungen
+            if ($via !== 'self') { http_response_code(403); exit('Nur für die eigenen Daten.'); }
+            [$rid, $rerr] = md_privacy_request_add($mid, 'erasure', 'self', $aid, trim((string)($_POST['note'] ?? '')) ?: null);
+            $msg = $rerr ?: 'Dein Löschantrag ist eingegangen. Die Verwaltung antwortet spätestens innerhalb eines Monats.';
+            $kind = $rerr ? 'err' : 'ok';
             break;
         case 'consent_revoke':
             md_revoke_consent($mid, (int)($_POST['consent_id'] ?? 0), $aid);
