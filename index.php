@@ -216,7 +216,14 @@ foreach ($fin['rows'] as $r) {
     echo '<td class="r ' . ($out ? 'neg' : 'pos') . '">' . ($out ? '− ' : '+ ') . md_money((int)$r['amount_cents']) . '</td><td class="' . ($overdue ? 'bad' : '') . '">' . h($stat) . '</td></tr>';
 }
 if (!$fin['rows']) echo '<tr><td colspan="5" class="muted">Keine Buchungen.</td></tr>';
-echo '</tbody></table></section>';
+echo '</tbody></table>';
+$myReceipts = md_q("SELECT * FROM md_receipts WHERE member_id = ? AND status = 'issued' ORDER BY receipt_no DESC", [$mid]);
+if ($myReceipts) {
+    echo '<h3>Spendenbescheinigungen</h3><ul class="plain">';
+    foreach ($myReceipts as $rc) echo '<li><a href="admin/receipt_print.php?id=' . (int)$rc['receipt_id'] . '" target="_blank">Nr. ' . h($rc['receipt_no']) . '</a> · ' . ($rc['kind'] === 'annual' ? 'Sammelbestätigung ' . h(md_date($rc['period_from'])) . ' – ' . h(md_date($rc['period_to'])) : 'Zuwendung vom ' . h(md_date($rc['period_from']))) . ' · ' . md_money((int)$rc['total_cents']) . ' <span class="muted">ausgestellt ' . h(date('d.m.Y', strtotime($rc['issued_at']))) . '</span></li>';
+    echo '</ul><p class="muted">Der Ausdruck ist eine Kopie der ausgestellten Bestätigung.</p>';
+}
+echo '</section>';
 }
 echo '</fieldset>';
 

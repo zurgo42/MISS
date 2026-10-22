@@ -93,7 +93,7 @@ function demo_build(string $anchor): array
         8 => [['Privat', 'Sonnenhang 6', '79098', 'Freiburg', 'Deutschland']],
         9 => [['Privat', 'Nordstraße 31', '10115', 'Berlin', 'Deutschland']],
         10 => [['Privat', 'Eichenhof 1', '70173', 'Stuttgart', 'Deutschland']],
-        11 => [['Privat', 'Serverstraße 404', '60311', 'Frankfurt am Main', 'Deutschland']],
+        11 => [['Privat', 'Serverstraße 404', '', 'Frankfurt am Main', 'Deutschland']],   // PLZ fehlt absichtlich (Demo-Fall Spendenbescheinigung)
         12 => [['Privat', 'Anglerweg 7', '23552', 'Lübeck', 'Deutschland']],
     ];
     $addresses = [];
@@ -172,6 +172,10 @@ function demo_build(string $anchor): array
     $L[] = [4, 'spende', 25.0, "$Y-09-12", null, "$Y-09-12", 'paid', 'Spende', 'SP' . $Y . '03'];
     $L[] = [7, 'spende', 200.0, ($Y - 1) . '-12-20', null, ($Y - 1) . '-12-20', 'paid', 'Jahresendspende', 'SP' . ($Y - 1) . '04'];
     $L[] = [7, 'spende', 150.0, "$Y-12-01", null, null, 'cancelled', 'Zugesagte Spende (storniert)', null];
+    $L[] = [1, 'spende', 150.0, ($Y - 1) . '-03-10', null, ($Y - 1) . '-03-10', 'paid', 'Spende Frühjahrsaktion', 'SP' . ($Y - 1) . '05'];
+    $L[] = [1, 'spende', 100.0, ($Y - 1) . '-11-25', null, ($Y - 1) . '-11-25', 'paid', 'Spende Jahresende', 'SP' . ($Y - 1) . '06'];
+    $L[] = [2, 'spende', 50.0, ($Y - 1) . '-06-15', null, ($Y - 1) . '-06-15', 'paid', 'Spende Sommerfest', 'SP' . ($Y - 1) . '07'];
+    $L[] = [11, 'spende', 30.0, ($Y - 1) . '-09-01', null, ($Y - 1) . '-09-01', 'paid', 'Spende Herbstmarkt (Anschrift unvollständig – Demo-Fall)', 'SP' . ($Y - 1) . '08'];
     // Erstattungen an das Mitglied
     $L[] = [1, 'erstattung', 54.0, "$Y-04-11", null, "$Y-04-25", 'paid', 'Fahrtkosten Prüfungsgespräch', 'E' . $Y . '01'];
     $L[] = [4, 'erstattung', 14.8, "$Y-06-02", null, "$Y-06-10", 'paid', 'Porto Mitgliederpost', 'E' . $Y . '02'];
@@ -233,11 +237,14 @@ function demo_build(string $anchor): array
         'svmembers' => $svmembers,
         'svressorts' => array_map(fn($r, $i) => ['ID' => $i + 1, 'Code' => $r[1], 'Ressort' => $r[2], 'Reihenfolge' => ($i + 1) * 10, 'aktiv' => 1], $svressorts, array_keys($svressorts)),
         'md_functions' => array_map(fn($f) => ['code' => $f[0], 'name' => $f[1], 'sv_aktiv_level' => $f[2]], $functions),
-        'md_groups' => array_map(fn($g) => ['name' => $g[0], 'kind' => $g[1]], $groups),
+        'md_groups' => array_map(fn($g, $i) => ['group_id' => $i + 1, 'name' => $g[0], 'kind' => $g[1]], $groups, array_keys($groups)),   // feste IDs: bleiben auch nach --reset gültig
         'md_profiles' => $profiles, 'md_addresses' => $addresses, 'md_contacts' => $contacts, 'md_visibility' => $visibility,
         'md_member_groups' => $memberGroups, 'md_member_functions' => $memberFunctions, 'md_ledger' => $ledger,
         'md_terms_versions' => $terms, 'md_terms_consents' => $consents, 'md_changelog' => $changelog, 'md_import_profiles' => $importProfiles,
-        'md_settings' => [['setting_key' => 'ueb_freibetrag_cents', 'setting_value' => '330000', 'description' => 'Jahresfreibetrag Übungsleiterpauschale in Cent (Stand 2026: 3.300 €, bitte jährlich prüfen)']],
+        'md_settings' => array_merge(array_map(fn($k, $v) => ['setting_key' => 'club.' . $k, 'setting_value' => $v, 'description' => 'Angaben für Spendenbescheinigungen (Demo)'],
+            ['name', 'street', 'zip', 'city', 'tax_office', 'tax_number', 'exemption_kind', 'exemption_date', 'exemption_period', 'purposes', 'place', 'signer'],
+            ['Musterverein e. V.', 'Vereinsstraße 1', '30159', 'Hannover', 'Finanzamt Musterstadt', '12/345/67890', 'feststellung', date('d.m.Y', strtotime(($Y - 1) . '-04-15')), '', 'Förderung der Bildung und Erziehung (§ 52 Abs. 2 Nr. 7 AO)', 'Hannover', 'Max Mustermann, Finanzvorstand']),
+            [['setting_key' => 'ueb_freibetrag_cents', 'setting_value' => '330000', 'description' => 'Jahresfreibetrag Übungsleiterpauschale in Cent (Stand 2026: 3.300 €, bitte jährlich prüfen)']]),
     ];
 }
 

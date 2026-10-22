@@ -38,3 +38,14 @@ function demo_photos(PDO $pdo, array $svmembers, array $idmap = []): void
     }
     echo "Fotos angelegt.\n";
 }
+
+/** Stellt für die Demo eine Einzelbestätigung aus (Julias Spende), damit die Liste der Bestätigungen nicht leer ist. Braucht src/bootstrap.php. */
+function demo_issue_receipts(array $idmap = []): void
+{
+    $julia = $idmap[4] ?? 4;
+    $max = $idmap[1] ?? 1;
+    $e = md_one("SELECT entry_id FROM md_ledger WHERE member_id = ? AND kind = 'spende' AND status = 'paid' AND receipt_id IS NULL ORDER BY entry_id LIMIT 1", [$julia]);
+    if (!$e) return;
+    [$rid, $err] = md_receipt_issue($julia, 'single', ['entry_id' => (int)$e['entry_id']], $max);
+    echo $rid ? "Demo-Spendenquittung ausgestellt.\n" : "Demo-Spendenquittung nicht ausgestellt: $err\n";
+}

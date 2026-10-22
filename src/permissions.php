@@ -15,6 +15,7 @@ const MD_AREAS = [
     'members'   => ['Mitglieder: Daten, Gruppen, Funktionen', ['none', 'view', 'edit']],
     'finance'   => ['Finanzen: Buchungen aller Mitglieder', ['none', 'view', 'edit']],
     'terms'     => ['Nutzungsbedingungen und Zustimmungen', ['none', 'view', 'edit']],
+    'receipts'  => ['Spendenbescheinigungen', ['none', 'view', 'edit']],
     'import'    => ['CSV-Import Mitglieder', ['none', 'edit']],
     'settings'  => ['Einstellungen, Rechte, Standard-Sichtbarkeit', ['none', 'edit']],
 ];
@@ -30,6 +31,7 @@ function md_default_permissions(): array
         ['FVo', 'members', 'view'], ['FVo', 'finance', 'edit'], ['FVo', 'terms', 'view'],
         ['FVv', 'members', 'view'], ['FVv', 'finance', 'edit'], ['FVv', 'terms', 'view'],
         ['GF', 'members', 'edit'], ['GF', 'finance', 'view'], ['GF', 'terms', 'edit'], ['GF', 'import', 'edit'], ['GF', 'settings', 'edit'],
+        ['Vo', 'receipts', 'view'], ['FVo', 'receipts', 'edit'], ['FVv', 'receipts', 'edit'], ['GF', 'receipts', 'view'], ['VA', 'receipts', 'view'], ['Ka', 'receipts', 'edit'], ['FP', 'receipts', 'view'],
         ['VA', 'members', 'view'], ['VA', 'finance', 'view'], ['VA', 'terms', 'view'],
         ['SV', 'members', 'edit'], ['SV', 'terms', 'view'],
         ['MB', 'members', 'edit'], ['MB', 'import', 'edit'], ['MB', 'terms', 'edit'],
@@ -39,14 +41,30 @@ function md_default_permissions(): array
     ];
 }
 
-/** Trägt die Voreinstellung ein, wenn md_permissions leer ist. Gibt die Anzahl eingetragener Zeilen zurück. */
+/**
+ * Trägt die Voreinstellung für Bereiche ein, die noch nie eingetragen wurden (Merker in md_settings "perm_areas_seeded").
+ * So bekommen auch bestehende Installationen neue Bereiche, ohne dass bewusst geleerte Bereiche wiederkehren.
+ * Gibt die Anzahl eingetragener Zeilen zurück.
+ */
 function md_seed_permissions(): int
 {
-    if ((int)md_one('SELECT COUNT(*) c FROM md_permissions')['c'] > 0) return 0;
-    foreach (md_default_permissions() as [$subject, $area, $level]) {
-        md_exec('INSERT INTO md_permissions (subject, area, level) VALUES (?,?,?)', [$subject, $area, $level]);
+    $seeded = array_filter(explode(',', md_setting('perm_areas_seeded', '')));
+    $legacy = $seeded === [] && (int)md_one('SELECT COUNT(*) c FROM md_permissions')['c'] > 0;   // Tabelle aus Version ohne Merker
+    if ($legacy) $seeded = array_diff(array_keys(MD_AREAS), ['receipts']);
+    $n = 0;
+    foreach (array_keys(MD_AREAS) as $area) {
+        if (in_array($area, $seeded, true)) continue;
+        foreach (md_default_permissions() as [$subject, $a, $level]) {
+            if ($a !== $area) continue;
+            md_exec('INSERT INTO md_permissions (subject, area, level) VALUES (?,?,?)', [$subject, $a, $level]);
+            $n++;
+        }
+        $seeded[] = $area;
     }
-    return count(md_default_permissions());
+    $val = implode(',', $seeded);
+    if (md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', ['perm_areas_seeded'])) md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', [$val, 'perm_areas_seeded']);
+    else md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', ['perm_areas_seeded', $val, 'Bereiche, für die die Rechte-Voreinstellung schon eingetragen wurde (nicht ändern)']);
+    return $n;
 }
 
 function md_permission_matrix(): array

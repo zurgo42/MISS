@@ -36,6 +36,7 @@ require_once __DIR__ . '/profile.php';
 require_once __DIR__ . '/rights.php';
 require_once __DIR__ . '/permissions.php';
 require_once __DIR__ . '/ledger.php';
+require_once __DIR__ . '/receipts.php';
 require_once __DIR__ . '/migrate.php';
 require_once __DIR__ . '/import.php';
 require_once __DIR__ . '/finance.php';

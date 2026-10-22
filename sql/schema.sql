@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS md_ledger (
     cancelled_at DATETIME DEFAULT NULL,            -- Storno statt Löschen
     cancelled_by INT DEFAULT NULL,
     cancel_reason VARCHAR(255) DEFAULT NULL,
+    receipt_id INT DEFAULT NULL,                   -- Spende: durch diese Zuwendungsbestätigung abgedeckt (md_receipts)
     FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -216,4 +217,34 @@ CREATE TABLE IF NOT EXISTS md_permissions (
     area VARCHAR(20) NOT NULL,                     -- directory, members, finance, terms, import, settings
     level VARCHAR(10) NOT NULL,                    -- none, view, edit
     PRIMARY KEY (subject, area)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 14. Zuwendungsbestätigungen (Spendenquittungen): nummeriert, mit Momentaufnahme der Angaben, nie gelöscht
+CREATE TABLE IF NOT EXISTS md_receipts (
+    receipt_id INT PRIMARY KEY AUTO_INCREMENT,
+    receipt_no VARCHAR(20) NOT NULL UNIQUE,        -- z. B. 2026-0001 (Jahr der Ausstellung, laufende Nummer)
+    member_id INT NOT NULL,
+    kind VARCHAR(10) NOT NULL,                     -- single (Einzelbestätigung), annual (Sammelbestätigung für einen Zeitraum)
+    period_from DATE NOT NULL,
+    period_to DATE NOT NULL,
+    total_cents INT NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'issued',  -- issued, void
+    issued_at DATETIME NOT NULL,
+    issued_by INT DEFAULT NULL,
+    replaces_id INT DEFAULT NULL,                  -- ersetzt diese (für ungültig erklärte) Bestätigung
+    void_reason VARCHAR(255) DEFAULT NULL,
+    voided_at DATETIME DEFAULT NULL,
+    voided_by INT DEFAULT NULL,
+    snapshot TEXT NOT NULL,                        -- JSON: Verein, Spender, Einzelzuwendungen zum Zeitpunkt der Ausstellung
+    FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_receipt_events (
+    event_id INT PRIMARY KEY AUTO_INCREMENT,
+    receipt_id INT NOT NULL,
+    event VARCHAR(10) NOT NULL,                    -- issued, printed, voided
+    event_at DATETIME NOT NULL,
+    event_by INT DEFAULT NULL,
+    note VARCHAR(255) DEFAULT NULL,
+    FOREIGN KEY (receipt_id) REFERENCES md_receipts(receipt_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

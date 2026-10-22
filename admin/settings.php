@@ -54,6 +54,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 md_flash('Einstellungen gespeichert.');
             } else md_flash('Bitte gültige Werte eingeben (Freibetrag in €, Level 0–19).', 'err');
+        } elseif ($act === 'club') {
+            $changed = 0;
+            foreach (MD_CLUB_FIELDS as $k => [$label]) {
+                $v = trim((string)($_POST['club'][$k] ?? ''));
+                if ($k === 'exemption_kind' && !in_array($v, ['freistellung', 'feststellung'], true)) $v = 'feststellung';
+                if ($k === 'exemption_date' && $v !== '') $v = md_parse_date($v) ? md_date(md_parse_date($v)) : $v;
+                $v = mb_substr($v, 0, 255);
+                $old = md_setting('club.' . $k, '');
+                if ($old === $v) continue;
+                if (md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', ['club.' . $k])) md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', [$v, 'club.' . $k]);
+                else md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', ['club.' . $k, $v, 'Angaben für Spendenbescheinigungen: ' . $label]);
+                md_log_change($aid, 'settings', "$label: $old", $v, $aid, 'self');
+                $changed++;
+            }
+            $pr = md_club_problems(md_club());
+            md_flash($changed ? 'Vereinsangaben gespeichert.' . ($pr ? ' Noch offen: ' . implode('; ', $pr) . '.' : ' Spendenbescheinigungen sind freigegeben.') : 'Keine Änderungen.', ($changed && !$pr) || !$changed ? 'ok' : 'warn');
         } elseif ($act === 'function_level') {
             foreach ($functions as $f) {
                 $v = $_POST['lvl'][$f['function_id']] ?? '';
@@ -132,6 +148,23 @@ echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="acti
 echo '<section class="card" id="groups"><h2>Teilgruppen</h2><ul class="plain">';
 foreach (md_q('SELECT g.*, (SELECT COUNT(*) FROM md_member_groups mg WHERE mg.group_id = g.group_id) n FROM md_groups g ORDER BY g.name') as $g) echo '<li>' . h($g['name']) . ' <span class="muted">(' . h($g['kind']) . ', ' . (int)$g['n'] . ' Mitglieder)</span></li>';
 echo '</ul><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="group_add"><div class="addr"><label>Neue Teilgruppe<input name="name"></label><label>Art<select name="kind"><option value="region">Region</option><option value="interesse">Interesse</option><option value="projekt">Projekt</option></select></label></div><button>Anlegen</button></form></section>';
+
+// ---- Verein (Spendenbescheinigungen)
+$club = md_club();
+$cp = md_club_problems($club);
+echo '<section class="card" id="club"><h2>Verein (für Spendenbescheinigungen)</h2>';
+echo '<p class="muted">Diese Angaben stehen auf jeder Zuwendungsbestätigung und werden bei der Ausstellung festgehalten (spätere Änderungen betreffen nur neue Bestätigungen). Wortlaut und Pflichtangaben folgen dem amtlichen Muster; bitte einmal vom Steuerberater prüfen lassen. '
+    . 'Der Bescheid darf bei der Ausstellung nicht zu alt sein (Freistellung: 5 Jahre, Feststellung nach § 60a AO: 3 Jahre – nach meinem Kenntnisstand, bitte bestätigen lassen).</p>';
+if ($cp) { echo '<div class="flash warn"><ul>'; foreach ($cp as $x) echo '<li>' . h($x) . '</li>'; echo '</ul></div>'; } else echo '<div class="flash ok">Angaben vollständig, Bestätigungen können ausgestellt werden.</div>';
+echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="club"><div class="addr">';
+foreach (MD_CLUB_FIELDS as $k => [$label, $req, $hint]) {
+    if ($k === 'exemption_kind') {
+        echo '<label>' . h($label) . ' *<select name="club[exemption_kind]"><option value="feststellung"' . ($club[$k] === 'feststellung' ? ' selected' : '') . '>Feststellung nach § 60a AO</option><option value="freistellung"' . ($club[$k] === 'freistellung' ? ' selected' : '') . '>Freistellungsbescheid / Anlage zum KSt-Bescheid</option></select></label>';
+        continue;
+    }
+    echo '<label>' . h($label) . ($req ? ' *' : '') . '<input name="club[' . $k . ']" value="' . h($club[$k]) . '" placeholder="' . h($hint) . '"></label>';
+}
+echo '</div><button>Vereinsangaben speichern</button></form></section>';
 
 // ---- Allgemein
 echo '<section class="card" id="general"><h2>Allgemein</h2><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="general"><div class="addr">';

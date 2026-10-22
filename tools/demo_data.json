@@ -290,22 +290,27 @@
     ],
     "md_groups": [
         {
+            "group_id": 1,
             "name": "Regionalgruppe Nord",
             "kind": "region"
         },
         {
+            "group_id": 2,
             "name": "Regionalgruppe Süd",
             "kind": "region"
         },
         {
+            "group_id": 3,
             "name": "Schachgruppe",
             "kind": "interesse"
         },
         {
+            "group_id": 4,
             "name": "Wandergruppe",
             "kind": "interesse"
         },
         {
+            "group_id": 5,
             "name": "Projektgruppe Satzung",
             "kind": "projekt"
         }
@@ -660,7 +665,7 @@
             "slot": 1,
             "label": "Privat",
             "street": "Serverstraße 404",
-            "zip": "60311",
+            "zip": "",
             "city": "Frankfurt am Main",
             "country": "Deutschland"
         },
@@ -1859,6 +1864,58 @@
         },
         {
             "member_id": 1,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 15000,
+            "entry_date": "2025-03-10",
+            "due_date": null,
+            "paid_date": "2025-03-10",
+            "status": "paid",
+            "description": "Spende Frühjahrsaktion",
+            "reference": "SP202505",
+            "source": "demo"
+        },
+        {
+            "member_id": 1,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 10000,
+            "entry_date": "2025-11-25",
+            "due_date": null,
+            "paid_date": "2025-11-25",
+            "status": "paid",
+            "description": "Spende Jahresende",
+            "reference": "SP202506",
+            "source": "demo"
+        },
+        {
+            "member_id": 2,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 5000,
+            "entry_date": "2025-06-15",
+            "due_date": null,
+            "paid_date": "2025-06-15",
+            "status": "paid",
+            "description": "Spende Sommerfest",
+            "reference": "SP202507",
+            "source": "demo"
+        },
+        {
+            "member_id": 11,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 3000,
+            "entry_date": "2025-09-01",
+            "due_date": null,
+            "paid_date": "2025-09-01",
+            "status": "paid",
+            "description": "Spende Herbstmarkt (Anschrift unvollständig – Demo-Fall)",
+            "reference": "SP202508",
+            "source": "demo"
+        },
+        {
+            "member_id": 1,
             "kind": "erstattung",
             "direction": "to_member",
             "amount_cents": 5400,
@@ -2209,6 +2266,66 @@
         }
     ],
     "md_settings": [
+        {
+            "setting_key": "club.name",
+            "setting_value": "Musterverein e. V.",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.street",
+            "setting_value": "Vereinsstraße 1",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.zip",
+            "setting_value": "30159",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.city",
+            "setting_value": "Hannover",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.tax_office",
+            "setting_value": "Finanzamt Musterstadt",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.tax_number",
+            "setting_value": "12/345/67890",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.exemption_kind",
+            "setting_value": "feststellung",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.exemption_date",
+            "setting_value": "15.04.2025",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.exemption_period",
+            "setting_value": "",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.purposes",
+            "setting_value": "Förderung der Bildung und Erziehung (§ 52 Abs. 2 Nr. 7 AO)",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.place",
+            "setting_value": "Hannover",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
+        {
+            "setting_key": "club.signer",
+            "setting_value": "Max Mustermann, Finanzvorstand",
+            "description": "Angaben für Spendenbescheinigungen (Demo)"
+        },
         {
             "setting_key": "ueb_freibetrag_cents",
             "setting_value": "330000",

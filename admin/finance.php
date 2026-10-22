@@ -11,7 +11,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = $_POST['action'] ?? '';
     if ($act === 'add') {
         [$id, $err] = md_ledger_add($_POST, $aid);
-        md_flash($err ?: 'Buchung angelegt.', $err ? 'err' : 'ok');
+        $msg = $err ?: 'Buchung angelegt.';
+        // Option: Spendenquittung gleich ausstellen (nur bezahlte Spenden, Recht "Spendenbescheinigungen bearbeiten")
+        if ($id && !empty($_POST['issue_receipt']) && md_can($me, 'receipts', 'edit')) {
+            [$rid, $rerr] = md_receipt_issue((int)$_POST['member_id'], 'single', ['entry_id' => $id], $aid);
+            if ($rid) { md_flash('Buchung angelegt und Spendenquittung ausgestellt (Original-Ausdruck).'); header('Location: ' . md_url('admin/receipt_print.php?id=' . $rid)); exit; }
+            $msg .= ' Die Quittung konnte nicht ausgestellt werden: ' . $rerr;
+            $err = $err ?: $rerr;
+        }
+        md_flash($msg, $err ? 'err' : 'ok');
+    } elseif ($act === 'receipt') {
+        if (!md_can($me, 'receipts', 'edit')) { http_response_code(403); exit('Dafür fehlt die Berechtigung.'); }
+        [$rid, $rerr] = md_receipt_issue((int)($_POST['member_id'] ?? 0), 'single', ['entry_id' => (int)($_POST['entry_id'] ?? 0)], $aid);
+        if ($rid) { md_flash('Spendenquittung ausgestellt (Original-Ausdruck).'); header('Location: ' . md_url('admin/receipt_print.php?id=' . $rid)); exit; }
+        md_flash($rerr, 'err');
     } elseif ($act === 'paid') {
         $err = md_ledger_mark_paid((int)($_POST['entry_id'] ?? 0), $_POST['paid_date'] ?? '', $aid);
         md_flash($err ?: 'Zahlung vermerkt.', $err ? 'err' : 'ok');
@@ -34,7 +47,8 @@ if ($q !== '') { $where[] = "(s.first_name LIKE ? OR s.last_name LIKE ? OR s.mem
 if ($fkind) { $where[] = 'l.kind = ?'; $par[] = $fkind; }
 if ($fstatus) { $where[] = 'l.status = ?'; $par[] = $fstatus; }
 if ($fyear !== 'all') { $where[] = '(l.entry_date >= ? AND l.entry_date <= ?)'; array_push($par, "$fyear-01-01", "$fyear-12-31"); }
-$rows = md_q('SELECT l.*, s.first_name, s.last_name, s.membership_number FROM md_ledger l JOIN svmembers s ON s.member_id = l.member_id
+$rows = md_q('SELECT l.*, s.first_name, s.last_name, s.membership_number, rc.receipt_no, rc.status AS receipt_status FROM md_ledger l JOIN svmembers s ON s.member_id = l.member_id
+              LEFT JOIN md_receipts rc ON rc.receipt_id = l.receipt_id
               WHERE ' . implode(' AND ', $where) . ' ORDER BY l.entry_date DESC, l.entry_id DESC LIMIT 1000', $par);
 
 // ---- CSV-Export der aktuellen Auswahl
@@ -82,7 +96,9 @@ if ($edit) {
     foreach (MD_LEDGER_KINDS as $k => [$l, $dir]) echo '<option value="' . $k . '">' . h($l . ($dir === 'to_club' ? ' (an Verein)' : ' (an Mitglied)')) . '</option>';
     echo '</select></label><label>Betrag in €<input name="amount" placeholder="z. B. 120,00" required></label><label>Buchungsdatum<input name="entry_date" value="' . date('d.m.Y') . '"></label>';
     echo '<label>Fällig am<input name="due_date" placeholder="optional"></label><label>Status<select name="status"><option value="open">offen</option><option value="paid">bezahlt</option></select></label><label>Bezahlt am<input name="paid_date" placeholder="bei „bezahlt“"></label><label>Beleg-/Rechnungsnr.<input name="reference"></label></div>';
-    echo '<label class="block">Beschreibung<input name="description" required></label><button>Buchen</button></form></details>';
+    echo '<label class="block">Beschreibung<input name="description" required></label>'
+        . (md_can($me, 'receipts', 'edit') ? '<label class="check"><input type="checkbox" name="issue_receipt" value="1"> Spendenquittung ausstellen (nur bei bezahlten Spenden; wird dokumentiert)</label> ' : '')
+        . '<button>Buchen</button></form></details>';
 }
 
 echo '<table><thead><tr><th>Datum</th><th>Mitglied</th><th>Art</th><th>Beschreibung</th><th class="r">Betrag</th><th>Status</th>' . ($edit ? '<th></th>' : '') . '</tr></thead><tbody>';
@@ -93,10 +109,11 @@ foreach ($rows as $r) {
     $overdue = !$cx && $r['status'] === 'open' && $out && $r['due_date'] && $r['due_date'] < date('Y-m-d');
     echo '<tr' . ($cx ? ' class="muted" style="text-decoration:line-through"' : '') . '><td>' . h(md_date($r['entry_date'])) . '</td><td><a href="index.php?member=' . (int)$r['member_id'] . '#finance">' . h($r['first_name'] . ' ' . $r['last_name']) . '</a></td>';
     echo '<td>' . h(MD_LEDGER_KINDS[$r['kind']][0] ?? $r['kind']) . '</td><td>' . h($r['description']) . ($r['reference'] ? ' <span class="muted">' . h($r['reference']) . '</span>' : '') . '</td>';
-    echo '<td class="r ' . ($out ? 'neg' : 'pos') . '">' . ($out ? '− ' : '+ ') . md_money((int)$r['amount_cents']) . '</td><td class="' . ($overdue ? 'bad' : '') . '">' . h($stat) . '</td>';
+    echo '<td class="r ' . ($out ? 'neg' : 'pos') . '">' . ($out ? '− ' : '+ ') . md_money((int)$r['amount_cents']) . '</td><td class="' . ($overdue ? 'bad' : '') . '">' . h($stat) . ($r['receipt_id'] ? '<br><a href="admin/receipt_print.php?id=' . (int)$r['receipt_id'] . '" target="_blank" title="Zuwendungsbestätigung">Quittung ' . h($r['receipt_no']) . '</a>' : '') . '</td>';
     if ($edit) {
         echo '<td class="act">';
         if ($r['status'] === 'open') echo '<form class="inline" method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="paid"><input type="hidden" name="entry_id" value="' . (int)$r['entry_id'] . '"><input name="paid_date" size="9" value="' . date('d.m.Y') . '" title="Zahldatum"> <button>bezahlt</button></form> ';
+        if ($r['kind'] === 'spende' && $r['status'] === 'paid' && !$r['receipt_id'] && md_can($me, 'receipts', 'edit')) echo '<form class="inline" method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="receipt"><input type="hidden" name="entry_id" value="' . (int)$r['entry_id'] . '"><input type="hidden" name="member_id" value="' . (int)$r['member_id'] . '"><button title="Zuwendungsbestätigung für diese Spende ausstellen">Quittung</button></form> ';
         if (!$cx) echo '<form class="inline" method="post" onsubmit="return this.reason.value.trim() !== \'\' || (alert(\'Bitte einen Grund angeben.\'), false)">' . md_csrf_field() . '<input type="hidden" name="action" value="cancel"><input type="hidden" name="entry_id" value="' . (int)$r['entry_id'] . '"><input name="reason" size="12" placeholder="Storno-Grund"> <button class="link">Storno</button></form>';
         echo '</td>';
     }
