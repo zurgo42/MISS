@@ -9,6 +9,7 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
         if (md_can($me, 'members', 'view')) $nav['admin'] = ['admin/index.php', 'Mitglieder'];
         if (md_can($me, 'finance', 'view')) $nav['finance'] = ['admin/finance.php', 'Finanzen'];
         if (md_can($me, 'fees', 'view')) { $nav['fees'] = ['admin/fees.php', 'Beiträge']; $nav['dunning'] = ['admin/dunning.php', 'Mahnwesen']; }
+        if (md_can($me, 'mail', 'view')) $nav['mail'] = ['admin/mail.php', 'E-Mail'];
         if (md_can($me, 'sepa', 'view')) $nav['sepa'] = ['admin/sepa.php', 'SEPA'];
         if (md_can($me, 'receipts', 'view')) $nav['receipts'] = ['admin/receipts.php', 'Spendenbescheinigungen'];
         if (md_can($me, 'privacy', 'view')) $nav['privacy'] = ['admin/privacy.php', 'Datenschutz'];
@@ -22,7 +23,7 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
     foreach ($nav as $k => [$url, $label]) echo '<a href="' . $url . '"' . ($k === $active ? ' class="on"' : '') . '>' . h($label) . '</a>';
     echo '</nav>';
     if ($me) {
-        echo '<span class="who">' . h($me['first_name'] . ' ' . $me['last_name']) . ' · <a href="logout.php">Abmelden</a></span>';
+        echo '<span class="who">' . h($me['first_name'] . ' ' . $me['last_name']) . ' · <a href="account.php">Mein Zugang</a> · <a href="logout.php">Abmelden</a></span>';
     }
     echo '</div></header><main class="wrap">';
     if (MD_DEMO_MODE) echo '<div class="demo">Demo-Modus mit erfundenen Daten.</div>';

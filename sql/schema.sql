@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS md_profiles (
     join_date DATE DEFAULT NULL,
     leave_date DATE DEFAULT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'aktiv',   -- interessent, aktiv, ruhend, ausgetreten, ehrenmitglied
+    letter_channel VARCHAR(10) NOT NULL DEFAULT 'post',   -- Zustellweg für Rechnungen und Mahnungen: post oder mail
     admin_note TEXT,                               -- nur Verwaltung, nie für Mitglieder sichtbar
     retention_hold INT NOT NULL DEFAULT 0,         -- 1 = Löschsperre (z. B. offene Forderung, laufendes Verfahren)
     hold_reason VARCHAR(255) DEFAULT NULL,
@@ -417,4 +418,39 @@ CREATE TABLE IF NOT EXISTS md_sepa_events (
     event_at DATETIME NOT NULL,
     event_by INT DEFAULT NULL,
     note VARCHAR(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- E-Mail-Ausgang (Warteschlange und Nachweis)
+CREATE TABLE IF NOT EXISTS md_mail_outbox (
+    mail_id INT PRIMARY KEY AUTO_INCREMENT,
+    member_id INT DEFAULT NULL,
+    to_email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    kind VARCHAR(12) NOT NULL DEFAULT 'other',     -- dunning, invoice, invite, reset, receipt, other
+    ref VARCHAR(40) DEFAULT NULL,                  -- z. B. Mahnschreiben- oder Rechnungsnummer
+    status VARCHAR(10) NOT NULL DEFAULT 'queued',  -- queued, sent, failed, cancelled
+    attempts INT NOT NULL DEFAULT 0,
+    last_error VARCHAR(255) DEFAULT NULL,
+    created_at DATETIME NOT NULL,
+    created_by INT DEFAULT NULL,
+    sent_at DATETIME DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Einmal-Links zum Passwort setzen (nur der Hash des Tokens wird gespeichert)
+CREATE TABLE IF NOT EXISTS md_login_tokens (
+    token_id INT PRIMARY KEY AUTO_INCREMENT,
+    member_id INT NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
+    kind VARCHAR(10) NOT NULL,                     -- invite, reset
+    created_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Fehlversuche bei der Anmeldung (Hash der Kennung, keine Klartext-Eingaben)
+CREATE TABLE IF NOT EXISTS md_login_attempts (
+    attempt_id INT PRIMARY KEY AUTO_INCREMENT,
+    ident_hash VARCHAR(64) NOT NULL,
+    attempt_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

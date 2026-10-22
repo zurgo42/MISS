@@ -93,3 +93,13 @@ function demo_seed_sepa(array $idmap = []): int
     echo "Demo-Lastschriftmandate: $n\n";
     return $n;
 }
+
+/** Demo: zwei Mitglieder wünschen Rechnungen und Mahnungen per E-Mail. */
+function demo_seed_mail(array $idmap = []): void
+{
+    foreach ([3, 11] as $n) {
+        $m = $idmap[$n] ?? $n;
+        if (md_one('SELECT 1 FROM md_profiles WHERE member_id = ?', [$m])) md_exec("UPDATE md_profiles SET letter_channel = 'mail' WHERE member_id = ?", [$m]);
+    }
+    if (!md_one("SELECT 1 FROM md_settings WHERE setting_key = 'mail.from_email'")) md_exec("INSERT INTO md_settings (setting_key, setting_value, description) VALUES ('mail.from_email', 'mitglieder@musterverein.example', 'Demo-Absender')");
+}

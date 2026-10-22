@@ -69,6 +69,12 @@ try {
             md_revoke_consent($mid, (int)($_POST['consent_id'] ?? 0), $aid);
             $msg = 'Zustimmung widerrufen.';
             break;
+        case 'invite':
+            if ($via !== 'admin' || !md_can($actor, 'mail', 'edit')) { http_response_code(403); exit('Nur für die Verwaltung.'); }
+            $ierr = md_login_send_link($mid, empty($target['password_hash']) ? 'invite' : 'reset', $aid);
+            $msg = $ierr ?: 'Der Link wurde per E-Mail gesendet.';
+            $kind = $ierr ? 'err' : 'ok';
+            break;
         case 'club':
         case 'group_add':
         case 'group_remove':

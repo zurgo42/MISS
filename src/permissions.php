@@ -16,6 +16,7 @@ const MD_AREAS = [
     'finance'   => ['Finanzen: Buchungen aller Mitglieder', ['none', 'view', 'edit']],
     'terms'     => ['Nutzungsbedingungen und Zustimmungen', ['none', 'view', 'edit']],
     'sepa'      => ['SEPA-Lastschrift: Mandate und Einzugsläufe', ['none', 'view', 'edit']],
+    'mail'      => ['E-Mail: Ausgang, Versand, Einladungen', ['none', 'view', 'edit']],
     'fees'      => ['Beiträge: Gruppen, Beitragslauf, Mahnwesen', ['none', 'view', 'edit']],
     'receipts'  => ['Spendenbescheinigungen', ['none', 'view', 'edit']],
     'privacy'   => ['Datenschutz: Auskunft, Anfragen, Löschfristen', ['none', 'view', 'edit']],
@@ -37,6 +38,7 @@ function md_default_permissions(): array
         ['Vo', 'receipts', 'view'], ['FVo', 'receipts', 'edit'], ['FVv', 'receipts', 'edit'], ['GF', 'receipts', 'view'], ['VA', 'receipts', 'view'], ['Ka', 'receipts', 'edit'], ['FP', 'receipts', 'view'],
         ['FVo', 'fees', 'edit'], ['FVv', 'fees', 'edit'], ['Ka', 'fees', 'edit'], ['GF', 'fees', 'view'], ['Vo', 'fees', 'view'], ['VA', 'fees', 'view'], ['FP', 'fees', 'view'],
         ['FVo', 'sepa', 'edit'], ['FVv', 'sepa', 'edit'], ['Ka', 'sepa', 'edit'], ['GF', 'sepa', 'view'], ['FP', 'sepa', 'view'],
+        ['GF', 'mail', 'edit'], ['FVo', 'mail', 'edit'], ['FVv', 'mail', 'edit'], ['Ka', 'mail', 'edit'], ['Vo', 'mail', 'view'],
         ['GF', 'privacy', 'edit'], ['Vo', 'privacy', 'view'], ['MB', 'privacy', 'view'], ['VA', 'privacy', 'view'],
         ['VA', 'members', 'view'], ['VA', 'finance', 'view'], ['VA', 'terms', 'view'],
         ['SV', 'members', 'edit'], ['SV', 'terms', 'view'],
@@ -56,7 +58,7 @@ function md_seed_permissions(): int
 {
     $seeded = array_filter(explode(',', md_setting('perm_areas_seeded', '')));
     $legacy = $seeded === [] && (int)md_one('SELECT COUNT(*) c FROM md_permissions')['c'] > 0;   // Tabelle aus Version ohne Merker
-    if ($legacy) $seeded = array_diff(array_keys(MD_AREAS), ['receipts', 'privacy', 'fees', 'sepa']);
+    if ($legacy) $seeded = array_diff(array_keys(MD_AREAS), ['receipts', 'privacy', 'fees', 'sepa', 'mail']);
     $n = 0;
     foreach (array_keys(MD_AREAS) as $area) {
         if (in_array($area, $seeded, true)) continue;

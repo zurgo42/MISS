@@ -34,7 +34,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($errs) md_flash(implode(' | ', $errs), 'err');
         if ($ids) { md_flash(count($ids) . ' Mahnschreiben ausgestellt; dies ist die Druckansicht.'); header('Location: ' . md_url('admin/dunning_print.php?ids=' . implode(',', $ids))); exit; }
         if (!$errs) $err = 'Kein Mitglied ausgewählt.';
-    } elseif ($act === 'void') {
+    } elseif ($act === 'mail_letter' || $act === 'mail_letters') {
+        $ids = $act === 'mail_letter' ? [(int)($_POST['letter_id'] ?? 0)] : array_map(fn($r) => (int)$r['letter_id'], md_q("SELECT letter_id, member_id FROM md_dunning_letters WHERE status = 'issued' ORDER BY letter_id DESC LIMIT 300"));
+        $n = 0;
+        $errs = [];
+        foreach ($ids as $lid) {
+            $mem = md_one('SELECT member_id FROM md_dunning_letters WHERE letter_id = ?', [$lid]);
+            if ($act === 'mail_letters' && (!$mem || md_letter_channel((int)$mem['member_id']) !== 'mail')) continue;
+            [$mid_, $e] = md_mail_queue_letter($lid, $aid);
+            if ($mid_) $n++; elseif ($act === 'mail_letter' || !str_contains($e, 'schon')) $errs[] = $e;
+        }
+        $ok = $n ? "$n Mahnschreiben zum Versand vorgemerkt. Prüfen und absenden unter E-Mail." : 'Nichts vorgemerkt.';
+        $err = $n ? '' : implode(' ', array_unique($errs));
+
         $err = md_dunning_void((int)($_POST['letter_id'] ?? 0), (string)($_POST['reason'] ?? ''), $aid);
         $ok = 'Mahnschreiben storniert; Mahnstufen und Gebühr sind zurückgesetzt.';
     } elseif ($act === 'defer') {
@@ -101,15 +113,22 @@ if ($def) {
 
 // ---- ausgestellte Schreiben
 $letters = md_q('SELECT d.*, s.first_name, s.last_name, u.first_name ufn, u.last_name uln FROM md_dunning_letters d JOIN svmembers s ON s.member_id = d.member_id LEFT JOIN svmembers u ON u.member_id = d.issued_by ORDER BY d.letter_id DESC LIMIT 100');
-echo '<section class="card" id="letters"><h2>Ausgestellte Mahnschreiben</h2><table><thead><tr><th>Nr.</th><th>Mitglied</th><th>Stufe</th><th class="r">Betrag</th><th>Frist</th><th>Ausgestellt</th><th>Status</th><th></th></tr></thead><tbody>';
+echo '<section class="card" id="letters"><h2>Ausgestellte Mahnschreiben</h2>' . ($edit ? '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="mail_letters"><button class="link">Alle Schreiben an Mitglieder mit Zustellweg E-Mail vormerken</button></form>' : '') . '<table><thead><tr><th>Nr.</th><th>Mitglied</th><th>Stufe</th><th class="r">Betrag</th><th>Frist</th><th>Ausgestellt</th><th>Status</th><th>E-Mail</th><th></th></tr></thead><tbody>';
+$mailCell = function (array $l) use ($edit): string {
+    $mo = md_one("SELECT status FROM md_mail_outbox WHERE kind = 'dunning' AND ref = ? AND status IN ('queued','sent') ORDER BY mail_id DESC LIMIT 1", [$l['letter_no']]);
+    if ($mo) return $mo['status'] === 'sent' ? 'versendet' : 'wartet';
+    $ch = md_letter_channel((int)$l['member_id']) === 'mail' ? 'E-Mail gewünscht' : 'Post';
+    if ($l['status'] !== 'issued' || !$edit || !md_mail_address_of((int)$l['member_id'])) return '<span class="muted">' . h($ch) . '</span>';
+    return '<span class="muted">' . h($ch) . '</span><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="mail_letter"><input type="hidden" name="letter_id" value="' . (int)$l['letter_id'] . '"><button class="link">per E-Mail senden</button></form>';
+};
 foreach ($letters as $l) {
     $void = $l['status'] === 'void';
     $s = json_decode($l['snapshot'], true);
-    echo '<tr' . ($void ? ' class="muted"' : '') . '><td><a href="admin/dunning_print.php?id=' . (int)$l['letter_id'] . '" target="_blank">' . h($l['letter_no']) . '</a></td><td>' . h($l['first_name'] . ' ' . $l['last_name']) . '</td><td>' . h($s['level_name'] ?? $l['level']) . '</td><td class="r">' . md_money((int)$l['total_cents']) . '</td><td>' . h(md_date($l['deadline'])) . '</td><td>' . h(date('d.m.Y', strtotime($l['issued_at']))) . '<br><span class="muted">' . h(trim($l['ufn'] . ' ' . $l['uln'])) . '</span></td><td>' . ($void ? 'storniert<br><span class="muted">' . h($l['void_reason']) . '</span>' : 'gültig') . '</td><td class="act">';
+    echo '<tr' . ($void ? ' class="muted"' : '') . '><td><a href="admin/dunning_print.php?id=' . (int)$l['letter_id'] . '" target="_blank">' . h($l['letter_no']) . '</a></td><td>' . h($l['first_name'] . ' ' . $l['last_name']) . '</td><td>' . h($s['level_name'] ?? $l['level']) . '</td><td class="r">' . md_money((int)$l['total_cents']) . '</td><td>' . h(md_date($l['deadline'])) . '</td><td>' . h(date('d.m.Y', strtotime($l['issued_at']))) . '<br><span class="muted">' . h(trim($l['ufn'] . ' ' . $l['uln'])) . '</span></td><td>' . ($void ? 'storniert<br><span class="muted">' . h($l['void_reason']) . '</span>' : 'gültig') . '</td><td>' . $mailCell($l) . '</td><td class="act">';
     if ($edit && !$void) echo '<form method="post" onsubmit="return this.reason.value.trim() !== \'\' || (alert(\'Bitte einen Grund angeben.\'), false)">' . md_csrf_field() . '<input type="hidden" name="action" value="void"><input type="hidden" name="letter_id" value="' . (int)$l['letter_id'] . '"><input name="reason" placeholder="Storno-Grund"><button class="link">stornieren</button></form>';
     echo '</td></tr>';
 }
-if (!$letters) echo '<tr><td colspan="8" class="muted">Noch keine Mahnschreiben.</td></tr>';
+if (!$letters) echo '<tr><td colspan="9" class="muted">Noch keine Mahnschreiben.</td></tr>';
 echo '</tbody></table></section>';
 
 // ---- Stufen

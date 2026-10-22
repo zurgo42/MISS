@@ -31,6 +31,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             md_log_change($aid, 'settings', "fees.$k: $old", $v, $aid, 'self');
         }
         $ok = 'Angaben für Rechnungen gespeichert.';
+    } elseif ($act === 'mail_run') {
+        $n = 0;
+        $errs = [];
+        foreach (md_q("SELECT entry_id, member_id FROM md_ledger WHERE run_id = ? AND status = 'open' AND direction = 'to_club'", [(int)($_POST['run_id'] ?? 0)]) as $e) {
+            if (md_letter_channel((int)$e['member_id']) !== 'mail') continue;
+            [$id, $er] = md_mail_queue_invoice((int)$e['entry_id'], $aid);
+            if ($id) $n++; elseif (!str_contains($er, 'schon')) $errs[] = $er;
+        }
+        $ok = $n ? "$n Rechnung(en) zum Versand vorgemerkt. Prüfen und absenden unter E-Mail." : 'Keine Rechnung vorgemerkt (kein Mitglied mit Zustellweg E-Mail, oder schon vorgemerkt).';
+        $err = $errs ? implode(' ', array_unique($errs)) : '';
     } elseif ($act === 'run') {
         $key = (string)($_POST['period'] ?? '');
         if (($_SESSION['md_fee_preview'] ?? '') !== $key) { $err = 'Bitte zuerst die Vorschau für genau diesen Zeitraum ansehen.'; }
@@ -134,7 +144,7 @@ $runs = md_q('SELECT r.*, s.first_name, s.last_name FROM md_fee_runs r LEFT JOIN
 echo '<section class="card" id="runs"><h2>Bisherige Beitragsläufe</h2><table><thead><tr><th>Zeitraum</th><th>Durchgeführt</th><th class="r">Rechnungen</th><th class="r">Summe</th><th>Zahlbar bis</th><th></th></tr></thead><tbody>';
 foreach ($runs as $r) {
     $pi = md_fee_period($r['period_key']);
-    echo '<tr><td>' . h($pi ? $pi['label'] : $r['period_key']) . '</td><td>' . h(date('d.m.Y H:i', strtotime($r['run_at']))) . '<br><span class="muted">' . h(trim($r['first_name'] . ' ' . $r['last_name'])) . ($r['note'] ? ' – ' . h($r['note']) : '') . '</span></td><td class="r">' . (int)$r['entries'] . '</td><td class="r">' . md_money((int)$r['total_cents']) . '</td><td>' . h(md_date($r['due_date'])) . '</td><td><a href="admin/invoice_print.php?run=' . (int)$r['run_id'] . '" target="_blank">Rechnungen drucken</a></td></tr>';
+    echo '<tr><td>' . h($pi ? $pi['label'] : $r['period_key']) . '</td><td>' . h(date('d.m.Y H:i', strtotime($r['run_at']))) . '<br><span class="muted">' . h(trim($r['first_name'] . ' ' . $r['last_name'])) . ($r['note'] ? ' – ' . h($r['note']) : '') . '</span></td><td class="r">' . (int)$r['entries'] . '</td><td class="r">' . md_money((int)$r['total_cents']) . '</td><td>' . h(md_date($r['due_date'])) . '</td><td><a href="admin/invoice_print.php?run=' . (int)$r['run_id'] . '" target="_blank">Rechnungen drucken</a>' . ($edit ? '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="mail_run"><input type="hidden" name="run_id" value="' . (int)$r['run_id'] . '"><button class="link" title="nur Mitglieder mit Zustellweg E-Mail">per E-Mail vormerken</button></form>' : '') . '</td></tr>';
 }
 if (!$runs) echo '<tr><td colspan="6" class="muted">Noch kein Beitragslauf.</td></tr>';
 echo '</tbody></table></section>';

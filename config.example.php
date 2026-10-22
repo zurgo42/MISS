@@ -18,7 +18,7 @@ define('MD_DEMO_MODE', true);
 
 // Produktiv: Mitglied kommt aus der Sitzung der Sitzungsverwaltung.
 define('MD_SESSION_KEY', 'member_id');
-define('MD_LOGIN_URL',   '/Sitzungsverwaltung/login.php');   // Anmeldeseite der Sitzungsverwaltung (gleiche Domain)
+define('MD_LOGIN_URL',   '');   // leer = eigene Anmeldung (login.php); sonst Adresse einer anderen Anmeldeseite
 
 // Basis-Pfad der Anwendung, z. B. '/Mitgliederverwaltung'. Wird automatisch erkannt; nur bei Problemen von Hand setzen:
 // define('MD_BASE_URL', '/Mitgliederverwaltung');
@@ -36,3 +36,10 @@ define('MD_STORAGE_DIR', __DIR__ . '/storage');
 
 // Vereinsname für Kopfzeile
 define('MD_CLUB_NAME', 'Musterverein e. V.');
+
+// E-Mail-Versand: 'log' (Demo: speichert .eml-Dateien in storage/mail), 'mail' (PHP mail()) oder 'smtp'
+define('MD_MAIL_TRANSPORT', 'log');
+// define('MD_SMTP_HOST', 'smtp.example.org'); define('MD_SMTP_PORT', 587); define('MD_SMTP_SECURE', 'tls'); // tls | ssl | none
+// define('MD_SMTP_USER', ''); define('MD_SMTP_PASS', '');
+// Öffentliche Adresse dieser Anwendung für Links in E-Mails (empfohlen, sonst wird der Host der Anfrage verwendet):
+// define('MD_PUBLIC_URL', 'https://verein.example.org/Mitgliederverwaltung');

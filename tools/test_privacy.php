@@ -20,7 +20,7 @@ $cnt = fn(string $t, int $m) => (int)md_one("SELECT COUNT(*) c FROM $t WHERE mem
 
 echo "-- Auskunft\n";
 $d = md_privacy_export_data($hans, $max);
-$check('Abschnitte vorhanden', array_keys($d), ['meta', 'stammdaten_sitzungsverwaltung', 'profil', 'adressen', 'kontakt', 'fotos', 'sichtbarkeit', 'teilgruppen', 'funktionen', 'lastschriftmandate', 'lastschriften', 'buchungen', 'spendenbescheinigungen',
+$check('Abschnitte vorhanden', array_keys($d), ['meta', 'stammdaten_sitzungsverwaltung', 'profil', 'adressen', 'kontakt', 'fotos', 'sichtbarkeit', 'teilgruppen', 'funktionen', 'lastschriftmandate', 'lastschriften', 'e_mails', 'buchungen', 'spendenbescheinigungen',
     'zustimmungen_nutzungsbedingungen', 'aenderungsprotokoll', 'datenschutz_anfragen', 'datenschutz_vorgaenge', 'informationen_art_15']);
 $check('keine Zugangsdaten im Export', array_filter(array_keys($d['stammdaten_sitzungsverwaltung']), fn($k) => preg_match('/hash|password|token/i', $k)), []);
 $check('Hans: 3 Adressen, Kontakte, Buchungen, Gruppen', [count($d['adressen']), count($d['kontakt']) >= 4, count($d['buchungen']) > 3, count($d['teilgruppen'])], [3, true, true, 2]);

@@ -8,7 +8,7 @@ function md_require_login(): array
     $id = $_SESSION[MD_DEMO_MODE ? 'md_member_id' : MD_SESSION_KEY] ?? null;
     $m = $id ? md_one('SELECT * FROM svmembers WHERE member_id = ?', [(int)$id]) : null;
     if (!$m) {
-        header('Location: ' . (MD_DEMO_MODE ? md_url('login.php') : MD_LOGIN_URL));
+        header('Location: ' . (MD_DEMO_MODE || !defined('MD_LOGIN_URL') || MD_LOGIN_URL === '' ? md_url('login.php') : MD_LOGIN_URL));
         exit;
     }
     return $m;

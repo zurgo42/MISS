@@ -25,6 +25,10 @@ if (!md_one("SHOW TABLES LIKE 'svmembers'")) exit("FEHLER: Tabelle svmembers feh
 $cols = md_sv_columns();
 foreach (['member_id', 'membership_number', 'first_name', 'last_name', 'email', 'role'] as $c) if (!in_array($c, $cols, true)) { $say("FEHLER: svmembers.$c fehlt."); $problems++; }
 foreach (['aktiv', 'funktion', 'is_admin', 'is_active'] as $c) if (!in_array($c, $cols, true)) $say("Hinweis: svmembers.$c fehlt – der Rechteabgleich bleibt ohne diese Spalte aus.");
+if (!in_array('password_hash', $cols, true)) {
+    if (MD_DEMO_MODE) { md_db()->exec('ALTER TABLE svmembers ADD COLUMN password_hash VARCHAR(255) DEFAULT NULL'); $say('Demo: svmembers.password_hash ergänzt.'); }
+    else { $say('FEHLER: svmembers.password_hash fehlt – ohne diese Spalte ist keine Anmeldung mit Passwort möglich.'); $problems++; }
+}
 $role = md_one("SHOW COLUMNS FROM svmembers LIKE 'role'");
 $say('svmembers.role: ' . ($role['Type'] ?? '?'));
 if (stripos($role['Type'] ?? '', 'enum') === 0 && stripos($role['Type'], "'Mitglied'") === false) { $say("FEHLER: ENUM von role enthält 'Mitglied' nicht – Import und Rechteabgleich würden scheitern."); $problems++; }

@@ -55,5 +55,6 @@ if (function_exists('md_seed_permissions')) { md_seed_permissions(); md_dunning_
 foreach ($data['md_settings'] as $st) if (!md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$st['setting_key']])) md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$st['setting_key'], $st['setting_value'], $st['description']]);
 demo_ensure_key($root);
 demo_seed_sepa($idmap);
+demo_seed_mail($idmap);
 demo_issue_receipts($idmap);
 echo "\nFertig. Demo-Anmeldung (MD_DEMO_MODE): " . md_url('login.php') . "\n";

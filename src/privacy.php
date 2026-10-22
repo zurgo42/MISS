@@ -85,6 +85,7 @@ function md_privacy_purge(int $member, int $actor, bool $early = false, ?string 
                  hobbies = NULL, interests = NULL, intro_text = NULL, wishes_text = NULL, admin_note = NULL, purged_at = ?, updated_at = ? WHERE member_id = ?', [md_now(), md_now(), $member]);
         // Lastschriftmandate beenden (die Unterlagen bleiben bis zur Anonymisierung wegen der Rückgabefristen)
         md_exec("UPDATE md_sepa_mandates SET status = 'revoked', status_reason = 'Austritt', status_at = ? WHERE member_id = ? AND status <> 'revoked'", [md_now(), $member]);
+        md_exec('DELETE FROM md_login_tokens WHERE member_id = ?', [$member]);
         // Zugang sperren und Kontaktadresse entfernen (die Zeile selbst bleibt für Buchungen und die Sitzungsverwaltung)
         $sets = ['email = ?'];
         $par = ['geloescht-' . $member . '@example.invalid'];
@@ -115,6 +116,7 @@ function md_privacy_anonymize(int $member, int $actor, ?string $note = null): st
     try {
         md_exec('DELETE FROM md_receipt_events WHERE receipt_id IN (SELECT receipt_id FROM md_receipts WHERE member_id = ?)', [$member]);
         md_exec('DELETE FROM md_sepa_items WHERE member_id = ?', [$member]);
+        md_exec('DELETE FROM md_mail_outbox WHERE member_id = ?', [$member]);
         foreach (['md_sepa_mandates', 'md_receipts', 'md_ledger', 'md_terms_consents', 'md_member_functions', 'md_privacy_requests', 'md_changelog'] as $t) md_exec("DELETE FROM $t WHERE member_id = ?", [$member]);
         md_exec("UPDATE md_profiles SET leave_date = NULL, join_date = NULL, retention_hold = 0, hold_reason = NULL, anonymized_at = ?, updated_at = ? WHERE member_id = ?", [md_now(), md_now(), $member]);
         $cols = md_sv_columns();
@@ -209,6 +211,8 @@ function md_privacy_export_data(int $member, int $by): array
             'unterschrieben' => $x['signed_on'], 'status' => $x['status'], 'grund' => $x['status_reason']], md_q('SELECT * FROM md_sepa_mandates WHERE member_id = ? ORDER BY mandate_id', [$member])),
         'lastschriften' => array_map(fn($x) => ['lauf' => $x['batch_no'], 'einzugsdatum' => $x['collection_date'], 'betrag_cent' => (int)$x['amount_cents'], 'verwendungszweck' => $x['purpose'], 'status' => $x['status'], 'rueckgabe' => $x['return_code']],
             md_q('SELECT i.*, b.batch_no, b.collection_date FROM md_sepa_items i JOIN md_sepa_batches b ON b.batch_id = i.batch_id WHERE i.member_id = ? ORDER BY i.item_id', [$member])),
+        'e_mails' => array_map(fn($x) => ['erstellt' => $x['created_at'], 'betreff' => $x['subject'], 'art' => MD_MAIL_KINDS[$x['kind']] ?? $x['kind'], 'status' => MD_MAIL_STATUS[$x['status']] ?? $x['status'], 'versendet' => $x['sent_at']],
+            md_q('SELECT * FROM md_mail_outbox WHERE member_id = ? ORDER BY mail_id', [$member])),
         'buchungen' => md_q('SELECT kind, direction, amount_cents, entry_date, due_date, paid_date, status, description, reference, cancel_reason FROM md_ledger WHERE member_id = ? ORDER BY entry_date, entry_id', [$member]),
         'spendenbescheinigungen' => array_map(fn($r) => ['nummer' => $r['receipt_no'], 'art' => $r['kind'], 'von' => $r['period_from'], 'bis' => $r['period_to'], 'betrag_cent' => (int)$r['total_cents'], 'status' => $r['status'],
             'ausgestellt' => $r['issued_at'], 'ungueltig_grund' => $r['void_reason'], 'inhalt_bei_ausstellung' => json_decode($r['snapshot'], true)], md_q('SELECT * FROM md_receipts WHERE member_id = ? ORDER BY receipt_no', [$member])),
@@ -234,7 +238,7 @@ function md_privacy_export_html(array $d): string
 {
     $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $titles = ['stammdaten_sitzungsverwaltung' => 'Stammdaten (Sitzungsverwaltung)', 'profil' => 'Profil', 'adressen' => 'Adressen', 'kontakt' => 'Kontakt und Social Media', 'fotos' => 'Fotos', 'sichtbarkeit' => 'Sichtbarkeit für andere Mitglieder',
-        'teilgruppen' => 'Teilgruppen', 'funktionen' => 'Funktionen', 'lastschriftmandate' => 'Lastschriftmandate', 'lastschriften' => 'Lastschriften', 'buchungen' => 'Buchungen', 'spendenbescheinigungen' => 'Spendenbescheinigungen', 'zustimmungen_nutzungsbedingungen' => 'Zustimmungen zu den Nutzungsbedingungen',
+        'teilgruppen' => 'Teilgruppen', 'funktionen' => 'Funktionen', 'lastschriftmandate' => 'Lastschriftmandate', 'lastschriften' => 'Lastschriften', 'e_mails' => 'E-Mails', 'buchungen' => 'Buchungen', 'spendenbescheinigungen' => 'Spendenbescheinigungen', 'zustimmungen_nutzungsbedingungen' => 'Zustimmungen zu den Nutzungsbedingungen',
         'aenderungsprotokoll' => 'Änderungsprotokoll', 'datenschutz_anfragen' => 'Datenschutz-Anfragen', 'datenschutz_vorgaenge' => 'Datenschutz-Vorgänge', 'informationen_art_15' => 'Informationen nach Art. 15 DSGVO'];
     $cell = function ($v) use ($h, &$cell) {
         if (is_array($v)) return '<pre>' . $h(json_encode($v, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . '</pre>';

@@ -213,6 +213,15 @@ if ($canClub) {
 }
 echo '</section>';
 
+// ---- Zugang (Verwaltung): Einladung und Passwort-Link
+if ($staff && $canClub && md_can($actor, 'mail', 'edit')) {
+    $has = !empty($target['password_hash']);
+    $chn = md_one('SELECT letter_channel FROM md_profiles WHERE member_id = ?', [$mid])['letter_channel'] ?? 'post';
+    echo '<section class="card" id="access"><h2>Zugang</h2><p>Passwort: <strong>' . ($has ? 'gesetzt' : 'noch nicht gesetzt') . '</strong> · E-Mail: ' . (md_mail_address_of($mid) ? h($target['email']) : '<span class="bad">keine gültige Adresse</span>') . ' · Rechnungen und Mahnungen: ' . ($chn === 'mail' ? 'per E-Mail' : 'per Post') . '</p>';
+    if (md_mail_address_of($mid)) echo '<form method="post" action="save.php">' . $form('invite', 'access') . '<button>' . ($has ? 'Link zum Zurücksetzen senden' : 'Einladung senden') . '</button> <span class="muted">Das Mitglied legt das Passwort selbst fest; die Verwaltung sieht es nie.</span></form>';
+    echo '</section>';
+}
+
 // ---- Finanzen
 if ($showFinance) {
 echo '<section class="card" id="finance"><h2>' . ($staff ? 'Finanzen ' : 'Meine Finanzen ') . $year . '</h2><div class="kpis">';
