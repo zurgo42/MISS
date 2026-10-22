@@ -1,0 +1,8 @@
+# Zugangsdaten und lokale Konfiguration
+config.php
+*.local.php
+.env
+
+# Laufzeitdaten (Fotos, Importdateien, Demo-Datenbank)
+storage/*
+!storage/.gitkeep

@@ -1,0 +1,2044 @@
+{
+    "generator": "tools/demo_build.php",
+    "anchor_date": "2026-10-22",
+    "svmembers": [
+        {
+            "member_id": 1,
+            "membership_number": "DEMO0001",
+            "first_name": "Max",
+            "last_name": "Mustermann",
+            "email": "max@example.com",
+            "role": "vorstand",
+            "aktiv": 19,
+            "funktion": "FVo",
+            "is_admin": 1,
+            "is_active": 1
+        },
+        {
+            "member_id": 2,
+            "membership_number": "DEMO0002",
+            "first_name": "Erika",
+            "last_name": "Musterfrau",
+            "email": "erika@example.com",
+            "role": "vorstand",
+            "aktiv": 19,
+            "funktion": "FVv",
+            "is_admin": 0,
+            "is_active": 1
+        },
+        {
+            "member_id": 3,
+            "membership_number": "DEMO0003",
+            "first_name": "Lukas",
+            "last_name": "Beispiel",
+            "email": "lukas@example.com",
+            "role": "vorstand",
+            "aktiv": 19,
+            "funktion": "Vo",
+            "is_admin": 0,
+            "is_active": 1
+        },
+        {
+            "member_id": 4,
+            "membership_number": "DEMO0004",
+            "first_name": "Julia",
+            "last_name": "Sommer",
+            "email": "julia@example.com",
+            "role": "gf",
+            "aktiv": 18,
+            "funktion": "GF",
+            "is_admin": 1,
+            "is_active": 1
+        },
+        {
+            "member_id": 5,
+            "membership_number": "DEMO0005",
+            "first_name": "Thomas",
+            "last_name": "Winter",
+            "email": "thomas@example.com",
+            "role": "assistenz",
+            "aktiv": 17,
+            "funktion": "VA",
+            "is_admin": 1,
+            "is_active": 1
+        },
+        {
+            "member_id": 6,
+            "membership_number": "DEMO0006",
+            "first_name": "Sabine",
+            "last_name": "Herbst",
+            "email": "sabine@example.com",
+            "role": "assistenz",
+            "aktiv": 11,
+            "funktion": "SV",
+            "is_admin": 1,
+            "is_active": 1
+        },
+        {
+            "member_id": 7,
+            "membership_number": "DEMO0007",
+            "first_name": "Hans",
+            "last_name": "Lehmann",
+            "email": "hans@example.com",
+            "role": "fuehrungsteam",
+            "aktiv": 17,
+            "funktion": "RL",
+            "is_admin": 0,
+            "is_active": 1
+        },
+        {
+            "member_id": 8,
+            "membership_number": "DEMO0008",
+            "first_name": "Anna",
+            "last_name": "Frühling",
+            "email": "anna@example.com",
+            "role": "fuehrungsteam",
+            "aktiv": 15,
+            "funktion": "RL",
+            "is_admin": 0,
+            "is_active": 1
+        },
+        {
+            "member_id": 9,
+            "membership_number": "DEMO0009",
+            "first_name": "Petra",
+            "last_name": "Nord",
+            "email": "petra@example.com",
+            "role": "fuehrungsteam",
+            "aktiv": 14,
+            "funktion": "RL",
+            "is_admin": 0,
+            "is_active": 1
+        },
+        {
+            "member_id": 10,
+            "membership_number": "DEMO0010",
+            "first_name": "Karl",
+            "last_name": "Prüfer",
+            "email": "karl@example.com",
+            "role": "mitglied",
+            "aktiv": 3,
+            "funktion": "FP",
+            "is_admin": 0,
+            "is_active": 1
+        },
+        {
+            "member_id": 11,
+            "membership_number": "DEMO0011",
+            "first_name": "Mia",
+            "last_name": "Technik",
+            "email": "mia@example.com",
+            "role": "mitglied",
+            "aktiv": 10,
+            "funktion": "AD",
+            "is_admin": 1,
+            "is_active": 1
+        },
+        {
+            "member_id": 12,
+            "membership_number": "DEMO0012",
+            "first_name": "Rolf",
+            "last_name": "Ehemals",
+            "email": "rolf@example.com",
+            "role": "mitglied",
+            "aktiv": 0,
+            "funktion": "Vx",
+            "is_admin": 0,
+            "is_active": 0
+        }
+    ],
+    "md_functions": [
+        {
+            "code": "Vo",
+            "name": "Vorstandsmitglied",
+            "sv_aktiv_level": 19
+        },
+        {
+            "code": "FVo",
+            "name": "Vorstand Finanzen",
+            "sv_aktiv_level": 19
+        },
+        {
+            "code": "FVv",
+            "name": "Vorstand + Vertretung Finanzvorstand",
+            "sv_aktiv_level": 19
+        },
+        {
+            "code": "GF",
+            "name": "Geschäftsführung",
+            "sv_aktiv_level": 18
+        },
+        {
+            "code": "VA",
+            "name": "Vorstandsassistenz",
+            "sv_aktiv_level": 18
+        },
+        {
+            "code": "SV",
+            "name": "Sekretariat Vorstand",
+            "sv_aktiv_level": 11
+        },
+        {
+            "code": "RL",
+            "name": "Ressortleitung",
+            "sv_aktiv_level": 15
+        },
+        {
+            "code": "PL",
+            "name": "Projektleitung",
+            "sv_aktiv_level": 12
+        },
+        {
+            "code": "MB",
+            "name": "Mitgliederbetreuung",
+            "sv_aktiv_level": 9
+        },
+        {
+            "code": "Ka",
+            "name": "Kassenführung",
+            "sv_aktiv_level": 9
+        },
+        {
+            "code": "FP",
+            "name": "Finanzprüfung",
+            "sv_aktiv_level": 3
+        },
+        {
+            "code": "AD",
+            "name": "Technischer Admin",
+            "sv_aktiv_level": 18
+        },
+        {
+            "code": "Vx",
+            "name": "Ehemaliges Vorstandsmitglied",
+            "sv_aktiv_level": 0
+        }
+    ],
+    "md_groups": [
+        {
+            "name": "Regionalgruppe Nord",
+            "kind": "region"
+        },
+        {
+            "name": "Regionalgruppe Süd",
+            "kind": "region"
+        },
+        {
+            "name": "Schachgruppe",
+            "kind": "interesse"
+        },
+        {
+            "name": "Wandergruppe",
+            "kind": "interesse"
+        },
+        {
+            "name": "Projektgruppe Satzung",
+            "kind": "projekt"
+        }
+    ],
+    "md_profiles": [
+        {
+            "member_id": 1,
+            "salutation": "Herr",
+            "title": "Dr.",
+            "nickname": null,
+            "birthdate": "1968-03-14",
+            "occupation": "Steuerberater",
+            "employer": "Kanzlei Mustermann & Partner",
+            "relationship_status": "verheiratet",
+            "hobbies": "Segeln\nSchach",
+            "interests": "Vereinsfinanzen, Datenschutz, Genossenschaftsrecht",
+            "intro_text": "Seit der Gründung dabei und für die Finanzen zuständig. Ich mag klare Zahlen und kurze Sitzungen.",
+            "wishes_text": "Mehr digitale Abläufe und weniger Papier bei der Beitragsverwaltung.",
+            "join_date": "2009-04-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 2,
+            "salutation": "Frau",
+            "title": null,
+            "nickname": "Eri",
+            "birthdate": "1971-09-02",
+            "occupation": "Schulleiterin",
+            "employer": "Gesamtschule Lindenau",
+            "relationship_status": "verheiratet",
+            "hobbies": "Gärtnern\nLesen",
+            "interests": "Bildung, Nachwuchsarbeit",
+            "intro_text": "Ich vertrete den Verein gern nach außen und kümmere mich um die Jugendarbeit.",
+            "wishes_text": "Eine feste Anlaufstelle für neue Mitglieder in den ersten Monaten.",
+            "join_date": "2010-01-15",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 3,
+            "salutation": "Herr",
+            "title": null,
+            "nickname": null,
+            "birthdate": "1980-11-23",
+            "occupation": "Softwareentwickler",
+            "employer": "Beispiel Systems GmbH",
+            "relationship_status": "in Beziehung",
+            "hobbies": "Radfahren\nFotografie",
+            "interests": "Open Source, Vereinsorganisation",
+            "intro_text": "Technikfreund mit Hang zu gut dokumentierten Prozessen.",
+            "wishes_text": "Ein Mitgliederbereich, der auch auf dem Handy gut funktioniert.",
+            "join_date": "2014-06-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": "Hat Neufassung der Bedingungen noch nicht bestätigt."
+        },
+        {
+            "member_id": 4,
+            "salutation": "Frau",
+            "title": null,
+            "nickname": null,
+            "birthdate": "1976-05-30",
+            "occupation": "Betriebswirtin",
+            "employer": "Verein (hauptamtlich)",
+            "relationship_status": "ledig",
+            "hobbies": "Wandern\nKochen",
+            "interests": "Organisation, Veranstaltungen",
+            "intro_text": "Ich halte die Fäden in der Geschäftsstelle zusammen und plane die Jahrestagung.",
+            "wishes_text": "Verlässliche Fristen und eine gemeinsame Terminübersicht.",
+            "join_date": "2016-03-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 5,
+            "salutation": "Herr",
+            "title": null,
+            "nickname": "Tom",
+            "birthdate": "1985-02-08",
+            "occupation": "Verwaltungsfachangestellter",
+            "employer": "Stadtverwaltung Nordstadt",
+            "relationship_status": "verheiratet",
+            "hobbies": "Modellbau\nBrettspiele",
+            "interests": "Satzungsfragen, Protokolle",
+            "intro_text": "Ich unterstütze den Vorstand bei Protokollen und Anträgen.",
+            "wishes_text": "Klarere Zuständigkeiten, wer welche Anträge bearbeitet.",
+            "join_date": "2017-09-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 6,
+            "salutation": "Frau",
+            "title": null,
+            "nickname": null,
+            "birthdate": "1990-07-19",
+            "occupation": "Sekretärin",
+            "employer": "Autohaus Herbst",
+            "relationship_status": "in Beziehung",
+            "hobbies": "Yoga\nBacken",
+            "interests": "Kommunikation, Mitgliederbetreuung",
+            "intro_text": "Erste Ansprechpartnerin im Sekretariat.",
+            "wishes_text": "Einen Newsletter, der wirklich gelesen wird.",
+            "join_date": "2019-02-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 7,
+            "salutation": "Herr",
+            "title": "Prof.",
+            "nickname": null,
+            "birthdate": "1964-12-01",
+            "occupation": "Hochschullehrer",
+            "employer": "Universität Lehmstadt",
+            "relationship_status": "verheiratet",
+            "hobbies": "Wandern\nKlavier",
+            "interests": "Wissenschaft, Weiterbildung",
+            "intro_text": "Ich leite die Kurse im Ressort Bildung und halte gern Vorträge.",
+            "wishes_text": "Mehr Kooperation zwischen den Regionalgruppen.",
+            "join_date": "2011-10-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 8,
+            "salutation": "Frau",
+            "title": null,
+            "nickname": null,
+            "birthdate": "1983-04-17",
+            "occupation": "Physiotherapeutin",
+            "employer": "Praxis am Markt",
+            "relationship_status": "verheiratet",
+            "hobbies": "Laufen\nSchwimmen",
+            "interests": "Gesundheit, Sport",
+            "intro_text": "Ich leite die Bewegungsangebote des Vereins.",
+            "wishes_text": "Hallenzeiten, die sich besser planen lassen.",
+            "join_date": "2015-05-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 9,
+            "salutation": "Frau",
+            "title": null,
+            "nickname": "Pe",
+            "birthdate": "1992-08-25",
+            "occupation": "Journalistin",
+            "employer": "freiberuflich",
+            "relationship_status": "ledig",
+            "hobbies": "Reisen\nSchach",
+            "interests": "Öffentlichkeitsarbeit, Social Media",
+            "intro_text": "Presse und Social Media – wer etwas posten will, meldet sich bei mir.",
+            "wishes_text": "Mehr Beteiligung der jüngeren Mitglieder.",
+            "join_date": "2020-01-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 10,
+            "salutation": "Herr",
+            "title": null,
+            "nickname": null,
+            "birthdate": "1958-06-11",
+            "occupation": "Wirtschaftsprüfer i. R.",
+            "employer": null,
+            "relationship_status": "verwitwet",
+            "hobbies": "Garten\nBriefmarken",
+            "interests": "Prüfung, Rechnungswesen",
+            "intro_text": "Ich prüfe die Kasse und habe dafür einen Blick für Belege.",
+            "wishes_text": "Nachvollziehbare Belegablage.",
+            "join_date": "2012-03-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": null
+        },
+        {
+            "member_id": 11,
+            "salutation": "Divers",
+            "title": null,
+            "nickname": null,
+            "birthdate": "1995-01-29",
+            "occupation": "IT-Administrator*in",
+            "employer": "Rechenzentrum Süd",
+            "relationship_status": "keine Angabe",
+            "hobbies": "Gaming\nLöten",
+            "interests": "Server, Sicherheit",
+            "intro_text": "Ich halte die Technik des Vereins am Laufen.",
+            "wishes_text": "Zwei-Faktor-Anmeldung für alle.",
+            "join_date": "2022-04-01",
+            "status": "aktiv",
+            "leave_date": null,
+            "admin_note": "Bitte E-Mail-Adresse vor dem nächsten Rundbrief prüfen."
+        },
+        {
+            "member_id": 12,
+            "salutation": "Herr",
+            "title": null,
+            "nickname": null,
+            "birthdate": "1960-10-05",
+            "occupation": "Rentner",
+            "employer": null,
+            "relationship_status": "geschieden",
+            "hobbies": "Angeln",
+            "interests": "Vereinsgeschichte",
+            "intro_text": "Früher im Vorstand, inzwischen ausgetreten.",
+            "wishes_text": null,
+            "join_date": "2008-05-01",
+            "status": "ausgetreten",
+            "leave_date": "2025-12-31",
+            "admin_note": null
+        }
+    ],
+    "md_addresses": [
+        {
+            "member_id": 1,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Gartenweg 4",
+            "zip": "30159",
+            "city": "Hannover",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 1,
+            "slot": 2,
+            "label": "Dienstlich",
+            "street": "Marktstraße 12",
+            "zip": "30159",
+            "city": "Hannover",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 2,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Lindenallee 17",
+            "zip": "28195",
+            "city": "Bremen",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 3,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Am Mühlbach 3",
+            "zip": "50667",
+            "city": "Köln",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 3,
+            "slot": 2,
+            "label": "Zweitwohnsitz",
+            "street": "Dünenstraße 8",
+            "zip": "26579",
+            "city": "Baltrum",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 4,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Hafenstraße 21",
+            "zip": "20457",
+            "city": "Hamburg",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 5,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Birkenweg 9",
+            "zip": "24103",
+            "city": "Kiel",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 6,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Rosenstraße 5",
+            "zip": "80331",
+            "city": "München",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 7,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Professorenpfad 2",
+            "zip": "37073",
+            "city": "Göttingen",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 7,
+            "slot": 2,
+            "label": "Dienstlich",
+            "street": "Universitätsplatz 1",
+            "zip": "37073",
+            "city": "Göttingen",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 7,
+            "slot": 3,
+            "label": "Ferienhaus",
+            "street": "Seeblick 14",
+            "zip": "17255",
+            "city": "Wesenberg",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 8,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Sonnenhang 6",
+            "zip": "79098",
+            "city": "Freiburg",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 9,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Nordstraße 31",
+            "zip": "10115",
+            "city": "Berlin",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 10,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Eichenhof 1",
+            "zip": "70173",
+            "city": "Stuttgart",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 11,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Serverstraße 404",
+            "zip": "60311",
+            "city": "Frankfurt am Main",
+            "country": "Deutschland"
+        },
+        {
+            "member_id": 12,
+            "slot": 1,
+            "label": "Privat",
+            "street": "Anglerweg 7",
+            "zip": "23552",
+            "city": "Lübeck",
+            "country": "Deutschland"
+        }
+    ],
+    "md_contacts": [
+        {
+            "member_id": 1,
+            "kind": "email",
+            "value": "max.privat@example.com"
+        },
+        {
+            "member_id": 1,
+            "kind": "phone",
+            "value": "0511 5550101"
+        },
+        {
+            "member_id": 1,
+            "kind": "mobile",
+            "value": "0170 5550101"
+        },
+        {
+            "member_id": 1,
+            "kind": "website",
+            "value": "https://mustermann-steuern.example.com"
+        },
+        {
+            "member_id": 1,
+            "kind": "linkedin",
+            "value": "linkedin.com/in/max-mustermann-demo"
+        },
+        {
+            "member_id": 2,
+            "kind": "email",
+            "value": "erika.privat@example.com"
+        },
+        {
+            "member_id": 2,
+            "kind": "mobile",
+            "value": "0171 5550102"
+        },
+        {
+            "member_id": 2,
+            "kind": "instagram",
+            "value": "@erika.musterfrau"
+        },
+        {
+            "member_id": 3,
+            "kind": "email",
+            "value": "lukas.privat@example.com"
+        },
+        {
+            "member_id": 3,
+            "kind": "mobile",
+            "value": "0172 5550103"
+        },
+        {
+            "member_id": 3,
+            "kind": "mastodon",
+            "value": "@lukas@social.example.com"
+        },
+        {
+            "member_id": 3,
+            "kind": "website",
+            "value": "https://lukas-beispiel.example.com"
+        },
+        {
+            "member_id": 4,
+            "kind": "email",
+            "value": "julia.sommer@example.com"
+        },
+        {
+            "member_id": 4,
+            "kind": "phone",
+            "value": "040 5550104"
+        },
+        {
+            "member_id": 4,
+            "kind": "mobile",
+            "value": "0173 5550104"
+        },
+        {
+            "member_id": 4,
+            "kind": "xing",
+            "value": "xing.com/profile/Julia_Sommer_demo"
+        },
+        {
+            "member_id": 5,
+            "kind": "email",
+            "value": "thomas.winter@example.com"
+        },
+        {
+            "member_id": 5,
+            "kind": "mobile",
+            "value": "0174 5550105"
+        },
+        {
+            "member_id": 6,
+            "kind": "email",
+            "value": "sabine.herbst@example.com"
+        },
+        {
+            "member_id": 6,
+            "kind": "phone",
+            "value": "089 5550106"
+        },
+        {
+            "member_id": 6,
+            "kind": "instagram",
+            "value": "@sabine.backt"
+        },
+        {
+            "member_id": 6,
+            "kind": "whatsapp",
+            "value": "0175 5550106"
+        },
+        {
+            "member_id": 7,
+            "kind": "email",
+            "value": "hans.lehmann@example.com"
+        },
+        {
+            "member_id": 7,
+            "kind": "phone",
+            "value": "0551 5550107"
+        },
+        {
+            "member_id": 7,
+            "kind": "fax",
+            "value": "0551 5550199"
+        },
+        {
+            "member_id": 7,
+            "kind": "website",
+            "value": "https://lehmann-uni.example.com"
+        },
+        {
+            "member_id": 7,
+            "kind": "youtube",
+            "value": "youtube.com/@lehmann-vortraege-demo"
+        },
+        {
+            "member_id": 8,
+            "kind": "email",
+            "value": "anna.fruehling@example.com"
+        },
+        {
+            "member_id": 8,
+            "kind": "mobile",
+            "value": "0176 5550108"
+        },
+        {
+            "member_id": 8,
+            "kind": "facebook",
+            "value": "facebook.com/anna.fruehling.demo"
+        },
+        {
+            "member_id": 9,
+            "kind": "email",
+            "value": "petra.nord@example.com"
+        },
+        {
+            "member_id": 9,
+            "kind": "mobile",
+            "value": "0177 5550109"
+        },
+        {
+            "member_id": 9,
+            "kind": "instagram",
+            "value": "@petra.nord"
+        },
+        {
+            "member_id": 9,
+            "kind": "x",
+            "value": "@petranord"
+        },
+        {
+            "member_id": 9,
+            "kind": "tiktok",
+            "value": "@petra.reist"
+        },
+        {
+            "member_id": 9,
+            "kind": "telegram",
+            "value": "@petranord"
+        },
+        {
+            "member_id": 10,
+            "kind": "email",
+            "value": "karl.pruefer@example.com"
+        },
+        {
+            "member_id": 10,
+            "kind": "phone",
+            "value": "0711 5550110"
+        },
+        {
+            "member_id": 11,
+            "kind": "phone",
+            "value": "069 5550111"
+        },
+        {
+            "member_id": 11,
+            "kind": "mastodon",
+            "value": "@mia@chaos.example.com"
+        },
+        {
+            "member_id": 12,
+            "kind": "email",
+            "value": "rolf.ehemals@example.com"
+        },
+        {
+            "member_id": 12,
+            "kind": "phone",
+            "value": "0451 5550112"
+        }
+    ],
+    "md_visibility": [
+        {
+            "member_id": 1,
+            "field_key": "birthdate",
+            "level": "admin"
+        },
+        {
+            "member_id": 1,
+            "field_key": "address.2",
+            "level": "all"
+        },
+        {
+            "member_id": 1,
+            "field_key": "contact.linkedin",
+            "level": "all"
+        },
+        {
+            "member_id": 1,
+            "field_key": "contact.website",
+            "level": "all"
+        },
+        {
+            "member_id": 2,
+            "field_key": "birthdate",
+            "level": "group"
+        },
+        {
+            "member_id": 2,
+            "field_key": "contact.instagram",
+            "level": "all"
+        },
+        {
+            "member_id": 2,
+            "field_key": "photo.2",
+            "level": "me"
+        },
+        {
+            "member_id": 3,
+            "field_key": "contact.mastodon",
+            "level": "all"
+        },
+        {
+            "member_id": 3,
+            "field_key": "contact.website",
+            "level": "all"
+        },
+        {
+            "member_id": 3,
+            "field_key": "address.2",
+            "level": "group"
+        },
+        {
+            "member_id": 3,
+            "field_key": "relationship_status",
+            "level": "me"
+        },
+        {
+            "member_id": 4,
+            "field_key": "contact.phone",
+            "level": "all"
+        },
+        {
+            "member_id": 4,
+            "field_key": "contact.mobile",
+            "level": "all"
+        },
+        {
+            "member_id": 4,
+            "field_key": "address.1",
+            "level": "me"
+        },
+        {
+            "member_id": 4,
+            "field_key": "birthdate",
+            "level": "all"
+        },
+        {
+            "member_id": 5,
+            "field_key": "address.1",
+            "level": "me"
+        },
+        {
+            "member_id": 5,
+            "field_key": "contact.mobile",
+            "level": "group"
+        },
+        {
+            "member_id": 6,
+            "field_key": "contact.instagram",
+            "level": "all"
+        },
+        {
+            "member_id": 6,
+            "field_key": "contact.email",
+            "level": "all"
+        },
+        {
+            "member_id": 7,
+            "field_key": "address.2",
+            "level": "all"
+        },
+        {
+            "member_id": 7,
+            "field_key": "contact.website",
+            "level": "all"
+        },
+        {
+            "member_id": 7,
+            "field_key": "contact.youtube",
+            "level": "all"
+        },
+        {
+            "member_id": 7,
+            "field_key": "wishes_text",
+            "level": "all"
+        },
+        {
+            "member_id": 8,
+            "field_key": "contact.facebook",
+            "level": "group"
+        },
+        {
+            "member_id": 8,
+            "field_key": "birthdate",
+            "level": "group"
+        },
+        {
+            "member_id": 9,
+            "field_key": "contact.instagram",
+            "level": "all"
+        },
+        {
+            "member_id": 9,
+            "field_key": "contact.x",
+            "level": "all"
+        },
+        {
+            "member_id": 9,
+            "field_key": "contact.tiktok",
+            "level": "all"
+        },
+        {
+            "member_id": 9,
+            "field_key": "contact.email",
+            "level": "all"
+        },
+        {
+            "member_id": 9,
+            "field_key": "wishes_text",
+            "level": "all"
+        },
+        {
+            "member_id": 10,
+            "field_key": "address.1",
+            "level": "me"
+        },
+        {
+            "member_id": 10,
+            "field_key": "contact.phone",
+            "level": "me"
+        },
+        {
+            "member_id": 11,
+            "field_key": "contact.mastodon",
+            "level": "all"
+        },
+        {
+            "member_id": 11,
+            "field_key": "address.1",
+            "level": "me"
+        }
+    ],
+    "md_member_groups": [
+        {
+            "member_id": 1,
+            "group_id": 1,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 1,
+            "group_id": 3,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 2,
+            "group_id": 1,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 3,
+            "group_id": 2,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 3,
+            "group_id": 5,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 4,
+            "group_id": 1,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 5,
+            "group_id": 1,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 5,
+            "group_id": 5,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 6,
+            "group_id": 2,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 7,
+            "group_id": 4,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 7,
+            "group_id": 2,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 8,
+            "group_id": 2,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 8,
+            "group_id": 4,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 9,
+            "group_id": 1,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 9,
+            "group_id": 3,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 10,
+            "group_id": 2,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 11,
+            "group_id": 2,
+            "since": "2023-01-01",
+            "until": null
+        },
+        {
+            "member_id": 11,
+            "group_id": 5,
+            "since": "2023-01-01",
+            "until": null
+        }
+    ],
+    "md_member_functions": [
+        {
+            "member_id": 1,
+            "function_id": 2,
+            "valid_from": "2019-05-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 2,
+            "function_id": 3,
+            "valid_from": "2020-05-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 3,
+            "function_id": 1,
+            "valid_from": "2022-05-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 4,
+            "function_id": 4,
+            "valid_from": "2016-03-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 5,
+            "function_id": 5,
+            "valid_from": "2017-09-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 6,
+            "function_id": 6,
+            "valid_from": "2019-02-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 7,
+            "function_id": 7,
+            "valid_from": "2014-10-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 8,
+            "function_id": 7,
+            "valid_from": "2018-05-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 9,
+            "function_id": 7,
+            "valid_from": "2021-01-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 10,
+            "function_id": 11,
+            "valid_from": "2023-05-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 11,
+            "function_id": 12,
+            "valid_from": "2022-04-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 5,
+            "function_id": 9,
+            "valid_from": "2024-01-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 12,
+            "function_id": 1,
+            "valid_from": "2014-05-01",
+            "valid_to": "2023-04-30",
+            "note": null
+        },
+        {
+            "member_id": 12,
+            "function_id": 13,
+            "valid_from": "2023-05-01",
+            "valid_to": null,
+            "note": null
+        },
+        {
+            "member_id": 3,
+            "function_id": 8,
+            "valid_from": "2020-01-01",
+            "valid_to": "2023-12-31",
+            "note": null
+        }
+    ],
+    "md_ledger": [
+        {
+            "member_id": 1,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-11",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250001"
+        },
+        {
+            "member_id": 2,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-12",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250002"
+        },
+        {
+            "member_id": 3,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-13",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250003"
+        },
+        {
+            "member_id": 4,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-14",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250004"
+        },
+        {
+            "member_id": 5,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-15",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250005"
+        },
+        {
+            "member_id": 6,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-16",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250006"
+        },
+        {
+            "member_id": 7,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-17",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250007"
+        },
+        {
+            "member_id": 8,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-18",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250008"
+        },
+        {
+            "member_id": 9,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-19",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250009"
+        },
+        {
+            "member_id": 10,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 6000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-20",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (ermäßigt)",
+            "reference": "R20250010"
+        },
+        {
+            "member_id": 11,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 6000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-21",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (ermäßigt)",
+            "reference": "R20250011"
+        },
+        {
+            "member_id": 12,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2025-01-15",
+            "due_date": "2025-02-15",
+            "paid_date": "2025-02-22",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2025 (Vollmitglied)",
+            "reference": "R20250012"
+        },
+        {
+            "member_id": 1,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-09",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied)",
+            "reference": "R20260001"
+        },
+        {
+            "member_id": 2,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-10",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied)",
+            "reference": "R20260002"
+        },
+        {
+            "member_id": 4,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-12",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied)",
+            "reference": "R20260004"
+        },
+        {
+            "member_id": 5,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-13",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied)",
+            "reference": "R20260005"
+        },
+        {
+            "member_id": 6,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-14",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied)",
+            "reference": "R20260006"
+        },
+        {
+            "member_id": 7,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-15",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied)",
+            "reference": "R20260007"
+        },
+        {
+            "member_id": 8,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-16",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied)",
+            "reference": "R20260008"
+        },
+        {
+            "member_id": 9,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-17",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied)",
+            "reference": "R20260009"
+        },
+        {
+            "member_id": 10,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 6000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-02-15",
+            "paid_date": "2026-02-18",
+            "status": "paid",
+            "description": "Mitgliedsbeitrag 2026 (ermäßigt)",
+            "reference": "R20260010"
+        },
+        {
+            "member_id": 3,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 12000,
+            "entry_date": "2026-01-15",
+            "due_date": "2026-09-07",
+            "paid_date": null,
+            "status": "open",
+            "description": "Mitgliedsbeitrag 2026 (Vollmitglied) – 1. Zahlungserinnerung",
+            "reference": "R20260003"
+        },
+        {
+            "member_id": 11,
+            "kind": "beitrag",
+            "direction": "to_club",
+            "amount_cents": 6000,
+            "entry_date": "2026-10-12",
+            "due_date": "2026-11-11",
+            "paid_date": null,
+            "status": "open",
+            "description": "Mitgliedsbeitrag 2026 (ermäßigt)",
+            "reference": "R20260011"
+        },
+        {
+            "member_id": 1,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 4500,
+            "entry_date": "2026-05-02",
+            "due_date": null,
+            "paid_date": "2026-05-02",
+            "status": "paid",
+            "description": "Jahrestagung 2026 – Teilnahmegebühr",
+            "reference": "T2026001"
+        },
+        {
+            "member_id": 2,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 4500,
+            "entry_date": "2026-05-02",
+            "due_date": null,
+            "paid_date": "2026-05-02",
+            "status": "paid",
+            "description": "Jahrestagung 2026 – Teilnahmegebühr",
+            "reference": "T2026002"
+        },
+        {
+            "member_id": 4,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 4500,
+            "entry_date": "2026-05-02",
+            "due_date": null,
+            "paid_date": "2026-05-02",
+            "status": "paid",
+            "description": "Jahrestagung 2026 – Teilnahmegebühr",
+            "reference": "T2026004"
+        },
+        {
+            "member_id": 5,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 4500,
+            "entry_date": "2026-05-02",
+            "due_date": null,
+            "paid_date": "2026-05-02",
+            "status": "paid",
+            "description": "Jahrestagung 2026 – Teilnahmegebühr",
+            "reference": "T2026005"
+        },
+        {
+            "member_id": 7,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 4500,
+            "entry_date": "2026-05-02",
+            "due_date": null,
+            "paid_date": "2026-05-02",
+            "status": "paid",
+            "description": "Jahrestagung 2026 – Teilnahmegebühr",
+            "reference": "T2026007"
+        },
+        {
+            "member_id": 8,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 4500,
+            "entry_date": "2026-05-02",
+            "due_date": null,
+            "paid_date": "2026-05-02",
+            "status": "paid",
+            "description": "Jahrestagung 2026 – Teilnahmegebühr",
+            "reference": "T2026008"
+        },
+        {
+            "member_id": 9,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 4500,
+            "entry_date": "2026-05-02",
+            "due_date": null,
+            "paid_date": "2026-05-02",
+            "status": "paid",
+            "description": "Jahrestagung 2026 – Teilnahmegebühr",
+            "reference": "T2026009"
+        },
+        {
+            "member_id": 1,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 1500,
+            "entry_date": "2026-07-18",
+            "due_date": null,
+            "paid_date": "2026-07-18",
+            "status": "paid",
+            "description": "Sommerfest 2026 – Eintritt",
+            "reference": "S2026001"
+        },
+        {
+            "member_id": 3,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 1500,
+            "entry_date": "2026-07-18",
+            "due_date": null,
+            "paid_date": "2026-07-18",
+            "status": "paid",
+            "description": "Sommerfest 2026 – Eintritt",
+            "reference": "S2026003"
+        },
+        {
+            "member_id": 6,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 1500,
+            "entry_date": "2026-07-18",
+            "due_date": null,
+            "paid_date": "2026-07-18",
+            "status": "paid",
+            "description": "Sommerfest 2026 – Eintritt",
+            "reference": "S2026006"
+        },
+        {
+            "member_id": 9,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 1500,
+            "entry_date": "2026-07-18",
+            "due_date": null,
+            "paid_date": "2026-07-18",
+            "status": "paid",
+            "description": "Sommerfest 2026 – Eintritt",
+            "reference": "S2026009"
+        },
+        {
+            "member_id": 10,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 1500,
+            "entry_date": "2026-07-18",
+            "due_date": null,
+            "paid_date": "2026-07-18",
+            "status": "paid",
+            "description": "Sommerfest 2026 – Eintritt",
+            "reference": "S2026010"
+        },
+        {
+            "member_id": 3,
+            "kind": "eintritt",
+            "direction": "to_club",
+            "amount_cents": 1500,
+            "entry_date": "2026-10-27",
+            "due_date": "2026-11-03",
+            "paid_date": null,
+            "status": "open",
+            "description": "Herbstwanderung – Anmeldegebühr",
+            "reference": "H2026003"
+        },
+        {
+            "member_id": 1,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 10000,
+            "entry_date": "2026-03-20",
+            "due_date": null,
+            "paid_date": "2026-03-20",
+            "status": "paid",
+            "description": "Spende für die Jugendarbeit",
+            "reference": "SP202601"
+        },
+        {
+            "member_id": 2,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 5000,
+            "entry_date": "2026-06-04",
+            "due_date": null,
+            "paid_date": "2026-06-04",
+            "status": "paid",
+            "description": "Spende Sommerfest",
+            "reference": "SP202602"
+        },
+        {
+            "member_id": 4,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 2500,
+            "entry_date": "2026-09-12",
+            "due_date": null,
+            "paid_date": "2026-09-12",
+            "status": "paid",
+            "description": "Spende",
+            "reference": "SP202603"
+        },
+        {
+            "member_id": 7,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 20000,
+            "entry_date": "2025-12-20",
+            "due_date": null,
+            "paid_date": "2025-12-20",
+            "status": "paid",
+            "description": "Jahresendspende",
+            "reference": "SP202504"
+        },
+        {
+            "member_id": 7,
+            "kind": "spende",
+            "direction": "to_club",
+            "amount_cents": 15000,
+            "entry_date": "2026-12-01",
+            "due_date": null,
+            "paid_date": null,
+            "status": "cancelled",
+            "description": "Zugesagte Spende (storniert)",
+            "reference": null
+        },
+        {
+            "member_id": 1,
+            "kind": "erstattung",
+            "direction": "to_member",
+            "amount_cents": 5400,
+            "entry_date": "2026-04-11",
+            "due_date": null,
+            "paid_date": "2026-04-25",
+            "status": "paid",
+            "description": "Fahrtkosten Prüfungsgespräch",
+            "reference": "E202601"
+        },
+        {
+            "member_id": 4,
+            "kind": "erstattung",
+            "direction": "to_member",
+            "amount_cents": 1480,
+            "entry_date": "2026-06-02",
+            "due_date": null,
+            "paid_date": "2026-06-10",
+            "status": "paid",
+            "description": "Porto Mitgliederpost",
+            "reference": "E202602"
+        },
+        {
+            "member_id": 5,
+            "kind": "erstattung",
+            "direction": "to_member",
+            "amount_cents": 8640,
+            "entry_date": "2026-05-04",
+            "due_date": null,
+            "paid_date": "2026-05-16",
+            "status": "paid",
+            "description": "Reisekosten Vorstandssitzung",
+            "reference": "E202603"
+        },
+        {
+            "member_id": 9,
+            "kind": "erstattung",
+            "direction": "to_member",
+            "amount_cents": 2310,
+            "entry_date": "2026-08-20",
+            "due_date": null,
+            "paid_date": "2026-08-31",
+            "status": "paid",
+            "description": "Material Infostand",
+            "reference": "E202604"
+        },
+        {
+            "member_id": 11,
+            "kind": "erstattung",
+            "direction": "to_member",
+            "amount_cents": 12990,
+            "entry_date": "2026-10-16",
+            "due_date": null,
+            "paid_date": null,
+            "status": "open",
+            "description": "Ersatz-Router Geschäftsstelle (Beleg liegt vor)",
+            "reference": "E202605"
+        },
+        {
+            "member_id": 7,
+            "kind": "uebungsleiter",
+            "direction": "to_member",
+            "amount_cents": 60000,
+            "entry_date": "2026-03-31",
+            "due_date": null,
+            "paid_date": "2026-04-05",
+            "status": "paid",
+            "description": "Übungsleiterpauschale I. Quartal 2026 (Kurse Bildung)",
+            "reference": "U202673"
+        },
+        {
+            "member_id": 8,
+            "kind": "uebungsleiter",
+            "direction": "to_member",
+            "amount_cents": 30000,
+            "entry_date": "2026-03-31",
+            "due_date": null,
+            "paid_date": "2026-04-05",
+            "status": "paid",
+            "description": "Übungsleiterpauschale I. Quartal 2026 (Bewegungsangebote)",
+            "reference": "U202683"
+        },
+        {
+            "member_id": 7,
+            "kind": "uebungsleiter",
+            "direction": "to_member",
+            "amount_cents": 60000,
+            "entry_date": "2026-06-30",
+            "due_date": null,
+            "paid_date": "2026-07-05",
+            "status": "paid",
+            "description": "Übungsleiterpauschale II. Quartal 2026 (Kurse Bildung)",
+            "reference": "U202676"
+        },
+        {
+            "member_id": 8,
+            "kind": "uebungsleiter",
+            "direction": "to_member",
+            "amount_cents": 30000,
+            "entry_date": "2026-06-30",
+            "due_date": null,
+            "paid_date": "2026-07-05",
+            "status": "paid",
+            "description": "Übungsleiterpauschale II. Quartal 2026 (Bewegungsangebote)",
+            "reference": "U202686"
+        },
+        {
+            "member_id": 7,
+            "kind": "uebungsleiter",
+            "direction": "to_member",
+            "amount_cents": 60000,
+            "entry_date": "2026-09-30",
+            "due_date": null,
+            "paid_date": "2026-10-05",
+            "status": "paid",
+            "description": "Übungsleiterpauschale III. Quartal 2026 (Kurse Bildung)",
+            "reference": "U202679"
+        },
+        {
+            "member_id": 8,
+            "kind": "uebungsleiter",
+            "direction": "to_member",
+            "amount_cents": 30000,
+            "entry_date": "2026-09-30",
+            "due_date": null,
+            "paid_date": "2026-10-05",
+            "status": "paid",
+            "description": "Übungsleiterpauschale III. Quartal 2026 (Bewegungsangebote)",
+            "reference": "U202689"
+        }
+    ],
+    "md_terms_versions": [
+        {
+            "terms_id": 1,
+            "doc_type": "nutzungsbedingungen",
+            "version_label": "1",
+            "title": "Nutzungsbedingungen und Datenschutzhinweise",
+            "body": "1. Zweck\nDiese Plattform dient der Pflege der Mitgliedsdaten und der Kommunikation im Verein.\n\n2. Deine Angaben\nDu pflegst deine Daten selbst. Jede Änderung wird mit Zeitpunkt und Bearbeiter protokolliert.\n\n3. Sichtbarkeit\nDu bestimmst für jedes Feld, wer es sehen darf. Ohne deine Freigabe sehen andere Mitglieder nur Name und Funktion.\n\n4. Datenschutz\nDie Daten werden nur für Vereinszwecke verwendet und nicht an Dritte weitergegeben.",
+            "valid_from": "2024-01-01",
+            "requires_consent": 1
+        },
+        {
+            "terms_id": 2,
+            "doc_type": "nutzungsbedingungen",
+            "version_label": "2",
+            "title": "Nutzungsbedingungen und Datenschutzhinweise",
+            "body": "1. Zweck\nDiese Plattform dient der Pflege der Mitgliedsdaten und der Kommunikation im Verein.\n\n2. Deine Angaben\nDu pflegst deine Daten selbst. Jede Änderung wird mit Zeitpunkt und Bearbeiter protokolliert.\n\n3. Sichtbarkeit\nDu bestimmst für jedes Feld, wer es sehen darf. Ohne deine Freigabe sehen andere Mitglieder nur Name und Funktion.\n\n4. Datenschutz\nDie Daten werden nur für Vereinszwecke verwendet und nicht an Dritte weitergegeben.\n\n5. Fotos (neu)\nHochgeladene Fotos werden verkleinert gespeichert. Mit der Freigabe für andere Mitglieder erklärst du dich mit der Anzeige im Mitgliederverzeichnis einverstanden. Die Freigabe kannst du jederzeit ändern.\n\n6. Widerruf\nDu kannst deine Zustimmung jederzeit widerrufen. Dann bleibt der Zugang eingeschränkt, bis du erneut zustimmst.",
+            "valid_from": "2026-06-24",
+            "requires_consent": 1
+        }
+    ],
+    "md_terms_consents": [
+        {
+            "consent_id": 1,
+            "member_id": 1,
+            "terms_id": 2,
+            "consented_at": "2026-07-04 09:12:00",
+            "channel": "self",
+            "recorded_by": 1,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": null
+        },
+        {
+            "consent_id": 2,
+            "member_id": 2,
+            "terms_id": 2,
+            "consented_at": "2026-07-05 18:40:00",
+            "channel": "self",
+            "recorded_by": 2,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": null
+        },
+        {
+            "consent_id": 3,
+            "member_id": 3,
+            "terms_id": 1,
+            "consented_at": "2025-03-01 20:05:00",
+            "channel": "self",
+            "recorded_by": 3,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": null
+        },
+        {
+            "consent_id": 4,
+            "member_id": 4,
+            "terms_id": 2,
+            "consented_at": "2026-06-26 08:30:00",
+            "channel": "self",
+            "recorded_by": 4,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": null
+        },
+        {
+            "consent_id": 5,
+            "member_id": 5,
+            "terms_id": 2,
+            "consented_at": "2026-06-27 11:02:00",
+            "channel": "self",
+            "recorded_by": 5,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": null
+        },
+        {
+            "consent_id": 6,
+            "member_id": 6,
+            "terms_id": 2,
+            "consented_at": "2026-07-14 14:15:00",
+            "channel": "self",
+            "recorded_by": 6,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": null
+        },
+        {
+            "consent_id": 7,
+            "member_id": 7,
+            "terms_id": 2,
+            "consented_at": "2026-07-19 09:50:00",
+            "channel": "admin",
+            "recorded_by": 6,
+            "ip_truncated": null,
+            "note": "telefonisch bestätigt, durch Sekretariat erfasst",
+            "revoked_at": null
+        },
+        {
+            "consent_id": 8,
+            "member_id": 8,
+            "terms_id": 2,
+            "consented_at": "2026-07-24 19:20:00",
+            "channel": "self",
+            "recorded_by": 8,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": null
+        },
+        {
+            "consent_id": 9,
+            "member_id": 9,
+            "terms_id": 2,
+            "consented_at": "2026-07-26 12:00:00",
+            "channel": "self",
+            "recorded_by": 9,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": null
+        },
+        {
+            "consent_id": 10,
+            "member_id": 10,
+            "terms_id": 2,
+            "consented_at": "2026-08-13 12:00:00",
+            "channel": "paper",
+            "recorded_by": 5,
+            "ip_truncated": null,
+            "note": "Brief vom 11.08.2026, Eingang Geschäftsstelle",
+            "revoked_at": null
+        },
+        {
+            "consent_id": 11,
+            "member_id": 12,
+            "terms_id": 1,
+            "consented_at": "2024-05-05 10:00:00",
+            "channel": "self",
+            "recorded_by": 12,
+            "ip_truncated": "203.0.113.0",
+            "note": null,
+            "revoked_at": "2025-12-26 10:00:00"
+        }
+    ],
+    "md_changelog": [
+        {
+            "member_id": 3,
+            "field_key": "contact.mastodon",
+            "old_value": null,
+            "new_value": "@lukas@social.example.com",
+            "changed_by": 3,
+            "changed_via": "self",
+            "changed_at": "2026-08-23 21:10:00"
+        },
+        {
+            "member_id": 3,
+            "field_key": "address.2.city",
+            "old_value": null,
+            "new_value": "Baltrum",
+            "changed_by": 3,
+            "changed_via": "self",
+            "changed_at": "2026-08-23 21:12:00"
+        },
+        {
+            "member_id": 7,
+            "field_key": "wishes_text",
+            "old_value": null,
+            "new_value": "Mehr Kooperation zwischen den Regionalgruppen.",
+            "changed_by": 6,
+            "changed_via": "admin",
+            "changed_at": "2026-09-02 10:30:00"
+        },
+        {
+            "member_id": 9,
+            "field_key": "visibility.contact.tiktok",
+            "old_value": "Nur ich",
+            "new_value": "Alle Mitglieder",
+            "changed_by": 9,
+            "changed_via": "self",
+            "changed_at": "2026-09-22 17:45:00"
+        },
+        {
+            "member_id": 11,
+            "field_key": "status",
+            "old_value": null,
+            "new_value": "aktiv",
+            "changed_by": 5,
+            "changed_via": "import",
+            "changed_at": "2025-09-17 09:00:00"
+        },
+        {
+            "member_id": 4,
+            "field_key": "address.1.street",
+            "old_value": "Hafenstr. 21",
+            "new_value": "Hafenstraße 21",
+            "changed_by": 4,
+            "changed_via": "self",
+            "changed_at": "2026-10-08 08:20:00"
+        }
+    ],
+    "md_import_profiles": [
+        {
+            "name": "Beispiel: Excel-Export Altverwaltung",
+            "source_software": "Excel",
+            "delimiter_char": ";",
+            "mapping": "{\"map\":{\"membership_number\":\"Mitgl-Nr\",\"first_name\":\"Vorname\",\"last_name\":\"Nachname\",\"email\":\"E-Mail\",\"birthdate\":\"Geb.-Datum\",\"join_date\":\"Eintritt\",\"street\":\"Strasse\",\"zip\":\"PLZ\",\"city\":\"Ort\",\"groups\":\"Gruppe\"},\"opts\":{\"update_existing\":true,\"placeholder_email\":false}}"
+        }
+    ],
+    "md_settings": [
+        {
+            "setting_key": "ueb_freibetrag_cents",
+            "setting_value": "330000",
+            "description": "Jahresfreibetrag Übungsleiterpauschale in Cent (Stand 2026: 3.300 €, bitte jährlich prüfen)"
+        }
+    ]
+}
