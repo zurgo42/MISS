@@ -1,9 +1,10 @@
 <?php
 require_once __DIR__ . '/../src/bootstrap.php';
-$me = md_require_admin();
+$me = md_require_perm('terms', 'view');
 $aid = (int)$me['member_id'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     md_csrf_check();
+    if (!md_can($me, 'terms', 'edit')) { http_response_code(403); exit('Dafür fehlt die Berechtigung.'); }
     $act = $_POST['action'] ?? '';
     if ($act === 'new_version') {
         $label = trim($_POST['version_label'] ?? '');
@@ -35,10 +36,11 @@ foreach (md_q('SELECT * FROM md_terms_versions ORDER BY valid_from DESC') as $v)
     echo '<tr><td><a href="terms.php?id=' . (int)$v['terms_id'] . '">' . h($v['version_label']) . '</a></td><td>' . h($v['title']) . '</td><td>' . h(md_date($v['valid_from'])) . '</td><td>' . ($v['requires_consent'] ? 'ja' : 'nein') . '</td><td>' . $n . ' von ' . $total . '</td></tr>';
 }
 echo '</tbody></table></section>';
-echo '<section class="card"><h2>Neue Version</h2><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="new_version">
+if (md_can($me, 'terms', 'edit')) echo '<section class="card"><h2>Neue Version</h2><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="new_version">
 <div class="addr"><label>Version<input name="version_label" placeholder="z. B. 3"></label><label>Gültig ab<input name="valid_from" placeholder="TT.MM.JJJJ"></label><label>Titel<input name="title"></label></div>
 <label class="block">Text<textarea name="body" rows="8"></textarea></label><label class="check"><input type="checkbox" name="requires_consent" value="1" checked> Mitglieder müssen neu zustimmen</label> <button>Anlegen</button></form></section>';
 $cur = md_current_terms();
+if (md_can($me, 'terms', 'edit')) {
 echo '<section class="card"><h2>Zustimmung erfassen (schriftlich / im Auftrag)</h2>';
 if ($cur) {
     echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="record"><div class="addr"><label>Mitglied<select name="member_id">';
@@ -47,4 +49,5 @@ if ($cur) {
 <label class="block">Vermerk (z. B. Eingang per Brief, Mailverweis)<input name="note"></label><p class="muted">Gilt für Version ' . h($cur['version_label']) . '.</p><button>Erfassen</button></form>';
 } else echo '<p class="muted">Erst eine Version anlegen.</p>';
 echo '</section>';
+}
 md_footer();

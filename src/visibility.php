@@ -21,6 +21,7 @@ function md_shares_group(int $a, int $b): bool
 function md_can_see(array $viewer, int $ownerId, string $key, array $vmap): bool
 {
     if ((int)$viewer['member_id'] === $ownerId) return true;
+    if (!md_consent_ok((int)$viewer['member_id'])) return false;
     $level = $vmap[$key] ?? 'me';
     switch ($level) {
         case 'all':   return true;

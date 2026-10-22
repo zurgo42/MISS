@@ -48,3 +48,14 @@ function md_revoke_consent(int $member, int $consentId, int $actor): void
     md_exec('UPDATE md_terms_consents SET revoked_at = ? WHERE consent_id = ? AND member_id = ? AND revoked_at IS NULL', [md_now(), $consentId, $member]);
     md_log_change($member, 'consent', 'Zustimmung', 'widerrufen', $actor, $actor === $member ? 'self' : 'admin');
 }
+
+/**
+ * Darf das Mitglied mehr als die eigenen Daten sehen und etwas ändern?
+ * Ja, wenn keine Nutzungsbedingungen hinterlegt sind oder der aktuellen Fassung zugestimmt wurde.
+ */
+function md_consent_ok(int $member): bool
+{
+    static $cache = [];
+    if (!isset($cache[$member])) $cache[$member] = in_array(md_terms_status($member)['state'], ['ok', 'none'], true);
+    return $cache[$member];
+}

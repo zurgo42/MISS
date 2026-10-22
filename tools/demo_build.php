@@ -143,7 +143,7 @@ function demo_build(string $anchor): array
     $memberGroups = array_map(fn($x) => ['member_id' => $x[0], 'group_id' => $gid[$x[1]] + 1, 'since' => ($Y - 3) . '-01-01', 'until' => null], $mg);
     // [Mitglied, Code, von, bis, Level (null = Standard der Funktion), Ressort-ID]
     $svressorts = [[1, 'R01', 'Finanzen'], [2, 'R02', 'Bildung'], [3, 'R03', 'Öffentlichkeitsarbeit'], [4, 'R04', 'Sport & Gesundheit'], [5, 'R05', 'Veranstaltungen']];
-    $mf = [[1, 'FVo', ($Y - 7) . '-05-01', null, null, null], [2, 'FVv', ($Y - 6) . '-05-01', null, null, null], [3, 'Vo', ($Y - 4) . '-05-01', null, null, null],
+    $mf = [[1, 'FVo', ($Y - 7) . '-05-01', null, null, null], [1, 'Ka', ($Y - 7) . '-05-01', null, null, null], [2, 'FVv', ($Y - 6) . '-05-01', null, null, null], [3, 'Vo', ($Y - 4) . '-05-01', null, null, null],
            [4, 'GF', ($Y - 10) . '-03-01', null, null, null], [5, 'VA', ($Y - 9) . '-09-01', null, 17, null], [6, 'SV', ($Y - 7) . '-02-01', null, null, null],
            [7, 'RL', ($Y - 12) . '-10-01', null, 17, 2], [8, 'RL', ($Y - 8) . '-05-01', null, 15, 4], [9, 'RL', ($Y - 5) . '-01-01', null, 14, 3],
            [10, 'FP', ($Y - 3) . '-05-01', null, 3, null], [11, 'AD', ($Y - 4) . '-04-01', null, 10, null], [5, 'MB', ($Y - 2) . '-01-01', null, null, null],
@@ -186,7 +186,7 @@ function demo_build(string $anchor): array
     $ledger = [];
     foreach ($L as $r) {
         $ledger[] = ['member_id' => $r[0], 'kind' => $r[1], 'direction' => in_array($r[1], ['erstattung', 'uebungsleiter'], true) ? 'to_member' : 'to_club',
-            'amount_cents' => (int)round($r[2] * 100), 'entry_date' => $r[3], 'due_date' => $r[4], 'paid_date' => $r[5], 'status' => $r[6], 'description' => $r[7], 'reference' => $r[8]];
+            'amount_cents' => (int)round($r[2] * 100), 'entry_date' => $r[3], 'due_date' => $r[4], 'paid_date' => $r[5], 'status' => $r[6], 'description' => $r[7], 'reference' => $r[8], 'source' => 'demo'];
     }
 
     // Nutzungsbedingungen

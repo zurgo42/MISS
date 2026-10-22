@@ -1,9 +1,17 @@
 <?php
 require_once __DIR__ . '/src/bootstrap.php';
 $actor = md_require_login();
-[$m, $via] = md_target_member($actor, $_GET['member'] ?? 0);
+if ((int)($_GET['member'] ?? 0) && (int)$_GET['member'] !== (int)$actor['member_id'] && !md_consent_ok((int)$actor['member_id'])) {
+    md_flash('Fremde Daten sind erst nach der Zustimmung zu den Nutzungsbedingungen sichtbar.', 'warn');
+    header('Location: ' . md_url('index.php#terms'));
+    exit;
+}
+[$m, $via] = md_target_member($actor, $_GET['member'] ?? 0, 'view');
 $mid = (int)$m['member_id'];
-$admin = $via === 'admin';
+$staff = $via === 'admin';
+$ownConsent = md_consent_ok((int)$actor['member_id']);
+$canEdit = $staff ? md_can($actor, 'members', 'edit') : $ownConsent;   // eigene Daten nur mit Zustimmung bearbeitbar
+$canClub = $staff && $canEdit;                                         // Vereinsdaten, Gruppen, Funktionen
 $year = (int)date('Y');
 
 $p = md_load_profile($mid);
@@ -13,10 +21,20 @@ $contacts = md_load_contacts($mid);
 $groups = md_load_groups($mid);
 $funcs = md_load_functions($mid);
 $vmap = md_visibility_map($mid);
+$masked = 0;
+if ($staff && !$canEdit) {   // nur ansehen: Felder mit "Nur ich" bleiben für das Mitglied reserviert
+    foreach (array_keys(MD_PROFILE_FIELDS) as $k) if (($vmap[$k] ?? 'me') === 'me' && ($p[$k] ?? '') !== '') { $p[$k] = null; $masked++; }
+    foreach (MD_SLOTS as $sl) {
+        if (($vmap["address.$sl"] ?? 'me') === 'me' && isset($addr[$sl])) { unset($addr[$sl]); $masked++; }
+        if (($vmap["photo.$sl"] ?? 'me') === 'me' && isset($photos[$sl])) { unset($photos[$sl]); $masked++; }
+    }
+    foreach (array_keys($contacts) as $k) if (($vmap["contact.$k"] ?? 'me') === 'me') { unset($contacts[$k]); $masked++; }
+}
 $fin = md_finance_summary($mid, $year);
+$showFinance = !$staff || md_can($actor, 'finance', 'view');
 $terms = md_terms_status($mid);
 $changes = md_recent_changes($mid, 12);
-$hidden = fn(string $name) => $admin ? '<input type="hidden" name="member" value="' . $mid . '">' : '';
+$hidden = fn(string $name) => $staff ? '<input type="hidden" name="member" value="' . $mid . '">' : '';
 $form = function (string $section, string $anchor, string $extra = '') use ($mid, $hidden): string {
     return '<input type="hidden" name="section" value="' . $section . '"><input type="hidden" name="anchor" value="' . $anchor . '">'
         . md_csrf_field() . $hidden('') . $extra;
@@ -24,9 +42,11 @@ $form = function (string $section, string $anchor, string $extra = '') use ($mid
 
 md_header('Dashboard', $actor, 'dashboard');
 md_show_flash();
-if ($admin) {
-    echo '<div class="flash warn">Verwaltungsmodus: Sie bearbeiten die Daten von <strong>' . h($m['first_name'] . ' ' . $m['last_name'])
-        . '</strong>. Änderungen werden als „Admin“ protokolliert. <a href="admin/index.php">zur Liste</a></div>';
+if ($staff) {
+    echo '<div class="flash warn">Verwaltungsmodus: ' . ($canEdit ? 'Du bearbeitest' : 'Du siehst (nur lesend)') . ' die Daten von <strong>' . h($m['first_name'] . ' ' . $m['last_name'])
+        . '</strong>.' . ($canEdit ? ' Änderungen werden als „Admin“ protokolliert.' : '') . ($masked ? " $masked Angabe(n) mit „Nur ich“ sind für dich ausgeblendet." : '') . ' <a href="admin/index.php">zur Liste</a></div>';
+} elseif (!$ownConsent) {
+    echo '<div class="flash warn"><strong>Nur Ansicht:</strong> Solange du den Nutzungsbedingungen nicht zugestimmt hast, kannst du nichts ändern und siehst nur deine eigenen Daten.</div>';
 }
 
 // ---- Kopf
@@ -54,17 +74,19 @@ if ($terms['state'] !== 'none') {
         echo 'Die Zustimmung zu den Nutzungsbedingungen liegt noch nicht vor.';
     }
     echo '</div><p><a href="terms.php?id=' . (int)$c['terms_id'] . '">Nutzungsbedingungen lesen (Version ' . h($c['version_label']) . ')</a></p>';
-    if ($terms['state'] !== 'ok' && !$admin) {
+    if ($terms['state'] !== 'ok' && !$staff) {
         echo '<form method="post" action="save.php">' . $form('consent', 'terms', '<input type="hidden" name="terms_id" value="' . (int)$c['terms_id'] . '">')
             . '<label class="check"><input type="checkbox" name="agree" value="1"> Ich habe die Nutzungsbedingungen gelesen und stimme zu.</label> <button>Zustimmung speichern</button></form>';
-    } elseif ($terms['state'] === 'ok' && $terms['consent'] && !$admin) {
+    } elseif ($terms['state'] === 'ok' && $terms['consent'] && !$staff) {
         echo '<form method="post" action="save.php" onsubmit="return confirm(\'Zustimmung wirklich widerrufen?\')">' . $form('consent_revoke', 'terms', '<input type="hidden" name="consent_id" value="' . (int)$terms['consent']['consent_id'] . '">')
             . '<button class="link">Zustimmung widerrufen</button></form>';
-    } elseif ($admin) {
+    } elseif ($staff) {
         echo '<p class="muted">Zustimmungen erfasst die Verwaltung unter <a href="admin/terms.php?member=' . $mid . '">Nutzungsbedingungen</a>.</p>';
     }
     echo '</section>';
 }
+
+echo '<fieldset class="roset"' . ($canEdit ? '' : ' disabled') . '>';
 
 // ---- Fotos
 echo '<section class="card" id="photos"><h2>Fotos</h2><div class="grid3">';
@@ -122,7 +144,7 @@ echo '<button>Speichern</button></form></section>';
 
 // ---- Verein
 echo '<section class="card" id="club"><h2>Vereinsdaten</h2>';
-if ($admin) {
+if ($canClub) {
     echo '<form method="post" action="save.php">' . $form('club', 'club') . '<div class="addr">';
     echo '<label>Status<select name="status">';
     foreach (MD_STATUS as $k => $l) echo '<option value="' . $k . '"' . (($p['status'] ?? '') === $k ? ' selected' : '') . '>' . h($l) . '</option>';
@@ -134,12 +156,12 @@ if ($admin) {
 echo '<h3>Teilgruppen</h3><ul class="plain">';
 foreach ($groups as $g) {
     echo '<li>' . h($g['name']) . ' <span class="muted">seit ' . h(md_date($g['since'])) . '</span>';
-    if ($admin) echo ' <form class="inline" method="post" action="save.php">' . $form('group_remove', 'club', '<input type="hidden" name="group_id" value="' . (int)$g['group_id'] . '">') . '<button class="link">entfernen</button></form>';
+    if ($canClub) echo ' <form class="inline" method="post" action="save.php">' . $form('group_remove', 'club', '<input type="hidden" name="group_id" value="' . (int)$g['group_id'] . '">') . '<button class="link">entfernen</button></form>';
     echo '</li>';
 }
 if (!$groups) echo '<li class="muted">keine</li>';
 echo '</ul>';
-if ($admin) {
+if ($canClub) {
     echo '<form class="inline" method="post" action="save.php">' . $form('group_add', 'club') . '<select name="group_id">';
     foreach (md_q('SELECT * FROM md_groups ORDER BY name') as $g) echo '<option value="' . (int)$g['group_id'] . '">' . h($g['name']) . '</option>';
     echo '</select> <button>Gruppe zuordnen</button></form>';
@@ -150,7 +172,7 @@ foreach ($funcs as $f) {
     $active = (!$f['valid_to'] || $f['valid_to'] >= $today) && (!$f['valid_from'] || $f['valid_from'] <= $today);
     $res = $f['ressort_id'] ? (md_ressorts()[(int)$f['ressort_id']] ?? null) : null;
     echo '<li' . ($active ? '' : ' class="muted"') . '>' . h($f['name']) . ($res ? ' – ' . h($res) : '') . ' <span class="muted">Level ' . (int)$f['level'] . ' · ' . h(md_date($f['valid_from'])) . ' – ' . h($f['valid_to'] ? md_date($f['valid_to']) : 'heute') . '</span>';
-    if ($admin && $active) echo ' <form class="inline" method="post" action="save.php">' . $form('func_remove', 'club', '<input type="hidden" name="member_function_id" value="' . (int)$f['member_function_id'] . '">') . '<button class="link">beenden</button></form>';
+    if ($canClub && $active) echo ' <form class="inline" method="post" action="save.php">' . $form('func_remove', 'club', '<input type="hidden" name="member_function_id" value="' . (int)$f['member_function_id'] . '">') . '<button class="link">beenden</button></form>';
     echo '</li>';
 }
 if (!$funcs) echo '<li class="muted">keine</li>';
@@ -160,7 +182,7 @@ if (md_member_is_managed($mid)) {
     echo '<p class="muted">Rechte im Sitzungstool: <strong>' . ($eff ? h($eff['code']) . ', Level ' . (int)$eff['level'] : 'keine Funktion, Level ' . (int)md_setting('default_aktiv', '0')) . '</strong>'
         . ' · Rolle ' . h(md_role_for($eff ? (int)$eff['level'] : (int)md_setting('default_aktiv', '0'), $eff['code'] ?? null)) . '</p>';
 }
-if ($admin) {
+if ($canClub) {
     echo '<form class="inline" method="post" action="save.php">' . $form('func_add', 'club') . '<select name="function_id">';
     foreach (md_q('SELECT * FROM md_functions ORDER BY code') as $f) echo '<option value="' . (int)$f['function_id'] . '">' . h($f['code'] . ' – ' . $f['name'] . ' (Level ' . $f['sv_aktiv_level'] . ')') . '</option>';
     echo '</select> <input name="aktiv_level" size="3" placeholder="Level" title="Optional: Level abweichend vom Standard der Funktion (0–19)">';
@@ -174,7 +196,8 @@ if ($admin) {
 echo '</section>';
 
 // ---- Finanzen
-echo '<section class="card" id="finance"><h2>Meine Finanzen ' . $year . '</h2><div class="kpis">';
+if ($showFinance) {
+echo '<section class="card" id="finance"><h2>' . ($staff ? 'Finanzen ' : 'Meine Finanzen ') . $year . '</h2><div class="kpis">';
 $kpi = fn(string $label, int $c, string $cls = '') => '<div class="kpi ' . $cls . '"><span>' . h($label) . '</span><strong>' . md_money($c) . '</strong></div>';
 echo $kpi('Offene Forderungen', $fin['open_claims'], $fin['overdue'] ? 'bad' : '');
 echo $kpi('Beiträge bezahlt', $fin['fees_paid']) . $kpi('Eintrittsgelder', $fin['tickets_paid']) . $kpi('Spenden', $fin['donations']);
@@ -194,6 +217,8 @@ foreach ($fin['rows'] as $r) {
 }
 if (!$fin['rows']) echo '<tr><td colspan="5" class="muted">Keine Buchungen.</td></tr>';
 echo '</tbody></table></section>';
+}
+echo '</fieldset>';
 
 // ---- Protokoll
 echo '<section class="card" id="log"><h2>Änderungsprotokoll</h2><table><thead><tr><th>Wann</th><th>Was</th><th>Alt</th><th>Neu</th><th>Wer</th></tr></thead><tbody>';

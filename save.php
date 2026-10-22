@@ -3,10 +3,16 @@ require_once __DIR__ . '/src/bootstrap.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 $actor = md_require_login();
 md_csrf_check();
-[$target, $via] = md_target_member($actor, $_POST['member'] ?? 0);
+$section = (string)($_POST['section'] ?? '');
+// Ohne Zustimmung zu den Nutzungsbedingungen kann man nichts ändern (außer eben zustimmen bzw. widerrufen)
+if (!in_array($section, ['consent', 'consent_revoke'], true) && !md_consent_ok((int)$actor['member_id'])) {
+    md_flash('Ändern ist erst nach der Zustimmung zu den Nutzungsbedingungen möglich.', 'warn');
+    header('Location: ' . md_url('index.php#terms'));
+    exit;
+}
+[$target, $via] = md_target_member($actor, $_POST['member'] ?? 0, 'edit');
 $mid = (int)$target['member_id'];
 $aid = (int)$actor['member_id'];
-$section = (string)($_POST['section'] ?? '');
 $msg = 'Gespeichert.';
 $kind = 'ok';
 $pdo = md_db();
@@ -55,7 +61,7 @@ try {
         case 'group_remove':
         case 'func_add':
         case 'func_remove':
-            if (!md_is_admin($actor)) { http_response_code(403); exit('Nur Verwaltung.'); }
+            if ($via !== 'admin') { http_response_code(403); exit('Nur für die Verwaltung.'); }
             require __DIR__ . '/src/save_club.php';
             break;
         default:

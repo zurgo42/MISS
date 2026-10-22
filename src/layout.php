@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 function md_header(string $title, ?array $me = null, string $active = ''): void
 {
-    $nav = [
-        'dashboard' => ['index.php', 'Mein Dashboard'],
-        'directory' => ['directory.php', 'Mitgliederverzeichnis'],
-    ];
-    if ($me && md_is_admin($me)) {
-        $nav['admin'] = ['admin/index.php', 'Verwaltung'];
-        $nav['import'] = ['admin/import.php', 'CSV-Import'];
-        $nav['terms'] = ['admin/terms.php', 'Nutzungsbedingungen'];
+    $nav = ['dashboard' => ['index.php', 'Mein Dashboard']];
+    if ($me && md_consent_ok((int)$me['member_id'])) {
+        if (md_can($me, 'directory', 'view')) $nav['directory'] = ['directory.php', 'Mitgliederverzeichnis'];
+        if (md_can($me, 'members', 'view')) $nav['admin'] = ['admin/index.php', 'Mitglieder'];
+        if (md_can($me, 'finance', 'view')) $nav['finance'] = ['admin/finance.php', 'Finanzen'];
+        if (md_can($me, 'import', 'edit')) $nav['import'] = ['admin/import.php', 'CSV-Import'];
+        if (md_can($me, 'terms', 'view')) $nav['terms'] = ['admin/terms.php', 'Nutzungsbedingungen'];
+        if (md_can($me, 'settings', 'edit')) $nav['settings'] = ['admin/settings.php', 'Einstellungen'];
     }
     echo '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><base href="' . h(md_url()) . '">';
     echo '<title>' . h($title) . ' – ' . h(MD_CLUB_NAME) . '</title><link rel="stylesheet" href="assets/md.css"></head><body>';

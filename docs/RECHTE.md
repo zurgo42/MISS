@@ -46,3 +46,28 @@ und dass der Demo-Stand mit den Werten der Sitzungsverwaltung übereinstimmt. De
 
 - Die Sitzungsverwaltung kann `aktiv`/`funktion` im Admin schreibgeschützt anzeigen, wenn die Mitgliederverwaltung aktiv ist.
 - Ob `default_aktiv` = 0 für Mitglieder ohne Funktion passt, bitte anhand des Ist-Zustands in der Sitzungsverwaltung prüfen.
+
+---
+
+# Rechte in der Mitgliederverwaltung selbst
+
+Unabhängig vom Abgleich nach `svmembers` (oben) regelt eine **einstellbare Tabelle** (`md_permissions`, Seite *Einstellungen*), wer in der Mitgliederverwaltung was darf.
+
+| Bereich | Stufen | Bedeutung |
+|---|---|---|
+| Mitgliederverzeichnis | keine / ansehen | Das Verzeichnis mit den für andere freigegebenen Angaben |
+| Mitglieder | keine / ansehen / bearbeiten | Fremde Dashboards, Mitgliederliste, Vereinsdaten, Gruppen, Funktionen |
+| Finanzen | keine / ansehen / bearbeiten | Buchungen aller Mitglieder (Kassenseite) |
+| Nutzungsbedingungen | keine / ansehen / bearbeiten | Versionen anlegen, Zustimmungen erfassen |
+| CSV-Import | keine / bearbeiten | Mitglieder importieren |
+| Einstellungen | keine / bearbeiten | Rechtetabelle, Standard-Sichtbarkeit, Funktionen, Teilgruppen |
+
+**Regeln**
+- Je Funktion (und eine Zeile „Alle Mitglieder“) steht pro Bereich eine Stufe in der Tabelle.
+- Wirksam ist die **höchste Stufe über alle aktuell gültigen Funktionen** des Mitglieds, je Bereich einzeln (Mitgliederbetreuung + Finanzprüfung = Mitglieder bearbeiten, Finanzen ansehen).
+  Das ist unabhängig von der Regel „höchstes Level gewinnt“ beim Abgleich nach `svmembers`, die nur `aktiv` und `funktion` für das Sitzungstool betrifft.
+- `svmembers.is_admin` darf immer alles, damit sich niemand aussperren kann.
+- **Nur ansehen** in fremden Dashboards: Angaben mit der Sichtbarkeit „Nur ich“ bleiben ausgeblendet; wer bearbeiten darf, sieht alles, was er zum Bearbeiten braucht.
+- Voreinstellung (bei `install.php` gesetzt, danach änderbar): Vorstand ansehen; Finanzvorstand und Kassenführung buchen; Geschäftsführung, Mitgliederbetreuung und Sekretariat pflegen Mitglieder; Finanzprüfung sieht Mitglieder und Finanzen; technischer Admin ändert Einstellungen.
+
+**Zustimmung zu den Nutzungsbedingungen:** Wer der aktuellen Fassung nicht zugestimmt hat, sieht nur die eigenen Daten und kann nichts ändern (auch nicht mit Funktion oder Admin-Flag) – außer eben zustimmen. Gibt es noch keine Version, gilt die Sperre nicht.

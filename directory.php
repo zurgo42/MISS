@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/src/bootstrap.php';
 $me = md_require_login();
+if (!md_consent_ok((int)$me['member_id']) || !md_can($me, 'directory', 'view')) {
+    md_flash('Das Mitgliederverzeichnis ist für dich nicht verfügbar' . (md_consent_ok((int)$me['member_id']) ? '.' : ': Bitte stimme zuerst den Nutzungsbedingungen zu.'), 'warn');
+    header('Location: ' . md_url('index.php'));
+    exit;
+}
 $q = trim((string)($_GET['q'] ?? ''));
 $rows = md_q("SELECT s.*, p.status, p.nickname, p.occupation, p.employer, p.hobbies, p.interests, p.intro_text, p.birthdate
               FROM svmembers s LEFT JOIN md_profiles p ON p.member_id = s.member_id

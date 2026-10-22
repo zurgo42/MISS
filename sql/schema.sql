@@ -130,6 +130,11 @@ CREATE TABLE IF NOT EXISTS md_ledger (
     description VARCHAR(255) NOT NULL,
     reference VARCHAR(80) DEFAULT NULL,            -- Rechnungs-/Belegnummer
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_by INT DEFAULT NULL,                   -- wer hat gebucht
+    source VARCHAR(10) NOT NULL DEFAULT 'manual',  -- manual, csv, demo
+    cancelled_at DATETIME DEFAULT NULL,            -- Storno statt Löschen
+    cancelled_by INT DEFAULT NULL,
+    cancel_reason VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -176,6 +181,7 @@ CREATE TABLE IF NOT EXISTS md_changelog (
 CREATE TABLE IF NOT EXISTS md_import_profiles (
     profile_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(120) NOT NULL UNIQUE,
+    target VARCHAR(10) NOT NULL DEFAULT 'members', -- members, ledger
     source_software VARCHAR(120) DEFAULT NULL,
     delimiter_char VARCHAR(5) NOT NULL DEFAULT ';',
     encoding VARCHAR(20) NOT NULL DEFAULT 'UTF-8',
@@ -201,4 +207,13 @@ CREATE TABLE IF NOT EXISTS md_settings (
     setting_key VARCHAR(60) PRIMARY KEY,
     setting_value VARCHAR(255) NOT NULL,
     description VARCHAR(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. Rechte in der Mitgliederverwaltung: je Funktion (oder '*' = alle Mitglieder) und Bereich eine Stufe.
+-- Wirksam ist die höchste Stufe über alle aktuell gültigen Funktionen des Mitglieds; svmembers.is_admin darf immer alles.
+CREATE TABLE IF NOT EXISTS md_permissions (
+    subject VARCHAR(10) NOT NULL,                  -- Funktionscode (Vo, FVo, GF, MB, Ka, FP, ...) oder '*'
+    area VARCHAR(20) NOT NULL,                     -- directory, members, finance, terms, import, settings
+    level VARCHAR(10) NOT NULL,                    -- none, view, edit
+    PRIMARY KEY (subject, area)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

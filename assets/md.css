@@ -79,3 +79,8 @@ tr.rowbad { background: var(--badbg); }
 dl { margin: 8px 0 0; font-size: 13px; } dt { color: var(--muted); margin-top: 6px; } dd { margin: 0; }
 .prose { max-width: 70ch; }
 .map td, .map th { padding: 4px 8px; }
+
+td.act form { display: flex; gap: 4px; align-items: center; margin: 0 0 4px; }
+td.act input { width: 8.5em; padding: 3px 6px; font-size: 13px; }
+td.act button { padding: 3px 10px; font-size: 13px; }
+td.act button.link { padding: 0; }

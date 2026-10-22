@@ -4,6 +4,7 @@ declare(strict_types=1);
 /** Angemeldetes Mitglied (Zeile aus svmembers) oder Weiterleitung zur Anmeldung. */
 function md_require_login(): array
 {
+    md_require_schema();
     $id = $_SESSION[MD_DEMO_MODE ? 'md_member_id' : MD_SESSION_KEY] ?? null;
     $m = $id ? md_one('SELECT * FROM svmembers WHERE member_id = ?', [(int)$id]) : null;
     if (!$m) {
@@ -18,20 +19,10 @@ function md_is_admin(array $m): bool
     return !empty($m['is_admin']);
 }
 
-function md_require_admin(): array
-{
-    $m = md_require_login();
-    if (!md_is_admin($m)) {
-        http_response_code(403);
-        exit('Nur für die Verwaltung.');
-    }
-    return $m;
-}
-
-/** Vorstand/GF zählen für die Sichtbarkeitsstufe "Vorstand/Verwaltung" wie Admins. */
+/** Vorstand/GF-Rolle, Admins und alle mit Recht "Mitglieder ansehen" zählen für die Sichtbarkeitsstufe "Vorstand/Verwaltung". */
 function md_is_privileged(array $m): bool
 {
-    return md_is_admin($m) || in_array(strtolower((string)($m['role'] ?? '')), ['vorstand', 'gf'], true);
+    return md_is_admin($m) || in_array(strtolower((string)($m['role'] ?? '')), ['vorstand', 'gf'], true) || md_can($m, 'members', 'view');
 }
 
 function md_csrf_token(): string
@@ -54,14 +45,15 @@ function md_csrf_check(): void
 }
 
 /**
- * Ziel-Mitglied einer Bearbeitung: das eigene, oder bei Admins ein fremdes (?member=ID).
+ * Ziel-Mitglied einer Aktion: das eigene, oder ein fremdes (?member=ID) mit dem Recht "Mitglieder" (ansehen bzw. bearbeiten, je nach $need).
+ * Ohne Zustimmung zu den Nutzungsbedingungen gibt es nur die eigenen Daten.
  * Gibt [Zielmitglied, Weg 'self'|'admin'] zurück.
  */
-function md_target_member(array $actor, $requested): array
+function md_target_member(array $actor, $requested, string $need = 'view'): array
 {
     $target = (int)$requested ?: (int)$actor['member_id'];
     if ($target === (int)$actor['member_id']) return [$actor, 'self'];
-    if (!md_is_admin($actor)) {
+    if (!md_consent_ok((int)$actor['member_id']) || !md_can($actor, 'members', $need)) {
         http_response_code(403);
         exit('Keine Berechtigung für dieses Mitglied.');
     }

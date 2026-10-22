@@ -55,11 +55,15 @@ foreach (array_filter(array_map('trim', preg_split('/;[ \t]*\R/', $sql))) as $st
 }
 if ($problems) exit("\nFehler beim Anlegen – bitte Meldungen prüfen.\n");
 
-// 3. Grunddaten
+// 3. Schema auf den neuesten Stand bringen (nur Ergänzungen) und Grunddaten
+$added = md_migrate_schema();
+if ($added) $say('Spalten ergänzt: ' . implode(', ', $added));
 if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) {
     foreach (MD_DEFAULT_FUNCTIONS as [$code, $name, $lvl]) md_exec('INSERT INTO md_functions (code, name, sv_aktiv_level) VALUES (?,?,?)', [$code, $name, $lvl]);
     $say('Funktionen eingetragen: ' . count(MD_DEFAULT_FUNCTIONS));
 }
+$n = md_seed_permissions();
+if ($n) $say("Rechtetabelle mit Voreinstellung gefüllt ($n Einträge, änderbar unter Einstellungen).");
 foreach ([['ueb_freibetrag_cents', '330000', 'Jahresfreibetrag Übungsleiterpauschale in Cent (bitte jährlich prüfen)'],
           ['default_aktiv', '0', 'aktiv-Level für Mitglieder ohne gültige Funktion (nur bei Mitgliedern mit Funktionszuordnung)']] as [$k, $v, $d]) {
     if (!md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$k])) md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$k, $v, $d]);

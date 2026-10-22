@@ -69,6 +69,11 @@ Mit `MD_DEMO_MODE=false` liest die Mitgliederverwaltung `$_SESSION['member_id']`
 müssen dafür auf derselben Domain laufen und denselben Session-Cookie teilen (`session.cookie_path = '/'`, siehe `docs/session-cookie-configuration.md`
 der Sitzungsverwaltung). Erst in der Sitzungsverwaltung anmelden, dann `http://localhost/Mitgliederverwaltung/` öffnen.
 
+## Nach einem Update
+
+Nach `git pull` einmal `D:\xampp\php\php.exe tools\install.php` ausführen. Das ergänzt nur Neues (Tabellen, Spalten, Rechtetabelle), löscht nichts und
+ändert nichts an `svmembers`. Ohne diesen Schritt weist die Anwendung mit einer Meldung darauf hin.
+
 ## Häufige Stolpersteine
 
 - **PHP-Erweiterungen:** `gd`, `mbstring`, `pdo_mysql` müssen in der `php.ini` aktiv sein (bei XAMPP standardmäßig der Fall). Benötigt PHP 8.1 oder neuer.

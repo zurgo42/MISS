@@ -10,6 +10,9 @@ gleiche Datenbank, gleiche Mitgliedertabelle (`svmembers`), gleiche Figuren in d
 | **Dashboard** (`/index.php`) | Eigene Daten: 3 Fotos, 3 Adressen, Kontakt und Social Media, Beruf und Interessen, Vorstellung, „Was ich mir im Verein wünsche“. Dazu Vereinsdaten (Gruppen, Funktionen), Finanzen und Änderungsprotokoll. |
 | **Sichtbarkeit** | Je Feld: Nur ich · Vorstand/Verwaltung · Meine Teilgruppen · Alle Mitglieder. Standardwerte im Code (`src/fields.php`) und überschreibbar in `md_visibility_defaults`. Fotos werden nur über `photo.php` mit Rechteprüfung ausgeliefert. |
 | **Protokoll** | Jede Änderung (Feld, alt, neu, wer, wann, Weg: selbst/Admin/Import) in `md_changelog`. |
+| **Rechte** (`admin/settings.php`) | Einstellbare Tabelle: je Funktion und Bereich keine/ansehen/bearbeiten (Verzeichnis, Mitglieder, Finanzen, Nutzungsbedingungen, Import, Einstellungen). Höchste Stufe über alle gültigen Funktionen. Siehe [docs/RECHTE.md](docs/RECHTE.md). |
+| **Kasse** (`admin/finance.php`) | Buchungen pflegen (einzeln und per CSV-Import mit Spaltenzuordnung, Vorschau, Dublettenprüfung), Zahlung vermerken, Storno mit Grund, CSV-Export. Siehe [docs/FINANZEN.md](docs/FINANZEN.md). |
+| **Zustimmung als Voraussetzung** | Ohne Zustimmung zur aktuellen Fassung der Nutzungsbedingungen: nur eigene Daten sehen, nichts ändern. |
 | **Admin** (`/admin/`) | Mitgliederliste, Bearbeiten im Namen des Mitglieds (`/index.php?member=ID`), Status, Eintritt/Austritt, Teilgruppen, Funktionen mit Zeitraum. |
 | **Nutzungsbedingungen** | Versionen mit Gültigkeit (`md_terms_versions`), dokumentierte Zustimmung je Mitglied (`md_terms_consents`: Version, Zeitpunkt, Weg online/schriftlich/Verwaltung/Import, erfassende Person, gekürzte IP, Widerruf). Neue Version mit „Zustimmung nötig“ setzt den Status zurück. |
 | **Finanzen** | Eine Buchungsliste `md_ledger`: Beitrag, Eintritt, Spende (Mitglied → Verein), Kostenerstattung, Übungsleiterpauschale (Verein → Mitglied). Das Dashboard summiert daraus, inkl. Fortschritt zum Freibetrag. |
@@ -52,7 +55,6 @@ Bewusste Sonderfälle: Lukas (alte Fassung der Bedingungen, offene Mahnung), Mia
 ## Offen / nächste Schritte
 
 - Abgleich der Spalten von `svmembers` in der echten Datenbank (der Import legt Mitglieder nur mit Nummer, Name und E-Mail an). Der Rechteabgleich prüft vorab, ob `aktiv`, `funktion` und `role` existieren.
-- Admin-Oberfläche für Standard-Sichtbarkeiten und Teilgruppen/Funktionen anlegen.
-- Finanz-Eingabe durch die Kasse, Beitragslauf, Spendenbescheinigung (später).
+- Beitragslauf, Mahnwesen, Spendenbescheinigung, DATEV-Importprofil (später, mit echter Beispieldatei).
 - Übungsleiter-Freibetrag steht in `md_settings.ueb_freibetrag_cents` (Voreinstellung 3.300 €); bitte jährlich prüfen.
 - Datenschutz: Aufbewahrungs-/Löschfristen nach Austritt, Auskunftsexport je Mitglied.

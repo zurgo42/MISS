@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../src/bootstrap.php';
-$me = md_require_admin();
+$me = md_require_perm('import', 'edit');
 $aid = (int)$me['member_id'];
 $encodings = ['UTF-8' => 'UTF-8', 'Windows-1252' => 'Windows-1252 (Excel/Windows)', 'ISO-8859-1' => 'ISO-8859-1'];
 
@@ -35,8 +35,8 @@ if ($path && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($act === 'save_profile' && trim($_POST['profile_name'] ?? '') !== '') {
         $name = trim($_POST['profile_name']);
         $json = json_encode(['map' => array_map(fn($i) => $headers[$i] ?? '', $map), 'opts' => $opts], JSON_UNESCAPED_UNICODE);
-        if (md_one('SELECT 1 FROM md_import_profiles WHERE name = ?', [$name])) md_exec('UPDATE md_import_profiles SET mapping=?, delimiter_char=?, source_software=? WHERE name=?', [$json, $delim, trim($_POST['source_software'] ?? '') ?: null, $name]);
-        else md_exec('INSERT INTO md_import_profiles (name, source_software, delimiter_char, mapping) VALUES (?,?,?,?)', [$name, trim($_POST['source_software'] ?? '') ?: null, $delim, $json]);
+        if (md_one('SELECT 1 FROM md_import_profiles WHERE name = ?', [$name])) md_exec('UPDATE md_import_profiles SET mapping=?, delimiter_char=?, source_software=?, target=? WHERE name=?', [$json, $delim, trim($_POST['source_software'] ?? '') ?: null, 'members', $name]);
+        else md_exec('INSERT INTO md_import_profiles (name, target, source_software, delimiter_char, mapping) VALUES (?,?,?,?,?)', [$name, 'members', trim($_POST['source_software'] ?? '') ?: null, $delim, $json]);
         md_flash('Zuordnung als Profil „' . $name . '“ gespeichert.');
         header('Location: ' . md_url('admin/import.php?token=') . $token . '&delim=' . urlencode($dparam) . '&profile=' . urlencode($name));
         exit;
@@ -89,7 +89,7 @@ if (!$path) {
 }
 
 [$headers, $rows] = md_import_read($path, $delim);
-$profiles = md_q('SELECT * FROM md_import_profiles ORDER BY name');
+$profiles = md_q("SELECT * FROM md_import_profiles WHERE target = 'members' ORDER BY name");
 $current = [];
 $opts = ['update_existing' => false, 'placeholder_email' => false];
 if (isset($_POST['map'])) {

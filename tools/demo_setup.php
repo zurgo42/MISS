@@ -35,5 +35,7 @@ foreach (['svmembers', 'svressorts'] as $t) demo_insert($pdo, $t, $data[$t]);
 foreach (DEMO_MD_TABLES as $t) demo_insert($pdo, $t, $data[$t]);
 $pdo->commit();
 require_once "$root/src/fields.php";
+require_once "$root/src/permissions.php";
+echo 'md_permissions        ' . md_seed_permissions() . "\n";
 demo_photos($pdo, $data['svmembers']);
 echo "Start: php -S localhost:8080  →  http://localhost:8080/login.php\n";
