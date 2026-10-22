@@ -5,8 +5,10 @@
  *
  *   php tools/demo_load.php            laden (md_-Tabellen müssen leer sein)
  *   php tools/demo_load.php --reset    vorher alle md_-Tabellen leeren (nur md_, nie sv*)
+ *   php tools/demo_load.php --ignore-others   auch laden, wenn svmembers weitere (Test-)Konten enthält; diese bleiben unverändert
  *
- * Schutz: Bricht ab, wenn svmembers andere Mitglieder als die Demo-Figuren enthält oder MD_DEMO_MODE=false ist.
+ * Schutz: Bricht ab (und listet die Konten), wenn svmembers andere Mitglieder als die Demo-Figuren enthält
+ * (außer mit --ignore-others) oder MD_DEMO_MODE=false ist.
  */
 if (PHP_SAPI !== 'cli') exit('nur per Kommandozeile');
 $root = dirname(__DIR__);
@@ -16,8 +18,12 @@ require_once "$root/tools/demo_lib.php";
 if (MD_DB_DRIVER !== 'mysql' || !MD_DEMO_MODE) exit("Nur mit MD_DB_DRIVER='mysql' und MD_DEMO_MODE=true.\n");
 $pdo = md_db();
 
-$others = md_q("SELECT COUNT(*) c FROM svmembers WHERE membership_number NOT LIKE 'DEMO%'")[0]['c'];
-if ((int)$others > 0) exit("Abbruch: svmembers enthält $others Mitglied(er) außerhalb der Demo (DEMO%). Das ist keine reine Demo-Datenbank.\n");
+$others = md_q("SELECT member_id, membership_number, first_name, last_name, email, role FROM svmembers WHERE membership_number NOT LIKE 'DEMO%' OR membership_number IS NULL ORDER BY member_id");
+if ($others && !in_array('--ignore-others', $argv, true)) {
+    echo 'Abbruch: svmembers enthält ' . count($others) . " Mitglied(er) außerhalb der Demo (DEMO%):\n";
+    foreach ($others as $o) printf("  #%d  Nr. %s  %s %s  <%s>  (%s)\n", $o['member_id'], $o['membership_number'] ?? '–', $o['first_name'], $o['last_name'], $o['email'], $o['role']);
+    exit("\nSind das Testkonten, die stehen bleiben sollen? Dann mit --ignore-others starten: Es werden nur die Demo-Figuren befüllt,\nsvmembers und diese Konten bleiben unverändert (die Konten haben danach ein leeres Profil).\n");
+}
 $idmap = [];
 foreach (md_q("SELECT member_id, membership_number FROM svmembers WHERE membership_number LIKE 'DEMO%'") as $r) $idmap[(int)substr($r['membership_number'], 4)] = (int)$r['member_id'];
 if (count($idmap) < 12) exit('Abbruch: Es fehlen Demo-Mitglieder (' . count($idmap) . " von 12 gefunden). Zuerst die Demo der Sitzungsverwaltung importieren.\n");
