@@ -3,6 +3,7 @@
     "anchor_date": "2026-10-22",
     "svmembers": [
         {
+            "is_confidential": 1,
             "member_id": 1,
             "membership_number": "DEMO0001",
             "first_name": "Max",
@@ -15,6 +16,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 1,
             "member_id": 2,
             "membership_number": "DEMO0002",
             "first_name": "Erika",
@@ -27,6 +29,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 1,
             "member_id": 3,
             "membership_number": "DEMO0003",
             "first_name": "Lukas",
@@ -39,6 +42,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 1,
             "member_id": 4,
             "membership_number": "DEMO0004",
             "first_name": "Julia",
@@ -51,6 +55,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 1,
             "member_id": 5,
             "membership_number": "DEMO0005",
             "first_name": "Thomas",
@@ -63,6 +68,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 1,
             "member_id": 6,
             "membership_number": "DEMO0006",
             "first_name": "Sabine",
@@ -75,6 +81,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 1,
             "member_id": 7,
             "membership_number": "DEMO0007",
             "first_name": "Hans",
@@ -87,6 +94,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 0,
             "member_id": 8,
             "membership_number": "DEMO0008",
             "first_name": "Anna",
@@ -99,6 +107,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 0,
             "member_id": 9,
             "membership_number": "DEMO0009",
             "first_name": "Petra",
@@ -111,6 +120,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 0,
             "member_id": 10,
             "membership_number": "DEMO0010",
             "first_name": "Karl",
@@ -123,6 +133,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 0,
             "member_id": 11,
             "membership_number": "DEMO0011",
             "first_name": "Mia",
@@ -135,6 +146,7 @@
             "is_active": 1
         },
         {
+            "is_confidential": 0,
             "member_id": 12,
             "membership_number": "DEMO0012",
             "first_name": "Rolf",
@@ -145,6 +157,43 @@
             "funktion": "Vx",
             "is_admin": 0,
             "is_active": 0
+        }
+    ],
+    "svressorts": [
+        {
+            "ID": 1,
+            "Code": "R01",
+            "Ressort": "Finanzen",
+            "Reihenfolge": 10,
+            "aktiv": 1
+        },
+        {
+            "ID": 2,
+            "Code": "R02",
+            "Ressort": "Bildung",
+            "Reihenfolge": 20,
+            "aktiv": 1
+        },
+        {
+            "ID": 3,
+            "Code": "R03",
+            "Ressort": "Öffentlichkeitsarbeit",
+            "Reihenfolge": 30,
+            "aktiv": 1
+        },
+        {
+            "ID": 4,
+            "Code": "R04",
+            "Ressort": "Sport & Gesundheit",
+            "Reihenfolge": 40,
+            "aktiv": 1
+        },
+        {
+            "ID": 5,
+            "Code": "R05",
+            "Ressort": "Veranstaltungen",
+            "Reihenfolge": 50,
+            "aktiv": 1
         }
     ],
     "md_functions": [
@@ -212,6 +261,11 @@
             "code": "Vx",
             "name": "Ehemaliges Vorstandsmitglied",
             "sv_aktiv_level": 0
+        },
+        {
+            "code": "JT",
+            "name": "Organisator Jahrestreffen",
+            "sv_aktiv_level": 12
         }
     ],
     "md_groups": [
@@ -1100,6 +1154,8 @@
             "function_id": 2,
             "valid_from": "2019-05-01",
             "valid_to": null,
+            "aktiv_level": null,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1107,6 +1163,8 @@
             "function_id": 3,
             "valid_from": "2020-05-01",
             "valid_to": null,
+            "aktiv_level": null,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1114,6 +1172,8 @@
             "function_id": 1,
             "valid_from": "2022-05-01",
             "valid_to": null,
+            "aktiv_level": null,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1121,6 +1181,8 @@
             "function_id": 4,
             "valid_from": "2016-03-01",
             "valid_to": null,
+            "aktiv_level": null,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1128,6 +1190,8 @@
             "function_id": 5,
             "valid_from": "2017-09-01",
             "valid_to": null,
+            "aktiv_level": 17,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1135,6 +1199,8 @@
             "function_id": 6,
             "valid_from": "2019-02-01",
             "valid_to": null,
+            "aktiv_level": null,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1142,6 +1208,8 @@
             "function_id": 7,
             "valid_from": "2014-10-01",
             "valid_to": null,
+            "aktiv_level": 17,
+            "ressort_id": 2,
             "note": null
         },
         {
@@ -1149,6 +1217,8 @@
             "function_id": 7,
             "valid_from": "2018-05-01",
             "valid_to": null,
+            "aktiv_level": 15,
+            "ressort_id": 4,
             "note": null
         },
         {
@@ -1156,6 +1226,8 @@
             "function_id": 7,
             "valid_from": "2021-01-01",
             "valid_to": null,
+            "aktiv_level": 14,
+            "ressort_id": 3,
             "note": null
         },
         {
@@ -1163,6 +1235,8 @@
             "function_id": 11,
             "valid_from": "2023-05-01",
             "valid_to": null,
+            "aktiv_level": 3,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1170,6 +1244,8 @@
             "function_id": 12,
             "valid_from": "2022-04-01",
             "valid_to": null,
+            "aktiv_level": 10,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1177,6 +1253,8 @@
             "function_id": 9,
             "valid_from": "2024-01-01",
             "valid_to": null,
+            "aktiv_level": null,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1184,6 +1262,8 @@
             "function_id": 1,
             "valid_from": "2014-05-01",
             "valid_to": "2023-04-30",
+            "aktiv_level": null,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1191,6 +1271,8 @@
             "function_id": 13,
             "valid_from": "2023-05-01",
             "valid_to": null,
+            "aktiv_level": 0,
+            "ressort_id": null,
             "note": null
         },
         {
@@ -1198,6 +1280,17 @@
             "function_id": 8,
             "valid_from": "2020-01-01",
             "valid_to": "2023-12-31",
+            "aktiv_level": null,
+            "ressort_id": null,
+            "note": null
+        },
+        {
+            "member_id": 7,
+            "function_id": 14,
+            "valid_from": "2023-01-01",
+            "valid_to": null,
+            "aktiv_level": 12,
+            "ressort_id": 5,
             "note": null
         }
     ],

@@ -38,7 +38,7 @@ $insert = function (string $table, array $rows) use ($pdo) {
     echo str_pad($table, 22) . count($rows) . "\n";
 };
 $pdo->beginTransaction();
-foreach (['svmembers', 'md_functions', 'md_groups', 'md_profiles', 'md_addresses', 'md_contacts', 'md_visibility', 'md_member_groups', 'md_member_functions',
+foreach (['svmembers', 'svressorts', 'md_functions', 'md_groups', 'md_profiles', 'md_addresses', 'md_contacts', 'md_visibility', 'md_member_groups', 'md_member_functions',
           'md_ledger', 'md_terms_versions', 'md_terms_consents', 'md_changelog', 'md_import_profiles', 'md_settings'] as $t) $insert($t, $data[$t]);
 $pdo->commit();
 

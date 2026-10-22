@@ -32,12 +32,11 @@ Bewusste Sonderfälle: Lukas (alte Fassung der Bedingungen, offene Mahnung), Mia
 - Tabellen mit Präfix `md_`, Schema in `sql/schema.sql` (MySQL/MariaDB). `md_*.member_id` verweist auf `svmembers.member_id`.
 - Produktiv: `config.php` mit `MD_DB_DRIVER='mysql'`, `MD_DEMO_MODE=false`; die Anmeldung kommt aus der Session der Sitzungsverwaltung (`MD_SESSION_KEY`).
 - Der Demo-Stub `sql/sv_stub.sql` gehört **nicht** in die Produktivdatenbank.
-- Funktionen (`md_functions`, `md_member_functions`) verwenden die Codes aus `docs/PERMISSIONS.md` der Sitzungsverwaltung und führen das zugehörige `aktiv`-Level mit. Die Übernahme in `svmembers.funktion/aktiv` ist als nächster Schritt vorgesehen.
+- **Funktionen und Rechte:** `md_member_functions` (mit Zeitraum, mehrere gleichzeitig möglich) wird nach `svmembers.aktiv/funktion/role` abgeglichen, höchstes Level gewinnt. Läuft nur im Standalone-Betrieb (`MD_SV_MODE`). Details: [docs/RECHTE.md](docs/RECHTE.md).
 
 ## Offen / nächste Schritte
 
-- Abgleich der Spalten von `svmembers` in der echten Datenbank (der Import legt Mitglieder nur mit Nummer, Name und E-Mail an).
-- Funktionen → Rechte im Sitzungstool übernehmen (Schnittstelle).
+- Abgleich der Spalten von `svmembers` in der echten Datenbank (der Import legt Mitglieder nur mit Nummer, Name und E-Mail an). Der Rechteabgleich prüft vorab, ob `aktiv`, `funktion` und `role` existieren.
 - Admin-Oberfläche für Standard-Sichtbarkeiten und Teilgruppen/Funktionen anlegen.
 - Finanz-Eingabe durch die Kasse, Beitragslauf, Spendenbescheinigung (später).
 - Übungsleiter-Freibetrag steht in `md_settings.ueb_freibetrag_cents` (Voreinstellung 3.300 €); bitte jährlich prüfen.

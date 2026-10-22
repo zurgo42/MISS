@@ -8,6 +8,11 @@ if (!is_file($md_config)) {
 }
 require_once $md_config;
 
+if (!defined('MD_SV_MODE') || MD_SV_MODE !== 'standalone') {
+    http_response_code(503);
+    exit('Die Mitgliederverwaltung läuft nur, wenn die Sitzungsverwaltung im Standalone-Betrieb arbeitet (MD_SV_MODE). Im Adapterbetrieb führt die Tabelle "berechtigte".');
+}
+
 date_default_timezone_set('Europe/Berlin');
 mb_internal_encoding('UTF-8');
 
@@ -17,6 +22,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/changelog.php';
 require_once __DIR__ . '/visibility.php';
 require_once __DIR__ . '/profile.php';
+require_once __DIR__ . '/rights.php';
 require_once __DIR__ . '/import.php';
 require_once __DIR__ . '/finance.php';
 require_once __DIR__ . '/terms.php';

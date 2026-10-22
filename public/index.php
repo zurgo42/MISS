@@ -144,22 +144,32 @@ if ($admin) {
     foreach (md_q('SELECT * FROM md_groups ORDER BY name') as $g) echo '<option value="' . (int)$g['group_id'] . '">' . h($g['name']) . '</option>';
     echo '</select> <button>Gruppe zuordnen</button></form>';
 }
-echo '<h3>Funktionen <span class="muted">(Grundlage der Rechte im Sitzungstool)</span></h3><ul class="plain">';
+echo '<h3>Funktionen <span class="muted">(alle werden dokumentiert; für die Rechte im Sitzungstool gilt das höchste Level)</span></h3><ul class="plain">';
+$today = date('Y-m-d');
 foreach ($funcs as $f) {
-    $active = !$f['valid_to'] || $f['valid_to'] >= date('Y-m-d');
-    echo '<li' . ($active ? '' : ' class="muted"') . '>' . h($f['name']) . ' <span class="muted">' . h(md_date($f['valid_from'])) . ' – ' . h($f['valid_to'] ? md_date($f['valid_to']) : 'heute') . '</span>';
-    if ($admin && $active) {
-        $mf = md_one('SELECT member_function_id FROM md_member_functions mf JOIN md_functions x ON x.function_id = mf.function_id WHERE mf.member_id = ? AND x.code = ? AND mf.valid_to IS NULL', [$mid, $f['code']]);
-        if ($mf) echo ' <form class="inline" method="post" action="/save.php">' . $form('func_remove', 'club', '<input type="hidden" name="member_function_id" value="' . (int)$mf['member_function_id'] . '">') . '<button class="link">beenden</button></form>';
-    }
+    $active = (!$f['valid_to'] || $f['valid_to'] >= $today) && (!$f['valid_from'] || $f['valid_from'] <= $today);
+    $res = $f['ressort_id'] ? (md_ressorts()[(int)$f['ressort_id']] ?? null) : null;
+    echo '<li' . ($active ? '' : ' class="muted"') . '>' . h($f['name']) . ($res ? ' – ' . h($res) : '') . ' <span class="muted">Level ' . (int)$f['level'] . ' · ' . h(md_date($f['valid_from'])) . ' – ' . h($f['valid_to'] ? md_date($f['valid_to']) : 'heute') . '</span>';
+    if ($admin && $active) echo ' <form class="inline" method="post" action="/save.php">' . $form('func_remove', 'club', '<input type="hidden" name="member_function_id" value="' . (int)$f['member_function_id'] . '">') . '<button class="link">beenden</button></form>';
     echo '</li>';
 }
 if (!$funcs) echo '<li class="muted">keine</li>';
 echo '</ul>';
+$eff = md_effective_function($mid);
+if (md_member_is_managed($mid)) {
+    echo '<p class="muted">Rechte im Sitzungstool: <strong>' . ($eff ? h($eff['code']) . ', Level ' . (int)$eff['level'] : 'keine Funktion, Level ' . (int)md_setting('default_aktiv', '0')) . '</strong>'
+        . ' · Rolle ' . h(md_role_for($eff ? (int)$eff['level'] : (int)md_setting('default_aktiv', '0'), $eff['code'] ?? null)) . '</p>';
+}
 if ($admin) {
     echo '<form class="inline" method="post" action="/save.php">' . $form('func_add', 'club') . '<select name="function_id">';
-    foreach (md_q('SELECT * FROM md_functions ORDER BY code') as $f) echo '<option value="' . (int)$f['function_id'] . '">' . h($f['code'] . ' – ' . $f['name']) . '</option>';
-    echo '</select> <button>Funktion zuordnen</button></form>';
+    foreach (md_q('SELECT * FROM md_functions ORDER BY code') as $f) echo '<option value="' . (int)$f['function_id'] . '">' . h($f['code'] . ' – ' . $f['name'] . ' (Level ' . $f['sv_aktiv_level'] . ')') . '</option>';
+    echo '</select> <input name="aktiv_level" size="3" placeholder="Level" title="Optional: Level abweichend vom Standard der Funktion (0–19)">';
+    if (md_ressorts()) {
+        echo ' <select name="ressort_id"><option value="">kein Ressort</option>';
+        foreach (md_ressorts() as $rid => $rn) echo '<option value="' . $rid . '">' . h($rn) . '</option>';
+        echo '</select>';
+    }
+    echo ' <button>Funktion zuordnen</button></form>';
 }
 echo '</section>';
 
@@ -188,7 +198,7 @@ echo '</tbody></table></section>';
 // ---- Protokoll
 echo '<section class="card" id="log"><h2>Änderungsprotokoll</h2><table><thead><tr><th>Wann</th><th>Was</th><th>Alt</th><th>Neu</th><th>Wer</th></tr></thead><tbody>';
 foreach ($changes as $c) {
-    $who = $c['changed_via'] === 'admin' ? 'Admin ' . trim($c['first_name'] . ' ' . $c['last_name']) : ($c['changed_via'] === 'import' ? 'Import' : 'selbst');
+    $who = $c['changed_via'] === 'admin' ? 'Admin ' . trim($c['first_name'] . ' ' . $c['last_name']) : ['import' => 'Import', 'system' => 'System (Tagesabgleich)'][$c['changed_via']] ?? 'selbst';
     $long = fn($v) => $v === null ? '–' : (mb_strlen($v) > 60 ? mb_substr($v, 0, 60) . '…' : $v);
     echo '<tr><td>' . h(date('d.m.Y H:i', strtotime($c['changed_at']))) . '</td><td>' . h(md_field_label($c['field_key'])) . '</td><td>' . h($long($c['old_value'])) . '</td><td>' . h($long($c['new_value'])) . '</td><td>' . h($who) . '</td></tr>';
 }

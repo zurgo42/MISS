@@ -19,6 +19,10 @@ define('MD_DEMO_MODE', true);
 define('MD_SESSION_KEY', 'member_id');
 define('MD_LOGIN_URL',   '/login.php');
 
+// Betriebsart der Sitzungsverwaltung. Die Mitgliederverwaltung ist nur im Standalone-Betrieb aktiv
+// ('standalone': svmembers ist führend). Im Adapterbetrieb ('adapter', Tabelle "berechtigte" führend) bleibt sie gesperrt.
+define('MD_SV_MODE', 'standalone');
+
 // Ablage für Fotos und Importdateien (außerhalb des Web-Roots empfohlen)
 define('MD_STORAGE_DIR', __DIR__ . '/storage');
 

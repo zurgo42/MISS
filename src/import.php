@@ -208,6 +208,7 @@ function md_import_apply(array $plan, int $actor): array
                     md_log_change($id, 'function', null, $f['code'] . ' ' . $f['name'], $actor, 'import');
                 }
             }
+            md_sync_member_rights($id, $actor, 'import');
         }
         $pdo->commit();
     } catch (Throwable $e) {

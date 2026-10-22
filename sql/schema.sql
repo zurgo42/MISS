@@ -109,6 +109,8 @@ CREATE TABLE IF NOT EXISTS md_member_functions (
     function_id INT NOT NULL,
     valid_from DATE DEFAULT NULL,
     valid_to DATE DEFAULT NULL,
+    aktiv_level INT DEFAULT NULL,                  -- überschreibt md_functions.sv_aktiv_level (z. B. RL 14/15/17)
+    ressort_id INT DEFAULT NULL,                   -- lose Verknüpfung zu svressorts.ID (Ressortleitung), kein Fremdschlüssel
     note VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE,
     FOREIGN KEY (function_id) REFERENCES md_functions(function_id) ON DELETE CASCADE

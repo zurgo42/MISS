@@ -24,19 +24,26 @@ switch ($section) {
     case 'func_add':
         $f = md_one('SELECT * FROM md_functions WHERE function_id = ?', [(int)($_POST['function_id'] ?? 0)]);
         if ($f) {
-            md_exec('INSERT INTO md_member_functions (member_id, function_id, valid_from, valid_to) VALUES (?,?,?,?)',
-                [$mid, $f['function_id'], md_parse_date($_POST['valid_from'] ?? '') ?? date('Y-m-d'), md_parse_date($_POST['valid_to'] ?? '')]);
-            md_log_change($mid, 'function', null, $f['code'] . ' ' . $f['name'], $aid, $via);
+            $lvl = trim((string)($_POST['aktiv_level'] ?? ''));
+            $lvl = ctype_digit($lvl) && (int)$lvl <= 19 ? (int)$lvl : null;
+            $res = (int)($_POST['ressort_id'] ?? 0);
+            $res = isset(md_ressorts()[$res]) ? $res : null;
+            md_exec('INSERT INTO md_member_functions (member_id, function_id, valid_from, valid_to, aktiv_level, ressort_id) VALUES (?,?,?,?,?,?)',
+                [$mid, $f['function_id'], md_parse_date($_POST['valid_from'] ?? '') ?? date('Y-m-d'), md_parse_date($_POST['valid_to'] ?? ''), $lvl, $res]);
+            md_log_change($mid, 'function', null, $f['code'] . ' ' . $f['name'] . ($res ? ' (' . md_ressorts()[$res] . ')' : ''), $aid, $via);
+            $sync = md_sync_member_rights($mid, $aid, $via);
         }
-        $msg = 'Funktion zugeordnet.';
+        $msg = 'Funktion zugeordnet.' . (!empty($sync) ? ' Rechte im Sitzungstool angepasst.' : '');
         break;
     case 'func_remove':
         $r = md_one('SELECT mf.*, f.code, f.name FROM md_member_functions mf JOIN md_functions f ON f.function_id = mf.function_id
                      WHERE mf.member_function_id = ? AND mf.member_id = ?', [(int)($_POST['member_function_id'] ?? 0), $mid]);
         if ($r) {
-            md_exec('UPDATE md_member_functions SET valid_to = ? WHERE member_function_id = ?', [date('Y-m-d'), $r['member_function_id']]);
+            // Ende = gestern, damit die Rechte sofort entfallen (valid_to ist inklusive)
+            md_exec('UPDATE md_member_functions SET valid_to = ? WHERE member_function_id = ?', [date('Y-m-d', strtotime('-1 day')), $r['member_function_id']]);
             md_log_change($mid, 'function', $r['code'] . ' ' . $r['name'], 'beendet', $aid, $via);
+            $sync = md_sync_member_rights($mid, $aid, $via);
         }
-        $msg = 'Funktion beendet.';
+        $msg = 'Funktion beendet.' . (!empty($sync) ? ' Rechte im Sitzungstool angepasst.' : '');
         break;
 }

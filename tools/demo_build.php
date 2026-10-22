@@ -30,9 +30,10 @@ function demo_build(string $anchor): array
         [11, 'Mia',    'Technik',    'mia',    'mitglied',      10, 'AD',  1, 1],
         [12, 'Rolf',   'Ehemals',    'rolf',   'mitglied',      0,  'Vx',  0, 0],
     ];
+    $conf = [1 => 1, 2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1, 7 => 1, 8 => 0, 9 => 0, 10 => 0, 11 => 0, 12 => 0];
     $svmembers = [];
     foreach ($members as [$id, $fn, $ln, $mail, $role, $aktiv, $fkt, $adm, $act]) {
-        $svmembers[] = ['member_id' => $id, 'membership_number' => sprintf('DEMO%04d', $id), 'first_name' => $fn, 'last_name' => $ln,
+        $svmembers[] = ['is_confidential' => $conf[$id], 'member_id' => $id, 'membership_number' => sprintf('DEMO%04d', $id), 'first_name' => $fn, 'last_name' => $ln,
             'email' => "$mail@example.com", 'role' => $role, 'aktiv' => $aktiv, 'funktion' => $fkt, 'is_admin' => $adm, 'is_active' => $act];
     }
 
@@ -40,7 +41,7 @@ function demo_build(string $anchor): array
         ['Vo', 'Vorstandsmitglied', 19], ['FVo', 'Vorstand Finanzen', 19], ['FVv', 'Vorstand + Vertretung Finanzvorstand', 19],
         ['GF', 'Geschäftsführung', 18], ['VA', 'Vorstandsassistenz', 18], ['SV', 'Sekretariat Vorstand', 11],
         ['RL', 'Ressortleitung', 15], ['PL', 'Projektleitung', 12], ['MB', 'Mitgliederbetreuung', 9], ['Ka', 'Kassenführung', 9],
-        ['FP', 'Finanzprüfung', 3], ['AD', 'Technischer Admin', 18], ['Vx', 'Ehemaliges Vorstandsmitglied', 0],
+        ['FP', 'Finanzprüfung', 3], ['AD', 'Technischer Admin', 18], ['Vx', 'Ehemaliges Vorstandsmitglied', 0], ['JT', 'Organisator Jahrestreffen', 12],
     ];
     $fid = array_flip(array_column($functions, 0));
     $groups = [
@@ -144,13 +145,15 @@ function demo_build(string $anchor): array
            [7, 'Wandergruppe'], [7, 'Regionalgruppe Süd'], [8, 'Regionalgruppe Süd'], [8, 'Wandergruppe'], [9, 'Regionalgruppe Nord'], [9, 'Schachgruppe'],
            [10, 'Regionalgruppe Süd'], [11, 'Regionalgruppe Süd'], [11, 'Projektgruppe Satzung']];
     $memberGroups = array_map(fn($x) => ['member_id' => $x[0], 'group_id' => $gid[$x[1]] + 1, 'since' => ($Y - 3) . '-01-01', 'until' => null], $mg);
-    $mf = [[1, 'FVo', ($Y - 7) . '-05-01', null], [2, 'FVv', ($Y - 6) . '-05-01', null], [3, 'Vo', ($Y - 4) . '-05-01', null],
-           [4, 'GF', ($Y - 10) . '-03-01', null], [5, 'VA', ($Y - 9) . '-09-01', null], [6, 'SV', ($Y - 7) . '-02-01', null],
-           [7, 'RL', ($Y - 12) . '-10-01', null], [8, 'RL', ($Y - 8) . '-05-01', null], [9, 'RL', ($Y - 5) . '-01-01', null],
-           [10, 'FP', ($Y - 3) . '-05-01', null], [11, 'AD', ($Y - 4) . '-04-01', null], [5, 'MB', ($Y - 2) . '-01-01', null],
-           [12, 'Vo', ($Y - 12) . '-05-01', ($Y - 3) . '-04-30'], [12, 'Vx', ($Y - 3) . '-05-01', null],
-           [3, 'PL', ($Y - 6) . '-01-01', ($Y - 3) . '-12-31']];
-    $memberFunctions = array_map(fn($x) => ['member_id' => $x[0], 'function_id' => $fid[$x[1]] + 1, 'valid_from' => $x[2], 'valid_to' => $x[3], 'note' => null], $mf);
+    // [Mitglied, Code, von, bis, Level (null = Standard der Funktion), Ressort-ID]
+    $svressorts = [[1, 'R01', 'Finanzen'], [2, 'R02', 'Bildung'], [3, 'R03', 'Öffentlichkeitsarbeit'], [4, 'R04', 'Sport & Gesundheit'], [5, 'R05', 'Veranstaltungen']];
+    $mf = [[1, 'FVo', ($Y - 7) . '-05-01', null, null, null], [2, 'FVv', ($Y - 6) . '-05-01', null, null, null], [3, 'Vo', ($Y - 4) . '-05-01', null, null, null],
+           [4, 'GF', ($Y - 10) . '-03-01', null, null, null], [5, 'VA', ($Y - 9) . '-09-01', null, 17, null], [6, 'SV', ($Y - 7) . '-02-01', null, null, null],
+           [7, 'RL', ($Y - 12) . '-10-01', null, 17, 2], [8, 'RL', ($Y - 8) . '-05-01', null, 15, 4], [9, 'RL', ($Y - 5) . '-01-01', null, 14, 3],
+           [10, 'FP', ($Y - 3) . '-05-01', null, 3, null], [11, 'AD', ($Y - 4) . '-04-01', null, 10, null], [5, 'MB', ($Y - 2) . '-01-01', null, null, null],
+           [12, 'Vo', ($Y - 12) . '-05-01', ($Y - 3) . '-04-30', null, null], [12, 'Vx', ($Y - 3) . '-05-01', null, 0, null],
+           [3, 'PL', ($Y - 6) . '-01-01', ($Y - 3) . '-12-31', null, null], [7, 'JT', ($Y - 3) . '-01-01', null, 12, 5]];
+    $memberFunctions = array_map(fn($x) => ['member_id' => $x[0], 'function_id' => $fid[$x[1]] + 1, 'valid_from' => $x[2], 'valid_to' => $x[3], 'aktiv_level' => $x[4], 'ressort_id' => $x[5], 'note' => null], $mf);
 
     // Finanzen: [Mitglied, Art, Betrag €, Datum, Fällig, Bezahlt, Status, Beschreibung, Beleg]
     $L = [];
@@ -232,6 +235,7 @@ function demo_build(string $anchor): array
     return [
         'generator' => 'tools/demo_build.php', 'anchor_date' => $anchor,
         'svmembers' => $svmembers,
+        'svressorts' => array_map(fn($r, $i) => ['ID' => $i + 1, 'Code' => $r[1], 'Ressort' => $r[2], 'Reihenfolge' => ($i + 1) * 10, 'aktiv' => 1], $svressorts, array_keys($svressorts)),
         'md_functions' => array_map(fn($f) => ['code' => $f[0], 'name' => $f[1], 'sv_aktiv_level' => $f[2]], $functions),
         'md_groups' => array_map(fn($g) => ['name' => $g[0], 'kind' => $g[1]], $groups),
         'md_profiles' => $profiles, 'md_addresses' => $addresses, 'md_contacts' => $contacts, 'md_visibility' => $visibility,

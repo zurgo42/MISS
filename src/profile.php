@@ -42,7 +42,8 @@ function md_load_groups(int $member): array
 
 function md_load_functions(int $member): array
 {
-    return md_q('SELECT f.code, f.name, mf.valid_from, mf.valid_to FROM md_member_functions mf
+    return md_q('SELECT f.code, f.name, mf.member_function_id, mf.valid_from, mf.valid_to, mf.ressort_id,
+                        COALESCE(mf.aktiv_level, f.sv_aktiv_level) AS level FROM md_member_functions mf
                  JOIN md_functions f ON f.function_id = mf.function_id
                  WHERE mf.member_id = ? ORDER BY mf.valid_from DESC', [$member]);
 }

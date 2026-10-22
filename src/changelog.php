@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-function md_log_change(int $member, string $key, ?string $old, ?string $new, int $by, string $via): void
+function md_log_change(int $member, string $key, ?string $old, ?string $new, ?int $by, string $via): void
 {
     if ((string)$old === (string)$new) return;
     md_exec('INSERT INTO md_changelog (member_id, field_key, old_value, new_value, changed_by, changed_via, changed_at) VALUES (?,?,?,?,?,?,?)',
@@ -23,6 +23,6 @@ function md_field_label(string $key): string
     if (preg_match('/^photo\.(\d)$/', $key, $m)) return 'Foto ' . $m[1];
     if (preg_match('/^visibility\.(.+)$/', $key, $m)) return 'Sichtbarkeit: ' . (md_visibility_keys()[$m[1]][0] ?? $m[1]);
     $static = ['status' => 'Status', 'join_date' => 'Eintritt', 'leave_date' => 'Austritt', 'admin_note' => 'Verwaltungsnotiz',
-        'consent' => 'Zustimmung Nutzungsbedingungen', 'created' => 'Mitglied', 'group' => 'Teilgruppe', 'function' => 'Funktion'];
+        'consent' => 'Zustimmung Nutzungsbedingungen', 'created' => 'Mitglied', 'rights' => 'Rechte im Sitzungstool', 'group' => 'Teilgruppe', 'function' => 'Funktion'];
     return $static[$key] ?? $key;
 }
