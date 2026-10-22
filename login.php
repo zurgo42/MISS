@@ -11,7 +11,7 @@ md_header('Demo-Anmeldung');
 echo '<h1>Demo-Anmeldung</h1><p class="muted">Wähle eine Figur. Es sind dieselben wie in der Sitzungsverwaltung.</p><div class="grid3">';
 foreach (md_q('SELECT * FROM svmembers ORDER BY member_id') as $m) {
     echo '<a class="card pick" href="login.php?as=' . (int)$m['member_id'] . '"><span class="avatar">' . h(md_initials($m)) . '</span><strong>'
-        . h($m['first_name'] . ' ' . $m['last_name']) . '</strong><span class="muted">' . h($m['role']) . ($m['funktion'] ? ' · ' . h($m['funktion']) : '') . ($m['is_admin'] ? ' · Admin' : '') . '</span></a>';
+        . h($m['first_name'] . ' ' . $m['last_name']) . '</strong><span class="muted">' . h($m['role']) . (($fkt = $m['funktion'] ?? $m['Funktion'] ?? '') ? ' · ' . h($fkt) : '') . (!empty($m['is_admin']) ? ' · Admin' : '') . '</span></a>';
 }
 echo '</div>';
 md_footer();
