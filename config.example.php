@@ -4,7 +4,8 @@
  * Diese Vorlage ist auf die lokale Demo (SQLite, Demo-Login) eingestellt.
  */
 
-// Datenbank: 'sqlite' (nur Demo/Entwicklung) oder 'mysql' (Produktion, gleiche DB wie die Sitzungsverwaltung)
+// Datenbank: 'sqlite' (nur Demo/Entwicklung ohne MySQL) oder 'mysql' (gleiche Datenbank wie die Sitzungsverwaltung).
+// XAMPP: MD_DB_DRIVER 'mysql', MD_DB_HOST 'localhost', MD_DB_USER 'root', MD_DB_PASS '' und MD_DB_NAME wie in der Sitzungsverwaltung.
 define('MD_DB_DRIVER',   'sqlite');
 define('MD_SQLITE_FILE', __DIR__ . '/storage/demo.sqlite');
 define('MD_DB_HOST',     'localhost');
@@ -17,7 +18,10 @@ define('MD_DEMO_MODE', true);
 
 // Produktiv: Mitglied kommt aus der Sitzung der Sitzungsverwaltung.
 define('MD_SESSION_KEY', 'member_id');
-define('MD_LOGIN_URL',   '/login.php');
+define('MD_LOGIN_URL',   '/Sitzungsverwaltung/login.php');   // Anmeldeseite der Sitzungsverwaltung (gleiche Domain)
+
+// Basis-Pfad der Anwendung, z. B. '/Mitgliederverwaltung'. Wird automatisch erkannt; nur bei Problemen von Hand setzen:
+// define('MD_BASE_URL', '/Mitgliederverwaltung');
 
 // Betriebsart der Sitzungsverwaltung. Die Mitgliederverwaltung ist nur im Standalone-Betrieb aktiv
 // ('standalone': svmembers ist führend). Im Adapterbetrieb ('adapter', Tabelle "berechtigte" führend) bleibt sie gesperrt.

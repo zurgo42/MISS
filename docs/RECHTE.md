@@ -20,7 +20,7 @@ von Hand geändert werden. Der nächste Abgleich würde sie wieder überschreibe
 | Level | `md_member_functions.aktiv_level`, sonst `md_functions.sv_aktiv_level` (Standard laut `PERMISSIONS.md`). Individuelle Abweichungen (RL 14/15/17, VA 17) gehören an die Zuordnung. |
 | Zeiträume | Beginn in der Zukunft wirkt erst ab dem Tag. Ende ist inklusive; „beenden“ in der Oberfläche setzt „gestern“, damit die Rechte sofort entfallen. |
 | Keine gültige Funktion mehr | `funktion` wird leer, `aktiv` = `md_settings.default_aktiv` (Voreinstellung 0). Ehemalige Funktionen (`Vx`, `Rx`, `Xx`) haben Level 0. |
-| Rolle | Wie `mapRole()` in `adapters/MemberAdapter.php`: `aktiv` 19 → `vorstand`, 18 → `gf`, sonst nach Funktion (Vo/FVo/FVv, VA/SV/MB/Ka/Orga, RL/PL/JT/TM, sonst `mitglied`). |
+| Rolle | In `svmembers.role` (ENUM `'vorstand','gf','assistenz','fuehrungsteam','Mitglied'`) wird exakt diese Schreibweise geschrieben. Ableitung wie `mapRole()` in `adapters/MemberAdapter.php`: `aktiv` 19 → `vorstand`, 18 → `gf`, sonst nach Funktion (Vo/FVo/FVv, VA/SV/MB/Ka/Orga, RL/PL/JT/TM, sonst `mitglied`). |
 | `is_admin`, `is_confidential` | Werden **nie** verändert, bleiben von Hand gepflegt. |
 | Nicht verwaltete Mitglieder | Ohne jede Funktionszuordnung in `md_member_functions` bleibt `svmembers` unangetastet (Einführung Schritt für Schritt möglich). |
 | Ressortleitung | Ist eine Funktion (`RL`). Das Ressort steht in `md_member_functions.ressort_id` und verweist lose auf `svressorts.ID` (die Ressortliste der Sitzungsverwaltung). Es steuert hier keine Rechte. |

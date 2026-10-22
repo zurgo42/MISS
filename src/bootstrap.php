@@ -13,6 +13,17 @@ if (!defined('MD_SV_MODE') || MD_SV_MODE !== 'standalone') {
     exit('Die Mitgliederverwaltung läuft nur, wenn die Sitzungsverwaltung im Standalone-Betrieb arbeitet (MD_SV_MODE). Im Adapterbetrieb führt die Tabelle "berechtigte".');
 }
 
+// Basis-Pfad der Anwendung (z. B. "/Mitgliederverwaltung" unter XAMPP). Kann in config.php mit MD_BASE_URL festgelegt werden.
+if (!defined('MD_BASE_URL')) {
+    $root = str_replace('\\', '/', (string)realpath(__DIR__ . '/..'));
+    $doc = str_replace('\\', '/', (string)realpath($_SERVER['DOCUMENT_ROOT'] ?? ''));
+    define('MD_BASE_URL', ($doc !== '' && stripos($root, $doc) === 0) ? rtrim(substr($root, strlen($doc)), '/') : '');
+}
+function md_url(string $path = ''): string
+{
+    return MD_BASE_URL . '/' . ltrim($path, '/');
+}
+
 date_default_timezone_set('Europe/Berlin');
 mb_internal_encoding('UTF-8');
 

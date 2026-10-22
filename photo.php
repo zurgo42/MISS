@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/src/bootstrap.php';
 $viewer = md_require_login();
 $p = md_one('SELECT * FROM md_photos WHERE photo_id = ?', [(int)($_GET['id'] ?? 0)]);
 if (!$p) { http_response_code(404); exit; }

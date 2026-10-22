@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../src/bootstrap.php';
+require_once __DIR__ . '/../src/bootstrap.php';
 $me = md_require_admin();
 $aid = (int)$me['member_id'];
 $encodings = ['UTF-8' => 'UTF-8', 'Windows-1252' => 'Windows-1252 (Excel/Windows)', 'ISO-8859-1' => 'ISO-8859-1'];
@@ -8,11 +8,11 @@ $encodings = ['UTF-8' => 'UTF-8', 'Windows-1252' => 'Windows-1252 (Excel/Windows
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'upload') {
     md_csrf_check();
     $f = $_FILES['csv'] ?? null;
-    if (!$f || $f['error'] !== UPLOAD_ERR_OK || $f['size'] > 20 * 1024 * 1024) { md_flash('Upload fehlgeschlagen (max. 20 MB).', 'err'); header('Location: /admin/import.php'); exit; }
+    if (!$f || $f['error'] !== UPLOAD_ERR_OK || $f['size'] > 20 * 1024 * 1024) { md_flash('Upload fehlgeschlagen (max. 20 MB).', 'err'); header('Location: ' . md_url('admin/import.php')); exit; }
     $token = md_import_store($f['tmp_name'], $_POST['encoding'] ?? 'UTF-8');
     $_SESSION['md_import_name'][$token] = basename($f['name']);
     $delim = ($_POST['delimiter'] ?? 'auto') === 'auto' ? md_import_detect_delimiter(md_import_path($token)) : ($_POST['delimiter'] === 'tab' ? "\t" : $_POST['delimiter']);
-    header('Location: /admin/import.php?token=' . $token . '&delim=' . urlencode($delim === "\t" ? 'tab' : $delim));
+    header('Location: ' . md_url('admin/import.php?token=') . $token . '&delim=' . urlencode($delim === "\t" ? 'tab' : $delim));
     exit;
 }
 
@@ -38,7 +38,7 @@ if ($path && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (md_one('SELECT 1 FROM md_import_profiles WHERE name = ?', [$name])) md_exec('UPDATE md_import_profiles SET mapping=?, delimiter_char=?, source_software=? WHERE name=?', [$json, $delim, trim($_POST['source_software'] ?? '') ?: null, $name]);
         else md_exec('INSERT INTO md_import_profiles (name, source_software, delimiter_char, mapping) VALUES (?,?,?,?)', [$name, trim($_POST['source_software'] ?? '') ?: null, $delim, $json]);
         md_flash('Zuordnung als Profil „' . $name . '“ gespeichert.');
-        header('Location: /admin/import.php?token=' . $token . '&delim=' . urlencode($dparam) . '&profile=' . urlencode($name));
+        header('Location: ' . md_url('admin/import.php?token=') . $token . '&delim=' . urlencode($dparam) . '&profile=' . urlencode($name));
         exit;
     }
     if ($act === 'preview' || $act === 'commit') {
@@ -57,7 +57,7 @@ if ($path && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($_SESSION['md_import_sig']);
                 @unlink($path);
                 md_flash("Import abgeschlossen: $c angelegt, $u aktualisiert, $s übersprungen.");
-                header('Location: /admin/import.php');
+                header('Location: ' . md_url('admin/import.php'));
                 exit;
             } catch (Throwable $e) {
                 error_log('md import: ' . $e->getMessage());

@@ -1,0 +1,40 @@
+<?php
+/** Gemeinsame Hilfen für demo_setup.php (SQLite) und demo_load.php (MySQL, vorhandene Demo-Mitglieder). */
+
+const DEMO_MD_TABLES = ['md_functions', 'md_groups', 'md_profiles', 'md_addresses', 'md_contacts', 'md_visibility', 'md_member_groups', 'md_member_functions',
+                        'md_ledger', 'md_terms_versions', 'md_terms_consents', 'md_changelog', 'md_import_profiles', 'md_settings'];
+
+function demo_insert(PDO $pdo, string $table, array $rows, array $idmap = []): void
+{
+    foreach ($rows as $r) {
+        foreach (['member_id', 'changed_by', 'recorded_by', 'started_by'] as $k) if (isset($r[$k], $idmap[$r[$k]])) $r[$k] = $idmap[$r[$k]];
+        $cols = array_keys($r);
+        $pdo->prepare("INSERT INTO $table (" . implode(',', $cols) . ') VALUES (' . implode(',', array_fill(0, count($cols), '?')) . ')')->execute(array_values($r));
+    }
+    echo str_pad($table, 22) . count($rows) . "\n";
+}
+
+/** Platzhalter-Fotos (SVG mit Initialen); Anzahl Fotoplätze je Figur wie im Demo-Stand. */
+function demo_photos(PDO $pdo, array $svmembers, array $idmap = []): void
+{
+    $dir = MD_STORAGE_DIR . '/photos';
+    if (!is_dir($dir)) mkdir($dir, 0775, true);
+    foreach (glob("$dir/*_demo.svg") ?: [] as $f) unlink($f);
+    $hues = [210, 30, 150, 280, 0, 180, 50, 320, 100, 240, 20, 200];
+    $counts = [1 => 3, 2 => 2, 3 => 3, 4 => 1, 5 => 1, 6 => 2, 7 => 3, 8 => 2, 9 => 3, 10 => 1, 11 => 0, 12 => 0];
+    foreach ($svmembers as $m) {
+        $demoId = $m['member_id'];
+        $id = $idmap[$demoId] ?? $demoId;
+        for ($s = 1; $s <= $counts[$demoId]; $s++) {
+            $ini = mb_strtoupper(mb_substr($m['first_name'], 0, 1) . mb_substr($m['last_name'], 0, 1));
+            $hue = ($hues[$demoId - 1] + ($s - 1) * 25) % 360;
+            $name = sprintf('%d_%d_demo.svg', $id, $s);
+            file_put_contents("$dir/$name", '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="hsl(' . $hue . ',55%,78%)"/>'
+                . '<text x="100" y="118" font-family="sans-serif" font-size="70" text-anchor="middle" fill="hsl(' . $hue . ',50%,25%)">' . htmlspecialchars($ini) . '</text>'
+                . '<text x="100" y="180" font-family="sans-serif" font-size="14" text-anchor="middle" fill="hsl(' . $hue . ',50%,25%)">Demo-Foto ' . $s . '</text></svg>');
+            $pdo->prepare('INSERT INTO md_photos (member_id, slot, file_name, mime, caption) VALUES (?,?,?,?,?)')
+                ->execute([$id, $s, $name, 'image/svg+xml', $s === 1 ? 'Portrait' : ($s === 2 ? 'Beim Jahrestreffen' : 'Im Urlaub')]);
+        }
+    }
+    echo "Fotos angelegt.\n";
+}

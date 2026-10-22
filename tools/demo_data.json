@@ -126,7 +126,7 @@
             "first_name": "Karl",
             "last_name": "Prüfer",
             "email": "karl@example.com",
-            "role": "mitglied",
+            "role": "Mitglied",
             "aktiv": 3,
             "funktion": "FP",
             "is_admin": 0,
@@ -139,7 +139,7 @@
             "first_name": "Mia",
             "last_name": "Technik",
             "email": "mia@example.com",
-            "role": "mitglied",
+            "role": "Mitglied",
             "aktiv": 10,
             "funktion": "AD",
             "is_admin": 1,
@@ -152,7 +152,7 @@
             "first_name": "Rolf",
             "last_name": "Ehemals",
             "email": "rolf@example.com",
-            "role": "mitglied",
+            "role": "Mitglied",
             "aktiv": 0,
             "funktion": "Vx",
             "is_admin": 0,
@@ -266,6 +266,26 @@
             "code": "JT",
             "name": "Organisator Jahrestreffen",
             "sv_aktiv_level": 12
+        },
+        {
+            "code": "TM",
+            "name": "Teamleitung",
+            "sv_aktiv_level": 11
+        },
+        {
+            "code": "Orga",
+            "name": "Hilfsfunktion Antragstellung",
+            "sv_aktiv_level": 9
+        },
+        {
+            "code": "Rx",
+            "name": "Ehemalige Ressortleitung",
+            "sv_aktiv_level": 0
+        },
+        {
+            "code": "Xx",
+            "name": "Früher berechtigtes Mitglied",
+            "sv_aktiv_level": 0
         }
     ],
     "md_groups": [

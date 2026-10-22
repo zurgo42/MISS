@@ -16,11 +16,26 @@ gleiche Datenbank, gleiche Mitgliedertabelle (`svmembers`), gleiche Figuren in d
 | **CSV-Import** (`/admin/import.php`) | Upload (UTF-8/Windows-1252, Trennzeichen automatisch), Spalten zuordnen (mit automatischem Vorschlag), speicherbare Profile je Quellsoftware, Vorschau mit Fehlerliste und Dublettenprüfung, Import in einer Transaktion, Lauf-Protokoll. |
 | **Mitgliederverzeichnis** | Zeigt jedem Betrachter nur die für ihn freigegebenen Felder. |
 
-## Demo starten
+## Lokal einrichten (Windows/XAMPP, gleiche Datenbank wie die Sitzungsverwaltung)
+
+Schritt für Schritt in [docs/XAMPP.md](docs/XAMPP.md). Kurzfassung:
+
+```
+cd C:\xampp\htdocs
+git clone https://github.com/zurgo42/Mitgliederverwaltung.git Mitgliederverwaltung
+cd Mitgliederverwaltung
+copy config.example.php config.php        (Datenbankzugang eintragen)
+C:\xampp\php\php.exe tools\install.php --check
+C:\xampp\php\php.exe tools\install.php
+C:\xampp\php\php.exe tools\demo_load.php      (nur wenn die Demo-Mitglieder der Sitzungsverwaltung in der Datenbank sind)
+```
+Dann `http://localhost/Mitgliederverwaltung/login.php`.
+
+## Demo starten (ohne MySQL, nur SQLite)
 
 ```
 php tools/demo_setup.php            # legt config.php an, baut SQLite-Demo mit Demo-Daten und Platzhalter-Fotos
-php -S localhost:8080 -t public
+php -S localhost:8080
 ```
 
 Dann `http://localhost:8080/login.php` und eine der 12 Figuren wählen (Max Mustermann … Rolf Ehemals, wie in der Sitzungsverwaltung).

@@ -7,7 +7,7 @@ function md_require_login(): array
     $id = $_SESSION[MD_DEMO_MODE ? 'md_member_id' : MD_SESSION_KEY] ?? null;
     $m = $id ? md_one('SELECT * FROM svmembers WHERE member_id = ?', [(int)$id]) : null;
     if (!$m) {
-        header('Location: ' . (MD_DEMO_MODE ? '/login.php' : MD_LOGIN_URL));
+        header('Location: ' . (MD_DEMO_MODE ? md_url('login.php') : MD_LOGIN_URL));
         exit;
     }
     return $m;
@@ -31,7 +31,7 @@ function md_require_admin(): array
 /** Vorstand/GF zählen für die Sichtbarkeitsstufe "Vorstand/Verwaltung" wie Admins. */
 function md_is_privileged(array $m): bool
 {
-    return md_is_admin($m) || in_array($m['role'] ?? '', ['vorstand', 'gf'], true);
+    return md_is_admin($m) || in_array(strtolower((string)($m['role'] ?? '')), ['vorstand', 'gf'], true);
 }
 
 function md_csrf_token(): string

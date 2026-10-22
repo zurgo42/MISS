@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/src/bootstrap.php';
 $me = md_require_login();
 $q = trim((string)($_GET['q'] ?? ''));
 $rows = md_q("SELECT s.*, p.status, p.nickname, p.occupation, p.employer, p.hobbies, p.interests, p.intro_text, p.birthdate
@@ -34,7 +34,7 @@ foreach ($rows as $r) {
     $shown++;
     $ph = null;
     foreach ($photos as $s => $p) if ($see("photo.$s")) { $ph = $p; break; }
-    echo '<article class="card person">' . ($ph ? '<img class="thumb" src="/photo.php?id=' . (int)$ph['photo_id'] . '" alt="">' : '<span class="avatar">' . h(md_initials($r)) . '</span>');
+    echo '<article class="card person">' . ($ph ? '<img class="thumb" src="photo.php?id=' . (int)$ph['photo_id'] . '" alt="">' : '<span class="avatar">' . h(md_initials($r)) . '</span>');
     echo '<h3>' . h($r['first_name'] . ' ' . $r['last_name']) . '</h3><p>';
     foreach ($funcs as $f) echo '<span class="chip fn">' . h($f['name']) . '</span> ';
     foreach ($groups as $g) echo '<span class="chip">' . h($g['name']) . '</span> ';

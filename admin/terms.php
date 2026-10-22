@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../src/bootstrap.php';
+require_once __DIR__ . '/../src/bootstrap.php';
 $me = md_require_admin();
 $aid = (int)$me['member_id'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             md_flash('Zustimmung erfasst.');
         } else md_flash('Mitglied und Datum prüfen.', 'err');
     }
-    header('Location: /admin/terms.php');
+    header('Location: ' . md_url('admin/terms.php'));
     exit;
 }
 md_header('Nutzungsbedingungen verwalten', $me, 'terms');
@@ -32,7 +32,7 @@ echo '<h1>Nutzungsbedingungen</h1><section class="card"><h2>Versionen</h2><table
 $total = (int)md_one('SELECT COUNT(*) c FROM svmembers WHERE is_active = 1')['c'];
 foreach (md_q('SELECT * FROM md_terms_versions ORDER BY valid_from DESC') as $v) {
     $n = (int)md_one('SELECT COUNT(DISTINCT member_id) c FROM md_terms_consents WHERE terms_id = ? AND revoked_at IS NULL', [$v['terms_id']])['c'];
-    echo '<tr><td><a href="/terms.php?id=' . (int)$v['terms_id'] . '">' . h($v['version_label']) . '</a></td><td>' . h($v['title']) . '</td><td>' . h(md_date($v['valid_from'])) . '</td><td>' . ($v['requires_consent'] ? 'ja' : 'nein') . '</td><td>' . $n . ' von ' . $total . '</td></tr>';
+    echo '<tr><td><a href="terms.php?id=' . (int)$v['terms_id'] . '">' . h($v['version_label']) . '</a></td><td>' . h($v['title']) . '</td><td>' . h(md_date($v['valid_from'])) . '</td><td>' . ($v['requires_consent'] ? 'ja' : 'nein') . '</td><td>' . $n . ' von ' . $total . '</td></tr>';
 }
 echo '</tbody></table></section>';
 echo '<section class="card"><h2>Neue Version</h2><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="new_version">

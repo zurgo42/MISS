@@ -1,0 +1,47 @@
+<?php
+/**
+ * demo_load.php – lädt die md_*-Demo-Daten in eine MySQL-Datenbank, in der die Demo-Mitglieder der Sitzungsverwaltung
+ * (Mitgliedsnummern DEMO0001–DEMO0012) bereits vorhanden sind. svmembers und svressorts werden NICHT verändert.
+ *
+ *   php tools/demo_load.php            laden (md_-Tabellen müssen leer sein)
+ *   php tools/demo_load.php --reset    vorher alle md_-Tabellen leeren (nur md_, nie sv*)
+ *
+ * Schutz: Bricht ab, wenn svmembers andere Mitglieder als die Demo-Figuren enthält oder MD_DEMO_MODE=false ist.
+ */
+if (PHP_SAPI !== 'cli') exit('nur per Kommandozeile');
+$root = dirname(__DIR__);
+require_once "$root/src/bootstrap.php";
+require_once "$root/tools/demo_build.php";
+require_once "$root/tools/demo_lib.php";
+if (MD_DB_DRIVER !== 'mysql' || !MD_DEMO_MODE) exit("Nur mit MD_DB_DRIVER='mysql' und MD_DEMO_MODE=true.\n");
+$pdo = md_db();
+
+$others = md_q("SELECT COUNT(*) c FROM svmembers WHERE membership_number NOT LIKE 'DEMO%'")[0]['c'];
+if ((int)$others > 0) exit("Abbruch: svmembers enthält $others Mitglied(er) außerhalb der Demo (DEMO%). Das ist keine reine Demo-Datenbank.\n");
+$idmap = [];
+foreach (md_q("SELECT member_id, membership_number FROM svmembers WHERE membership_number LIKE 'DEMO%'") as $r) $idmap[(int)substr($r['membership_number'], 4)] = (int)$r['member_id'];
+if (count($idmap) < 12) exit('Abbruch: Es fehlen Demo-Mitglieder (' . count($idmap) . " von 12 gefunden). Zuerst die Demo der Sitzungsverwaltung importieren.\n");
+if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) exit("Abbruch: md_functions ist leer. Zuerst php tools/install.php ausführen.\n");
+
+if (in_array('--reset', $argv, true)) {
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+    foreach (array_merge(['md_photos'], array_diff(DEMO_MD_TABLES, ['md_functions', 'md_settings'])) as $t) $pdo->exec("DELETE FROM $t");
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+    echo "md_-Tabellen geleert.\n";
+}
+if ((int)md_one('SELECT COUNT(*) c FROM md_profiles')['c'] > 0) exit("Abbruch: md_profiles ist nicht leer. Mit --reset die md_-Tabellen leeren.\n");
+
+$anchor = date('Y-m-d');
+$data = demo_build($anchor);
+// Ressorts der echten Ressortliste über den Namen zuordnen (falls vorhanden)
+$real = [];
+try { foreach (md_q('SELECT ID, Ressort FROM svressorts') as $r) $real[mb_strtolower($r['Ressort'])] = (int)$r['ID']; } catch (Throwable $e) {}
+$demoRes = array_column($data['svressorts'], 'Ressort', 'ID');
+foreach ($data['md_member_functions'] as &$mf) $mf['ressort_id'] = $mf['ressort_id'] ? ($real[mb_strtolower($demoRes[$mf['ressort_id']] ?? '')] ?? null) : null;
+unset($mf);
+
+$pdo->beginTransaction();
+foreach (array_diff(DEMO_MD_TABLES, ['md_functions', 'md_settings']) as $t) demo_insert($pdo, $t, $data[$t], $idmap);
+$pdo->commit();
+demo_photos($pdo, $data['svmembers'], $idmap);
+echo "\nFertig. Demo-Anmeldung (MD_DEMO_MODE): " . md_url('login.php') . "\n";

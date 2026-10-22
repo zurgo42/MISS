@@ -6,3 +6,4 @@ config.php
 # Laufzeitdaten (Fotos, Importdateien, Demo-Datenbank)
 storage/*
 !storage/.gitkeep
+!storage/.htaccess

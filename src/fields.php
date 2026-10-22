@@ -104,3 +104,12 @@ function md_parse_date(?string $s): ?string
     }
     return null;
 }
+
+/** Standard-Funktionen mit Level (nach PERMISSIONS.md der Sitzungsverwaltung). Reihenfolge = function_id bei der Installation. */
+const MD_DEFAULT_FUNCTIONS = [
+    ['Vo', 'Vorstandsmitglied', 19], ['FVo', 'Vorstand Finanzen', 19], ['FVv', 'Vorstand + Vertretung Finanzvorstand', 19],
+    ['GF', 'Geschäftsführung', 18], ['VA', 'Vorstandsassistenz', 18], ['SV', 'Sekretariat Vorstand', 11],
+    ['RL', 'Ressortleitung', 15], ['PL', 'Projektleitung', 12], ['MB', 'Mitgliederbetreuung', 9], ['Ka', 'Kassenführung', 9],
+    ['FP', 'Finanzprüfung', 3], ['AD', 'Technischer Admin', 18], ['Vx', 'Ehemaliges Vorstandsmitglied', 0], ['JT', 'Organisator Jahrestreffen', 12],
+    ['TM', 'Teamleitung', 11], ['Orga', 'Hilfsfunktion Antragstellung', 9], ['Rx', 'Ehemalige Ressortleitung', 0], ['Xx', 'Früher berechtigtes Mitglied', 0],
+];

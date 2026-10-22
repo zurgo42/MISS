@@ -172,7 +172,8 @@ function md_import_apply(array $plan, int $actor): array
             $id = $e['member_id'];
             if ($e['action'] === 'create') {
                 $nr = ($d['membership_number'] ?? '') !== '' ? $d['membership_number'] : md_import_next_number();
-                md_exec('INSERT INTO svmembers (membership_number, first_name, last_name, email) VALUES (?,?,?,?)', [$nr, $d['first_name'], $d['last_name'], $d['email']]);
+                // role ist in der Sitzungsverwaltung NOT NULL ohne Standardwert (ENUM) und muss gesetzt werden
+                md_exec('INSERT INTO svmembers (membership_number, first_name, last_name, email, role) VALUES (?,?,?,?,?)', [$nr, $d['first_name'], $d['last_name'], $d['email'], md_sv_role_value('mitglied')]);
                 $id = (int)$pdo->lastInsertId();
                 md_log_change($id, 'created', null, 'Mitglied per Import angelegt', $actor, 'import');
                 $created++;

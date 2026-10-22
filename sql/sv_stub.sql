@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS svmembers (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    role VARCHAR(20) DEFAULT 'mitglied',
+    role VARCHAR(20) NOT NULL,                    -- echte Tabelle: ENUM('vorstand','gf','assistenz','fuehrungsteam','Mitglied')
     aktiv INT DEFAULT 0,
     funktion VARCHAR(10) DEFAULT NULL,
     is_admin INT DEFAULT 0,

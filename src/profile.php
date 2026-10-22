@@ -60,7 +60,7 @@ function md_save_profile(int $member, array $in, int $actor, string $via, array 
     foreach ($fields as $f) {
         if (!array_key_exists($f, $in)) continue;
         $type = MD_PROFILE_FIELDS[$f][1] ?? 'text';
-        $val = trim((string)$in[$f]);
+        $val = trim(str_replace(["\r\n", "\r"], "\n", (string)$in[$f]));   // Browser senden CRLF
         if ($type === 'date') $val = md_parse_date($val) ?? '';
         if ($type === 'select' && !in_array($val, MD_PROFILE_FIELDS[$f][4] ?? [], true)) continue;
         $new = $val === '' ? null : mb_substr($val, 0, $type === 'textarea' ? 4000 : 150);

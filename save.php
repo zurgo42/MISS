@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/src/bootstrap.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 $actor = md_require_login();
 md_csrf_check();
@@ -41,7 +41,7 @@ try {
         case 'consent':
             $cur = md_current_terms();
             if ($cur && (int)$cur['terms_id'] === (int)($_POST['terms_id'] ?? 0) && !empty($_POST['agree'])) {
-                if ($via === 'admin') { md_flash('Zustimmung bitte unter Verwaltung → Nutzungsbedingungen erfassen.', 'err'); $pdo->rollBack(); header('Location: /admin/terms.php'); exit; }
+                if ($via === 'admin') { md_flash('Zustimmung bitte unter Verwaltung → Nutzungsbedingungen erfassen.', 'err'); $pdo->rollBack(); header('Location: ' . md_url('admin/terms.php')); exit; }
                 md_record_consent($mid, (int)$cur['terms_id'], 'self', $aid, $_SERVER['REMOTE_ADDR'] ?? null);
                 $msg = 'Zustimmung dokumentiert.';
             } else { $msg = 'Bitte das Häkchen setzen.'; $kind = 'err'; }
@@ -56,7 +56,7 @@ try {
         case 'func_add':
         case 'func_remove':
             if (!md_is_admin($actor)) { http_response_code(403); exit('Nur Verwaltung.'); }
-            require __DIR__ . '/../src/save_club.php';
+            require __DIR__ . '/src/save_club.php';
             break;
         default:
             $msg = 'Unbekannte Aktion.';
@@ -70,5 +70,5 @@ try {
     $kind = 'err';
 }
 md_flash($msg, $kind);
-$back = '/index.php' . ($via === 'admin' ? '?member=' . $mid : '');
+$back = md_url('index.php') . ($via === 'admin' ? '?member=' . $mid : '');
 header('Location: ' . $back . '#' . preg_replace('/[^a-z_]/', '', (string)($_POST['anchor'] ?? '')));

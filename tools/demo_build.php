@@ -26,9 +26,9 @@ function demo_build(string $anchor): array
         [7,  'Hans',   'Lehmann',    'hans',   'fuehrungsteam', 17, 'RL',  0, 1],
         [8,  'Anna',   'Frühling',   'anna',   'fuehrungsteam', 15, 'RL',  0, 1],
         [9,  'Petra',  'Nord',       'petra',  'fuehrungsteam', 14, 'RL',  0, 1],
-        [10, 'Karl',   'Prüfer',     'karl',   'mitglied',      3,  'FP',  0, 1],
-        [11, 'Mia',    'Technik',    'mia',    'mitglied',      10, 'AD',  1, 1],
-        [12, 'Rolf',   'Ehemals',    'rolf',   'mitglied',      0,  'Vx',  0, 0],
+        [10, 'Karl',   'Prüfer',     'karl',   'Mitglied',      3,  'FP',  0, 1],
+        [11, 'Mia',    'Technik',    'mia',    'Mitglied',      10, 'AD',  1, 1],
+        [12, 'Rolf',   'Ehemals',    'rolf',   'Mitglied',      0,  'Vx',  0, 0],
     ];
     $conf = [1 => 1, 2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1, 7 => 1, 8 => 0, 9 => 0, 10 => 0, 11 => 0, 12 => 0];
     $svmembers = [];
@@ -37,12 +37,8 @@ function demo_build(string $anchor): array
             'email' => "$mail@example.com", 'role' => $role, 'aktiv' => $aktiv, 'funktion' => $fkt, 'is_admin' => $adm, 'is_active' => $act];
     }
 
-    $functions = [
-        ['Vo', 'Vorstandsmitglied', 19], ['FVo', 'Vorstand Finanzen', 19], ['FVv', 'Vorstand + Vertretung Finanzvorstand', 19],
-        ['GF', 'Geschäftsführung', 18], ['VA', 'Vorstandsassistenz', 18], ['SV', 'Sekretariat Vorstand', 11],
-        ['RL', 'Ressortleitung', 15], ['PL', 'Projektleitung', 12], ['MB', 'Mitgliederbetreuung', 9], ['Ka', 'Kassenführung', 9],
-        ['FP', 'Finanzprüfung', 3], ['AD', 'Technischer Admin', 18], ['Vx', 'Ehemaliges Vorstandsmitglied', 0], ['JT', 'Organisator Jahrestreffen', 12],
-    ];
+    require_once dirname(__DIR__) . '/src/fields.php';
+    $functions = MD_DEFAULT_FUNCTIONS;
     $fid = array_flip(array_column($functions, 0));
     $groups = [
         ['Regionalgruppe Nord', 'region'], ['Regionalgruppe Süd', 'region'], ['Schachgruppe', 'interesse'],

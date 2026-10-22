@@ -21,6 +21,12 @@ const MD_FUNCTION_ROLES = [
     'AD' => 'mitglied', 'FP' => 'mitglied', 'Rx' => 'mitglied', 'Vx' => 'mitglied', 'Xx' => 'mitglied',
 ];
 
+/** Schreibweise in svmembers.role (ENUM 'vorstand','gf','assistenz','fuehrungsteam','Mitglied'). */
+function md_sv_role_value(string $role): string
+{
+    return $role === 'mitglied' ? 'Mitglied' : $role;
+}
+
 function md_role_for(int $aktiv, ?string $funktion): string
 {
     if ($aktiv === 19) return 'vorstand';
@@ -93,7 +99,7 @@ function md_sync_member_rights(int $member, ?int $actor, string $via, ?string $o
     $new = ['aktiv' => $aktiv, 'funktion' => $fkt, 'role' => $role];
     if ($old === $new) return null;
     if (!$dry) {
-        md_exec('UPDATE svmembers SET aktiv = ?, funktion = ?, role = ? WHERE member_id = ?', [$aktiv, $fkt, $role, $member]);
+        md_exec('UPDATE svmembers SET aktiv = ?, funktion = ?, role = ? WHERE member_id = ?', [$aktiv, $fkt, md_sv_role_value($role), $member]);
         $fmt = fn(array $x) => 'aktiv ' . $x['aktiv'] . ', Funktion ' . ($x['funktion'] ?? '–') . ', Rolle ' . $x['role'];
         md_log_change($member, 'rights', $fmt($old), $fmt($new), $actor, $via);
     }
