@@ -7,7 +7,7 @@ declare(strict_types=1);
  * Absender und Antwortadresse stehen in den Einstellungen (mail.from_email, mail.from_name, mail.reply_to).
  */
 
-const MD_MAIL_KINDS = ['dunning' => 'Mahnung', 'invoice' => 'Rechnung', 'invite' => 'Einladung', 'reset' => 'Passwort', 'receipt' => 'Zuwendungsbestätigung', 'other' => 'Sonstiges'];
+const MD_MAIL_KINDS = ['dunning' => 'Mahnung', 'invoice' => 'Rechnung', 'invite' => 'Einladung', 'reset' => 'Passwort', 'receipt' => 'Zuwendungsbestätigung', 'list' => 'Verteiler', 'apply' => 'Anmeldung', 'other' => 'Sonstiges'];
 const MD_MAIL_STATUS = ['queued' => 'wartet', 'sent' => 'versendet', 'failed' => 'fehlgeschlagen', 'cancelled' => 'abgebrochen'];
 
 function md_mail_transport(): string
@@ -52,15 +52,16 @@ function md_mail_address(string $email, string $name = ''): string
 }
 
 /** Stellt eine Nachricht in die Warteschlange. Gibt [mail_id|null, Fehlertext] zurück. */
-function md_mail_queue(?int $member, string $to, string $subject, string $body, string $kind = 'other', ?string $ref = null, ?int $by = null): array
+function md_mail_queue(?int $member, string $to, string $subject, string $body, string $kind = 'other', ?string $ref = null, ?int $by = null, ?string $replyTo = null, ?string $unsubUrl = null): array
 {
     $to = trim($to);
     if (!filter_var($to, FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/', $to)) return [null, 'E-Mail-Adresse fehlt oder ist ungültig.'];
     $subject = md_mail_clean_header($subject);
     if ($subject === '' || trim($body) === '') return [null, 'Betreff und Text dürfen nicht leer sein.'];
     if (!isset(MD_MAIL_KINDS[$kind])) $kind = 'other';
-    md_exec('INSERT INTO md_mail_outbox (member_id, to_email, subject, body, kind, ref, status, attempts, created_at, created_by) VALUES (?,?,?,?,?,?,?,?,?,?)',
-        [$member, $to, mb_substr($subject, 0, 255), str_replace(["\r\n", "\r"], "\n", $body), $kind, $ref ? mb_substr($ref, 0, 40) : null, 'queued', 0, md_now(), $by]);
+    if ($replyTo !== null && !filter_var($replyTo, FILTER_VALIDATE_EMAIL)) $replyTo = null;
+    md_exec('INSERT INTO md_mail_outbox (member_id, to_email, subject, body, kind, ref, status, attempts, created_at, created_by, reply_to, unsub_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+        [$member, $to, mb_substr($subject, 0, 255), str_replace(["\r\n", "\r"], "\n", $body), $kind, $ref ? mb_substr($ref, 0, 40) : null, 'queued', 0, md_now(), $by, $replyTo, $unsubUrl ? mb_substr($unsubUrl, 0, 255) : null]);
     return [(int)md_db()->lastInsertId(), ''];
 }
 
@@ -78,7 +79,9 @@ function md_mail_build(array $m, array $conf): array
         'Auto-Submitted: auto-generated',
         'Message-ID: <md-' . (int)$m['mail_id'] . '.' . bin2hex(random_bytes(6)) . '@' . (preg_replace('/^.*@/', '', $conf['from_email']) ?: 'localhost') . '>',
     ];
-    if ($conf['reply_to'] !== '') $headers[] = 'Reply-To: ' . md_mail_address($conf['reply_to']);
+    $rt = !empty($m['reply_to']) ? $m['reply_to'] : $conf['reply_to'];
+    if ($rt !== '') $headers[] = 'Reply-To: ' . md_mail_address($rt);
+    if (!empty($m['unsub_url'])) { $headers[] = 'List-Unsubscribe: <' . md_mail_clean_header($m['unsub_url']) . '>'; $headers[] = 'Precedence: bulk'; }
     $body = chunk_split(base64_encode(str_replace("\n", "\r\n", $m['body'])), 76, "\r\n");
     return [$headers, $body];
 }

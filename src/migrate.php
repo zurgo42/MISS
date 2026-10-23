@@ -25,6 +25,9 @@ const MD_MIGRATIONS = [
     ['md_import_profiles', 'target', "VARCHAR(10) NOT NULL DEFAULT 'members'"],
     ['md_ledger', 'receipt_id', 'INT DEFAULT NULL'],
     ['md_ledger', 'sepa_item_id', 'INT DEFAULT NULL'],
+    ['md_mail_outbox', 'reply_to', 'VARCHAR(255) DEFAULT NULL'],
+    ['md_mail_outbox', 'unsub_url', 'VARCHAR(255) DEFAULT NULL'],
+    ['md_fee_groups', 'public', 'INT NOT NULL DEFAULT 0'],
     ['md_profiles', 'letter_channel', "VARCHAR(10) NOT NULL DEFAULT 'post'"],
     ['md_ledger', 'run_id', 'INT DEFAULT NULL'],
     ['md_ledger', 'fee_period', 'VARCHAR(10) DEFAULT NULL'],
@@ -60,7 +63,7 @@ function md_require_schema(): void
     static $checked = false;
     if ($checked) return;
     $checked = true;
-    $ok = md_table_exists('md_permissions') && md_table_exists('md_receipts') && md_table_exists('md_privacy_log') && md_table_exists('md_fee_groups') && md_table_exists('md_dunning_letters') && md_table_exists('md_sepa_batches') && md_table_exists('md_mail_outbox') && md_table_exists('md_login_tokens') && md_table_exists('md_events');
+    $ok = md_table_exists('md_permissions') && md_table_exists('md_receipts') && md_table_exists('md_privacy_log') && md_table_exists('md_fee_groups') && md_table_exists('md_dunning_letters') && md_table_exists('md_sepa_batches') && md_table_exists('md_mail_outbox') && md_table_exists('md_login_tokens') && md_table_exists('md_events') && md_table_exists('md_mail_lists') && md_table_exists('md_applications');
     if ($ok) foreach (MD_MIGRATIONS as [$t, $c]) if (md_table_exists($t) && !in_array($c, md_table_columns($t), true)) { $ok = false; break; }
     if (!$ok) {
         http_response_code(503);

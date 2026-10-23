@@ -295,7 +295,8 @@ CREATE TABLE IF NOT EXISTS md_fee_groups (
     rhythm VARCHAR(12) NOT NULL DEFAULT 'yearly',  -- yearly, halfyearly, quarterly, monthly
     entry_rule VARCHAR(10) NOT NULL DEFAULT 'full',-- full: voller Betrag, prorated: anteilig ab Eintrittsmonat bis Austrittsmonat
     description VARCHAR(255) DEFAULT NULL,
-    active INT NOT NULL DEFAULT 1
+    active INT NOT NULL DEFAULT 1,
+    public INT NOT NULL DEFAULT 0                  -- 1 = bei der Online-Anmeldung wählbar
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS md_member_fees (
@@ -427,14 +428,16 @@ CREATE TABLE IF NOT EXISTS md_mail_outbox (
     to_email VARCHAR(255) NOT NULL,
     subject VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
-    kind VARCHAR(12) NOT NULL DEFAULT 'other',     -- dunning, invoice, invite, reset, receipt, other
+    kind VARCHAR(12) NOT NULL DEFAULT 'other',     -- dunning, invoice, invite, reset, receipt, list, apply, other
     ref VARCHAR(40) DEFAULT NULL,                  -- z. B. Mahnschreiben- oder Rechnungsnummer
     status VARCHAR(10) NOT NULL DEFAULT 'queued',  -- queued, sent, failed, cancelled
     attempts INT NOT NULL DEFAULT 0,
     last_error VARCHAR(255) DEFAULT NULL,
     created_at DATETIME NOT NULL,
     created_by INT DEFAULT NULL,
-    sent_at DATETIME DEFAULT NULL
+    sent_at DATETIME DEFAULT NULL,
+    reply_to VARCHAR(255) DEFAULT NULL,            -- abweichende Antwortadresse (z. B. Veranstalter)
+    unsub_url VARCHAR(255) DEFAULT NULL            -- Abmeldelink bei Verteiler-Nachrichten (Kopfzeile List-Unsubscribe)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Einmal-Links zum Passwort setzen (nur der Hash des Tokens wird gespeichert)
@@ -484,4 +487,60 @@ CREATE TABLE IF NOT EXISTS md_event_regs (
     created_at DATETIME NOT NULL,
     status_at DATETIME DEFAULT NULL,
     UNIQUE (event_id, member_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- E-Mail-Verteiler (Empfänger ergeben sich aus Teilgruppe, Funktion oder allen Mitgliedern)
+CREATE TABLE IF NOT EXISTS md_mail_lists (
+    list_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255) DEFAULT NULL,
+    source_kind VARCHAR(10) NOT NULL DEFAULT 'group',  -- all, group, function
+    source_ref VARCHAR(50) DEFAULT NULL,               -- group_id bzw. Funktionskürzel
+    optional INT NOT NULL DEFAULT 1,                   -- 1 = Mitglieder können den Verteiler abbestellen
+    active INT NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_mail_optout (
+    member_id INT NOT NULL,
+    list_id INT NOT NULL,
+    opted_at DATETIME NOT NULL,
+    PRIMARY KEY (member_id, list_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_mail_campaigns (
+    campaign_id INT PRIMARY KEY AUTO_INCREMENT,
+    list_id INT DEFAULT NULL,
+    event_id INT DEFAULT NULL,
+    subject VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    recipients INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL,
+    created_by INT DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Online-Anmeldung neuer Mitglieder (Antrag, bis der Vorstand entscheidet)
+CREATE TABLE IF NOT EXISTS md_applications (
+    app_id INT PRIMARY KEY AUTO_INCREMENT,
+    status VARCHAR(12) NOT NULL DEFAULT 'unconfirmed',  -- unconfirmed (E-Mail noch nicht bestätigt), new, approved, rejected
+    created_at DATETIME NOT NULL,
+    confirmed_at DATETIME DEFAULT NULL,
+    token_hash VARCHAR(64) DEFAULT NULL,
+    token_expires DATETIME DEFAULT NULL,
+    salutation VARCHAR(20) DEFAULT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    birthdate DATE DEFAULT NULL,
+    street VARCHAR(150) DEFAULT NULL,
+    zip VARCHAR(20) DEFAULT NULL,
+    city VARCHAR(100) DEFAULT NULL,
+    phone VARCHAR(50) DEFAULT NULL,
+    fee_group_id INT DEFAULT NULL,
+    message VARCHAR(1000) DEFAULT NULL,
+    ack_at DATETIME NOT NULL,                      -- Datenschutzhinweise und Satzung zur Kenntnis genommen
+    decided_at DATETIME DEFAULT NULL,
+    decided_by INT DEFAULT NULL,
+    decision_note VARCHAR(255) DEFAULT NULL,
+    member_id INT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

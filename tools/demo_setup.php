@@ -43,5 +43,6 @@ demo_ensure_key($root);
 demo_seed_sepa();
 demo_seed_mail();
 demo_seed_events();
+demo_seed_lists_apply();
 demo_issue_receipts();
 echo "Start: php -S localhost:8080  →  http://localhost:8080/login.php\n";

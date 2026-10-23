@@ -122,3 +122,24 @@ function demo_seed_events(array $idmap = []): void
     md_exec("INSERT INTO md_events (organizer_id, title, description, location, starts_at, capacity, price_cents, status, created_at) VALUES (?,?,?,?,?,?,?,?,?)", [$id(1), 'Neujahrsempfang', 'Rückblick und Ausblick.', 'Vereinsheim', $past, 40, 0, 'open', date('Y-m-d H:i:s', strtotime('-90 days'))]);
     echo "Demo-Veranstaltungen: 3\n";
 }
+
+/** Demo: Verteiler (aus Teilgruppen und Funktionen) und zwei Online-Anträge. Die Testuser bleiben unverändert. */
+function demo_seed_lists_apply(array $idmap = []): void
+{
+    $id = fn(int $n) => $idmap[$n] ?? $n;
+    if (!md_one('SELECT 1 FROM md_mail_lists')) {
+        $defs = [['Alle Mitglieder', 'Vereinsnachrichten an alle', ['source_kind' => 'all', 'optional' => 1]], ['Vorstand', 'Interner Verteiler der Vorstände', ['source_kind' => 'function', 'function_code' => 'Vo', 'optional' => 0]]];
+        foreach (md_q('SELECT group_id, name FROM md_groups ORDER BY group_id LIMIT 3') as $g) $defs[] = [$g['name'], 'Neuigkeiten der Teilgruppe', ['source_kind' => 'group', 'group_id' => $g['group_id'], 'optional' => 1]];
+        foreach ($defs as [$name, $desc, $x]) md_list_save(null, array_merge(['name' => $name, 'description' => $desc, 'active' => 1], $x));
+        $all = md_one("SELECT list_id FROM md_mail_lists WHERE name = 'Alle Mitglieder'");
+        if ($all) md_list_set_optout($id(4), (int)$all['list_id'], true, $id(4));
+    }
+    if (!md_one('SELECT 1 FROM md_applications')) {
+        $fg = md_one("SELECT group_id FROM md_fee_groups WHERE public = 1 ORDER BY group_id LIMIT 1");
+        $row = fn($status, $first, $last, $email, $conf) => md_exec('INSERT INTO md_applications (status, created_at, confirmed_at, salutation, first_name, last_name, email, birthdate, street, zip, city, phone, fee_group_id, message, ack_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            [$status, md_now(), $conf ? md_now() : null, 'Frau', $first, $last, $email, '1991-06-02', 'Lindenallee 4', '30159', 'Hannover', '0511 123456', $fg['group_id'] ?? null, 'Ich möchte bei der Wandergruppe mitmachen.', md_now()]);
+        $row('new', 'Fiona', 'Neumann', 'fiona.neumann@example.org', true);
+        $row('unconfirmed', 'Bernd', 'Wartend', 'bernd.wartend@example.org', false);
+    }
+    echo "Demo-Verteiler und Online-Anträge angelegt.\n";
+}

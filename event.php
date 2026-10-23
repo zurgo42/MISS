@@ -51,6 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$manage) { http_response_code(403); exit('Dafür fehlt die Berechtigung.'); }
         $err = md_event_cancel($id, (string)($_POST['reason'] ?? ''), $mid);
         $ok = 'Die Veranstaltung ist abgesagt; Angemeldete wurden per E-Mail benachrichtigt.';
+    } elseif ($act === 'message') {
+        if (!$manage) { http_response_code(403); exit('Dafür fehlt die Berechtigung.'); }
+        [$n, $err] = md_event_message($id, (string)($_POST['subject'] ?? ''), (string)($_POST['body'] ?? ''), !empty($_POST['waitlist']), $me);
+        $ok = "Nachricht an $n Angemeldete gesendet." . ($err ? ' ' . $err : '');
+        if ($n > 0) $err = '';
     } elseif ($act === 'remove' && $manage) {
         $err = md_event_unregister($id, (int)($_POST['member_id'] ?? 0), $mid);
         $ok = 'Anmeldung entfernt.';
@@ -140,6 +145,13 @@ if ($manage) {
     echo '</ul>' . ($pl['hidden'] ? '<p class="muted">… und ' . $pl['hidden'] . ' weitere, die nicht in der Liste erscheinen möchten.</p>' : '');
 }
 echo '</section>';
+
+// ---- Nachricht an alle Angemeldeten
+if ($manage && $ev['status'] === 'open') {
+    echo '<section class="card" id="message"><h2>Nachricht an die Angemeldeten</h2><p class="muted">Geht einzeln per E-Mail an alle Angemeldeten; Antworten kommen direkt an deine E-Mail-Adresse (' . h($me['email']) . '). Höchstens 3 Nachrichten je Tag.</p>'
+        . '<form method="post">' . md_csrf_field() . '<input type="hidden" name="event_id" value="' . $id . '"><input type="hidden" name="action" value="message"><label class="block">Betreff<input name="subject" maxlength="200" required style="width:100%"></label>'
+        . '<label class="block">Text <span class="muted">({anrede} {vorname} {name} werden ersetzt)</span><textarea name="body" rows="6" required style="width:100%"></textarea></label><label class="check"><input type="checkbox" name="waitlist" value="1"> auch an die Warteliste</label> <button>Senden</button></form></section>';
+}
 
 // ---- Verwalten
 if ($manage && $ev['status'] === 'open') {

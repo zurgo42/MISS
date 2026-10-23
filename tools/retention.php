@@ -2,6 +2,7 @@
 /**
  * retention.php – listet die Löschfristen aller ausgetretenen Mitglieder (nur Anzeige, löscht nichts).
  * Aufruf: php tools/retention.php   (z. B. als monatliche Erinnerung per Cronjob; Ausgabe per Mail an die Verwaltung leiten)
+ * Einzige Ausnahme: abgelaufene Online-Anmeldeanträge (unbestätigt nach 3 Tagen, entschieden nach apply.keep_days) werden hier gelöscht.
  * Löschen führt die Verwaltung bewusst von Hand auf der Seite "Datenschutz" aus.
  */
 if (PHP_SAPI !== 'cli') exit('nur per Kommandozeile');
@@ -19,4 +20,6 @@ foreach ($rows as $r) {
 $overdue = md_q("SELECT COUNT(*) c FROM md_privacy_requests WHERE status = 'open'")[0]['c'];
 $late = 0;
 foreach (md_q("SELECT * FROM md_privacy_requests WHERE status = 'open'") as $q) if (md_privacy_request_deadline($q) < $today) $late++;
+$nApply = md_apply_purge();
+echo "$nApply abgelaufene Anmeldeanträge gelöscht.\n";
 echo "$due1 Mitglied(er) für Stufe 1, $due2 für Stufe 2 fällig, $blocked gesperrt; $overdue offene Anfrage(n), davon $late überfällig.\n";

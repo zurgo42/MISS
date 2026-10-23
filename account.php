@@ -12,6 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif ($new !== (string)($_POST['password2'] ?? '')) $err = 'Die beiden neuen Eingaben stimmen nicht überein.';
         else $err = md_password_set($mid, $new);
         md_flash($err ?: 'Passwort geändert.', $err ? 'err' : 'ok');
+    } elseif ($act === 'lists') {
+        $mine = md_lists_of_member($mid);
+        $want = array_map('intval', (array)($_POST['subscribed'] ?? []));
+        $e2 = '';
+        foreach ($mine as $l) if ((int)$l['optional'] === 1) $e2 = $e2 ?: md_list_set_optout($mid, (int)$l['list_id'], !in_array((int)$l['list_id'], $want, true), $mid);
+        md_flash($e2 ?: 'Gespeichert.', $e2 ? 'err' : 'ok');
     } elseif ($act === 'channel') {
         $ch = ($_POST['letter_channel'] ?? 'post') === 'mail' ? 'mail' : 'post';
         if ($ch === 'mail' && !md_mail_address_of($mid)) { md_flash('Für den Versand per E-Mail wird eine gültige E-Mail-Adresse benötigt.', 'err'); }
@@ -40,4 +46,10 @@ echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="acti
 echo '<section class="card"><h2>Rechnungen und Mahnungen</h2><p class="muted">Wie sollen wir dir Rechnungen und Zahlungserinnerungen zustellen? Die E-Mail geht an ' . h($me['email']) . '. Die Unterlagen siehst du auch jederzeit im Dashboard.</p>'
     . '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="channel"><label class="block"><input type="radio" name="letter_channel" value="post"' . ($ch === 'post' ? ' checked' : '') . '> per Post</label>'
     . '<label class="block"><input type="radio" name="letter_channel" value="mail"' . ($ch === 'mail' ? ' checked' : '') . '> per E-Mail</label><button>Speichern</button></form></section>';
+$mine = md_lists_of_member($mid);
+if ($mine) {
+    echo '<section class="card"><h2>E-Mail-Verteiler</h2><p class="muted">Diese Verteiler des Vereins erreichen dich. Verbindliche Verteiler (z. B. für Funktionsträger) lassen sich nicht abbestellen.</p><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="lists">';
+    foreach ($mine as $l) echo '<label class="block"><input type="checkbox" name="subscribed[]" value="' . (int)$l['list_id'] . '"' . (!$l['opted_out'] ? ' checked' : '') . ((int)$l['optional'] ? '' : ' checked disabled') . '> ' . h($l['name']) . ($l['description'] ? ' <span class="muted">– ' . h($l['description']) . '</span>' : '') . ((int)$l['optional'] ? '' : ' <span class="muted">(verbindlich)</span>') . '</label>';
+    echo '<button>Speichern</button></form></section>';
+}
 md_footer();

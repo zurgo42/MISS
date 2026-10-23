@@ -85,10 +85,11 @@ function md_fee_group_save(?int $id, array $d): string
     $rhythm = array_key_exists($d['rhythm'] ?? '', MD_RHYTHMS) ? $d['rhythm'] : 'yearly';
     $rule = array_key_exists($d['entry_rule'] ?? '', MD_ENTRY_RULES) ? $d['entry_rule'] : 'full';
     $active = !empty($d['active']) ? 1 : 0;
+    $public = !empty($d['public']) ? 1 : 0;
     $desc = trim((string)($d['description'] ?? '')) ?: null;
     if (md_one('SELECT 1 FROM md_fee_groups WHERE LOWER(name) = ? AND group_id <> ?', [mb_strtolower($name), (int)$id])) return 'Es gibt schon eine Gruppe mit diesem Namen.';
-    if ($id) md_exec('UPDATE md_fee_groups SET name=?, amount_cents=?, rhythm=?, entry_rule=?, description=?, active=? WHERE group_id=?', [$name, (int)$cents, $rhythm, $rule, $desc, $active, $id]);
-    else md_exec('INSERT INTO md_fee_groups (name, amount_cents, rhythm, entry_rule, description, active) VALUES (?,?,?,?,?,?)', [$name, (int)$cents, $rhythm, $rule, $desc, $active]);
+    if ($id) md_exec('UPDATE md_fee_groups SET name=?, amount_cents=?, rhythm=?, entry_rule=?, description=?, active=?, public=? WHERE group_id=?', [$name, (int)$cents, $rhythm, $rule, $desc, $active, $public, $id]);
+    else md_exec('INSERT INTO md_fee_groups (name, amount_cents, rhythm, entry_rule, description, active, public) VALUES (?,?,?,?,?,?,?)', [$name, (int)$cents, $rhythm, $rule, $desc, $active, $public]);
     return '';
 }
 

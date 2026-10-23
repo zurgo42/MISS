@@ -118,6 +118,8 @@ function md_privacy_anonymize(int $member, int $actor, ?string $note = null): st
         md_exec('DELETE FROM md_receipt_events WHERE receipt_id IN (SELECT receipt_id FROM md_receipts WHERE member_id = ?)', [$member]);
         md_exec('DELETE FROM md_sepa_items WHERE member_id = ?', [$member]);
         md_exec('DELETE FROM md_mail_outbox WHERE member_id = ?', [$member]);
+        md_exec('DELETE FROM md_mail_optout WHERE member_id = ?', [$member]);
+        md_exec('DELETE FROM md_applications WHERE member_id = ?', [$member]);
         foreach (['md_sepa_mandates', 'md_receipts', 'md_ledger', 'md_terms_consents', 'md_member_functions', 'md_privacy_requests', 'md_changelog'] as $t) md_exec("DELETE FROM $t WHERE member_id = ?", [$member]);
         md_exec("UPDATE md_profiles SET leave_date = NULL, join_date = NULL, retention_hold = 0, hold_reason = NULL, anonymized_at = ?, updated_at = ? WHERE member_id = ?", [md_now(), md_now(), $member]);
         $cols = md_sv_columns();
@@ -217,6 +219,7 @@ function md_privacy_export_data(int $member, int $by): array
         'veranstaltungen' => array_map(fn($x) => ['veranstaltung' => $x['title'], 'beginn' => $x['starts_at'], 'status' => MD_EVENT_REG_STATUS[$x['status']] ?? $x['status'], 'in_liste_sichtbar' => (bool)$x['show_in_list'], 'anmerkung' => $x['note'], 'angemeldet_am' => $x['created_at']],
             md_q('SELECT r.*, e.title, e.starts_at FROM md_event_regs r JOIN md_events e ON e.event_id = r.event_id WHERE r.member_id = ? ORDER BY e.starts_at', [$member])),
         'veranstaltungen_als_veranstalter' => array_map(fn($x) => ['titel' => $x['title'], 'beginn' => $x['starts_at'], 'status' => $x['status']], md_q('SELECT title, starts_at, status FROM md_events WHERE organizer_id = ? ORDER BY starts_at', [$member])),
+        'verteiler_abbestellt' => array_map(fn($x) => ['verteiler' => $x['name'], 'seit' => $x['opted_at']], md_q('SELECT l.name, o.opted_at FROM md_mail_optout o JOIN md_mail_lists l ON l.list_id = o.list_id WHERE o.member_id = ?', [$member])),
         'buchungen' => md_q('SELECT kind, direction, amount_cents, entry_date, due_date, paid_date, status, description, reference, cancel_reason FROM md_ledger WHERE member_id = ? ORDER BY entry_date, entry_id', [$member]),
         'spendenbescheinigungen' => array_map(fn($r) => ['nummer' => $r['receipt_no'], 'art' => $r['kind'], 'von' => $r['period_from'], 'bis' => $r['period_to'], 'betrag_cent' => (int)$r['total_cents'], 'status' => $r['status'],
             'ausgestellt' => $r['issued_at'], 'ungueltig_grund' => $r['void_reason'], 'inhalt_bei_ausstellung' => json_decode($r['snapshot'], true)], md_q('SELECT * FROM md_receipts WHERE member_id = ? ORDER BY receipt_no', [$member])),
@@ -242,7 +245,7 @@ function md_privacy_export_html(array $d): string
 {
     $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $titles = ['stammdaten_sitzungsverwaltung' => 'Stammdaten (Sitzungsverwaltung)', 'profil' => 'Profil', 'adressen' => 'Adressen', 'kontakt' => 'Kontakt und Social Media', 'fotos' => 'Fotos', 'sichtbarkeit' => 'Sichtbarkeit für andere Mitglieder',
-        'teilgruppen' => 'Teilgruppen', 'funktionen' => 'Funktionen', 'lastschriftmandate' => 'Lastschriftmandate', 'lastschriften' => 'Lastschriften', 'e_mails' => 'E-Mails', 'veranstaltungen' => 'Veranstaltungen (Anmeldungen)', 'veranstaltungen_als_veranstalter' => 'Veranstaltungen (als Veranstalter)', 'buchungen' => 'Buchungen', 'spendenbescheinigungen' => 'Spendenbescheinigungen', 'zustimmungen_nutzungsbedingungen' => 'Zustimmungen zu den Nutzungsbedingungen',
+        'teilgruppen' => 'Teilgruppen', 'funktionen' => 'Funktionen', 'lastschriftmandate' => 'Lastschriftmandate', 'lastschriften' => 'Lastschriften', 'e_mails' => 'E-Mails', 'verteiler_abbestellt' => 'Abbestellte Verteiler', 'veranstaltungen' => 'Veranstaltungen (Anmeldungen)', 'veranstaltungen_als_veranstalter' => 'Veranstaltungen (als Veranstalter)', 'buchungen' => 'Buchungen', 'spendenbescheinigungen' => 'Spendenbescheinigungen', 'zustimmungen_nutzungsbedingungen' => 'Zustimmungen zu den Nutzungsbedingungen',
         'aenderungsprotokoll' => 'Änderungsprotokoll', 'datenschutz_anfragen' => 'Datenschutz-Anfragen', 'datenschutz_vorgaenge' => 'Datenschutz-Vorgänge', 'informationen_art_15' => 'Informationen nach Art. 15 DSGVO'];
     $cell = function ($v) use ($h, &$cell) {
         if (is_array($v)) return '<pre>' . $h(json_encode($v, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . '</pre>';

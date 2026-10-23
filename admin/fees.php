@@ -78,7 +78,7 @@ foreach ($groups as $g) {
         foreach (MD_RHYTHMS as $k => $l) echo '<option value="' . $k . '"' . ($g['rhythm'] === $k ? ' selected' : '') . '>' . h($l) . '</option>';
         echo '</select></label><label>Eintritt/Austritt<select name="entry_rule">';
         foreach (MD_ENTRY_RULES as $k => $l) echo '<option value="' . $k . '"' . ($g['entry_rule'] === $k ? ' selected' : '') . '>' . h($l) . '</option>';
-        echo '</select></label><label>Beschreibung<input name="description" value="' . h($g['description']) . '"></label></div><label class="check"><input type="checkbox" name="active" value="1"' . ($g['active'] ? ' checked' : '') . '> aktiv (für neue Zuordnungen wählbar)</label> <button>Speichern</button></form></details>';
+        echo '</select></label><label>Beschreibung<input name="description" value="' . h($g['description']) . '"></label></div><label class="check"><input type="checkbox" name="active" value="1"' . ($g['active'] ? ' checked' : '') . '> aktiv (für neue Zuordnungen wählbar)</label> <label class="check"><input type="checkbox" name="public" value="1"' . ($g['public'] ? ' checked' : '') . '> bei der Online-Anmeldung wählbar</label> <button>Speichern</button></form></details>';
     }
     echo '</td></tr>';
 }
@@ -89,7 +89,7 @@ if ($edit) {
     foreach (MD_RHYTHMS as $k => $l) echo '<option value="' . $k . '">' . h($l) . '</option>';
     echo '</select></label><label>Eintritt/Austritt<select name="entry_rule">';
     foreach (MD_ENTRY_RULES as $k => $l) echo '<option value="' . $k . '">' . h($l) . '</option>';
-    echo '</select></label><label>Beschreibung<input name="description"></label></div><input type="hidden" name="active" value="1"><button>Anlegen</button></form></details>';
+    echo '</select></label><label>Beschreibung<input name="description"></label></div><input type="hidden" name="active" value="1"><label class="check"><input type="checkbox" name="public" value="1"> bei der Online-Anmeldung wählbar</label> <button>Anlegen</button></form></details>';
 }
 echo '</section>';
 
