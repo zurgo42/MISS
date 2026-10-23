@@ -15,9 +15,10 @@ Vielen Dank für deine Hilfe! Du testest die **Mitgliederverwaltung** eines Vere
 | Erika Musterfrau (DEMO0002) | Finanzverwaltung | Beitragslauf, Rechnungen, Lastschrift |
 | Lukas Beispiel (DEMO0003) | Vorstand | Mitgliederliste, Anmeldungen, Verteiler |
 | Julia Sommer (DEMO0004) | Geschäftsführung, Admin | Einstellungen, Rechte, Datenschutz, E-Mail |
-| Thomas Winter (DEMO0005) | Mitglied mit Admin | Profil, Veranstaltungen |
+| Thomas Winter (DEMO0005), Sabine Herbst (DEMO0006) | Vorstandsassistenz bzw. Verwaltung, jeweils mit Admin-Recht | Mitgliederdaten, Rechte, Einstellungen |
 | Hans Lehmann (DEMO0007), Anna Frühling (DEMO0008), Petra Nord (DEMO0009) | Mitglieder mit Funktion | Alltag eines Mitglieds, Veranstaltungen anlegen und buchen |
-| Karl Prüfer (DEMO0010), Mia Technik (DEMO0011) | Mitglieder | Sicht eines einfachen Mitglieds, Rechnungen |
+| Karl Prüfer (DEMO0010) | Finanzprüfung (nur Lesen) | Sicht eines Prüfers: sieht Finanzen, ändert nichts |
+| Mia Technik (DEMO0011) | Technik-Admin, Mitglied mit offener Rechnung | Rechnungen, Lastschrift-Mandat, Admin-Sicht |
 | Rolf Ehemals (DEMO0012) | ausgetretenes Mitglied | Verhalten nach dem Austritt |
 
 ## Aufgaben (Auswahl – gern mehr!)
