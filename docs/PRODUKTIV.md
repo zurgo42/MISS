@@ -119,3 +119,4 @@ Das ist ein eigener Schritt mit anderen Voraussetzungen; die Testinstanz wird da
 6. Vorab klären: Satzung/Beitragsordnung (Mahngebühren, Lastschrift), Datenschutzhinweise und Nutzungsbedingungen, Auftragsverarbeitungsvertrag mit dem Hoster, Verzeichnis der Verarbeitungstätigkeiten (siehe `docs/DATENSCHUTZ.md`), Steuerberater für Spendenbescheinigungen und DATEV.
 7. **Sicherung** einrichten: Datenbank täglich, `storage/` (Fotos) und `config.php` regelmäßig.
 8. Jeden Schritt vorher am Testsystem proben.
+9. **Aufräumen nach der Testphase:** `tools/set_password.php` (setzt Passwörter ohne E-Mail, nur für Demo-/Testsysteme gedacht) auf dem Server **löschen**, ebenso `setup_test.php`, falls noch vorhanden, und `MD_TEST_INSTANCE` nicht in die Echt-Konfiguration übernehmen.
