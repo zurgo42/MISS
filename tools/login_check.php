@@ -14,7 +14,11 @@ $cols = md_sv_columns();
 echo 'svmembers.password_hash: ' . (in_array('password_hash', $cols, true) ? 'Spalte vorhanden' : 'SPALTE FEHLT – ohne sie ist keine Anmeldung mit Passwort möglich') . "\n";
 $rows = md_q('SELECT * FROM svmembers WHERE LOWER(email) = LOWER(?) OR membership_number = ?', [$ident, $ident]);
 echo count($rows) . " Treffer für '$ident'\n";
-if (!$rows) exit("→ Grund: Kein Mitglied mit dieser E-Mail-Adresse oder Mitgliedsnummer (Tippfehler? Adresse in svmembers prüfen).\n");
+if (!$rows) {
+    echo "→ Grund: Kein Mitglied mit dieser E-Mail-Adresse oder Mitgliedsnummer. Vorhandene Konten (erste 25):\n";
+    foreach (md_q('SELECT member_id, membership_number, first_name, last_name, email FROM svmembers ORDER BY member_id LIMIT 25') as $m) printf("  #%-3d %-10s %-24s %s\n", $m['member_id'], $m['membership_number'], $m['first_name'] . ' ' . $m['last_name'], $m['email']);
+    exit("Mit einer dieser E-Mail-Adressen oder Mitgliedsnummern erneut prüfen.\n");
+}
 foreach ($rows as $m) {
     $h = (string)($m['password_hash'] ?? '');
     $scheme = $h === '' ? 'LEER (noch kein Passwort)' : (preg_match('/^\$(2[aby]|argon2id?)\$/', $h, $x) ? 'password_hash()-Format ' . $x[1] . ', Länge ' . strlen($h) : (preg_match('/^[0-9a-f]{32}$/i', $h) ? 'sieht nach MD5 aus (nicht kompatibel)' : (preg_match('/^[0-9a-f]{40}$/i', $h) ? 'sieht nach SHA-1 aus (nicht kompatibel)' : (preg_match('/^[0-9a-f]{64}$/i', $h) ? 'sieht nach SHA-256 aus (nicht kompatibel)' : 'unbekanntes Format, Länge ' . strlen($h)))));
