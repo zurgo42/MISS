@@ -284,6 +284,18 @@ if (!$staff || md_can($actor, 'fees', 'view')) {
     echo '</section>';
 }
 
+// ---- Veranstaltungen (eigene Anmeldungen und eigene Veranstaltungen)
+if (!$staff) {
+    $myEv = md_q("SELECT e.*, r.status rstatus FROM md_event_regs r JOIN md_events e ON e.event_id = r.event_id WHERE r.member_id = ? AND r.status IN ('registered','waitlist') AND e.starts_at >= ? AND e.status = 'open' ORDER BY e.starts_at", [$mid, date('Y-m-d H:i:s')]);
+    $orgEv = md_q("SELECT * FROM md_events WHERE organizer_id = ? AND starts_at >= ? AND status = 'open' ORDER BY starts_at", [$mid, date('Y-m-d H:i:s')]);
+    if ($myEv || $orgEv) {
+        echo '<section class="card" id="events"><h2>Veranstaltungen</h2><ul class="plain">';
+        foreach ($myEv as $e) echo '<li>' . h(md_event_dt($e['starts_at'])) . ' · <a href="event.php?id=' . (int)$e['event_id'] . '">' . h($e['title']) . '</a> <span class="muted">(' . ($e['rstatus'] === 'registered' ? 'angemeldet' : 'Warteliste') . ')</span></li>';
+        foreach ($orgEv as $e) echo '<li>' . h(md_event_dt($e['starts_at'])) . ' · <a href="event.php?id=' . (int)$e['event_id'] . '">' . h($e['title']) . '</a> <span class="muted">(ich veranstalte)</span></li>';
+        echo '</ul><p><a href="events.php">Alle Veranstaltungen</a></p></section>';
+    }
+}
+
 // ---- Lastschrift (eigene Daten bzw. Verwaltung mit Recht "SEPA")
 if (!$staff || md_can($actor, 'sepa', 'view')) {
     $mandates = md_q('SELECT * FROM md_sepa_mandates WHERE member_id = ? ORDER BY mandate_id DESC', [$mid]);

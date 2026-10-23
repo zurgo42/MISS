@@ -288,7 +288,7 @@ function md_sepa_candidates(string $collection, bool $allowShort = false): array
 {
     $conf = md_sepa_conf();
     $rows = md_q("SELECT l.*, s.first_name, s.last_name, s.membership_number FROM md_ledger l JOIN svmembers s ON s.member_id = l.member_id
-                  WHERE l.status = 'open' AND l.direction = 'to_club' AND l.kind IN ('beitrag', 'eintritt') AND l.sepa_item_id IS NULL AND l.due_date IS NOT NULL AND l.due_date <= ?
+                  WHERE l.status = 'open' AND l.direction = 'to_club' AND l.kind IN ('beitrag', 'eintritt') AND l.sepa_item_id IS NULL AND l.source <> 'event' AND l.due_date IS NOT NULL AND l.due_date <= ?
                   AND (l.deferred_until IS NULL OR l.deferred_until < ?) AND l.amount_cents > 0 AND s.membership_number NOT LIKE 'DEL-%' ORDER BY s.last_name, s.first_name, l.due_date", [$collection, $collection]);
     $out = [];
     foreach ($rows as $e) {

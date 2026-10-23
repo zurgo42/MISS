@@ -56,5 +56,6 @@ foreach ($data['md_settings'] as $st) if (!md_one('SELECT 1 FROM md_settings WHE
 demo_ensure_key($root);
 demo_seed_sepa($idmap);
 demo_seed_mail($idmap);
+demo_seed_events($idmap);
 demo_issue_receipts($idmap);
 echo "\nFertig. Demo-Anmeldung (MD_DEMO_MODE): " . md_url('login.php') . "\n";

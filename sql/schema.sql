@@ -454,3 +454,34 @@ CREATE TABLE IF NOT EXISTS md_login_attempts (
     ident_hash VARCHAR(64) NOT NULL,
     attempt_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Veranstaltungen: jedes Mitglied kann anlegen und sich anmelden
+CREATE TABLE IF NOT EXISTS md_events (
+    event_id INT PRIMARY KEY AUTO_INCREMENT,
+    organizer_id INT NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    location VARCHAR(200) DEFAULT NULL,
+    starts_at DATETIME NOT NULL,
+    ends_at DATETIME DEFAULT NULL,
+    reg_deadline DATETIME DEFAULT NULL,            -- Anmeldeschluss (leer = bis zum Beginn)
+    capacity INT DEFAULT NULL,                     -- leer = unbegrenzt
+    price_cents INT NOT NULL DEFAULT 0,            -- 0 = kostenlos; sonst entsteht je Anmeldung eine Forderung (Art Eintritt)
+    status VARCHAR(10) NOT NULL DEFAULT 'open',    -- open, cancelled
+    cancel_reason VARCHAR(255) DEFAULT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_event_regs (
+    reg_id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    member_id INT NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'registered',   -- registered, waitlist, cancelled
+    show_in_list INT NOT NULL DEFAULT 0,           -- 1 = andere Angemeldete sehen mich in der Teilnehmerliste
+    note VARCHAR(255) DEFAULT NULL,                -- Anmerkung an den Veranstalter
+    entry_id INT DEFAULT NULL,                     -- Forderung im Kassenbuch (bei Teilnahmegebühr)
+    created_at DATETIME NOT NULL,
+    status_at DATETIME DEFAULT NULL,
+    UNIQUE (event_id, member_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

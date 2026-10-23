@@ -59,6 +59,7 @@ Unabhängig vom Abgleich nach `svmembers` (oben) regelt eine **einstellbare Tabe
 | Mitglieder | keine / ansehen / bearbeiten | Fremde Dashboards, Mitgliederliste, Vereinsdaten, Gruppen, Funktionen |
 | Finanzen | keine / ansehen / bearbeiten | Buchungen aller Mitglieder (Kassenseite) |
 | Beiträge | keine / ansehen / bearbeiten | Beitragsgruppen, Zuordnung, Beitragslauf, Rechnungen, Zahlungszuordnung, Mahnwesen |
+| Veranstaltungen | keine / bearbeiten | Fremde Veranstaltungen verwalten; anlegen und buchen darf jedes Mitglied mit Zustimmung |
 | E-Mail | keine / ansehen / bearbeiten | Ausgang, Versand, Einladungen und Passwort-Links |
 | SEPA | keine / ansehen / bearbeiten | Mandate, Einzugsläufe, XML-Datei, Rücklastschriften (IBAN-Abruf wird protokolliert) |
 | Nutzungsbedingungen | keine / ansehen / bearbeiten | Versionen anlegen, Zustimmungen erfassen |

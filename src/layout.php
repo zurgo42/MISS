@@ -5,6 +5,7 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
 {
     $nav = ['dashboard' => ['index.php', 'Mein Dashboard']];
     if ($me && md_consent_ok((int)$me['member_id'])) {
+        $nav['events'] = ['events.php', 'Veranstaltungen'];
         if (md_can($me, 'directory', 'view')) $nav['directory'] = ['directory.php', 'Mitgliederverzeichnis'];
         if (md_can($me, 'members', 'view')) $nav['admin'] = ['admin/index.php', 'Mitglieder'];
         if (md_can($me, 'finance', 'view')) $nav['finance'] = ['admin/finance.php', 'Finanzen'];

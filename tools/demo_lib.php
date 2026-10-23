@@ -103,3 +103,22 @@ function demo_seed_mail(array $idmap = []): void
     }
     if (!md_one("SELECT 1 FROM md_settings WHERE setting_key = 'mail.from_email'")) md_exec("INSERT INTO md_settings (setting_key, setting_value, description) VALUES ('mail.from_email', 'mitglieder@musterverein.example', 'Demo-Absender')");
 }
+
+/** Demo-Veranstaltungen: ausgebucht mit Warteliste, kostenpflichtiger Workshop, vergangene Veranstaltung. */
+function demo_seed_events(array $idmap = []): void
+{
+    if (md_one('SELECT 1 FROM md_events')) return;
+    $id = fn(int $n) => $idmap[$n] ?? $n;
+    $d = fn(int $days, string $t) => date('Y-m-d', strtotime("+$days days")) . 'T' . $t;
+    [$sf] = md_event_save(null, ['title' => 'Sommerfest im Vereinsgarten', 'description' => "Grillen, Musik und Spiele für alle.\nBitte etwas für das Buffet mitbringen.", 'location' => 'Vereinsgarten, Vereinsstraße 1', 'starts_at' => $d(30, '15:00'), 'ends_at' => $d(30, '21:00'), 'reg_deadline' => $d(25, '18:00'), 'capacity' => '3'], $id(2));
+    md_event_register($sf, $id(1), true, null, $id(1));
+    md_event_register($sf, $id(4), false, 'Vegetarisch, bitte', $id(4));
+    md_event_register($sf, $id(5), true, null, $id(5));
+    md_event_register($sf, $id(3), false, null, $id(3));   // Warteliste
+    [$ws] = md_event_save(null, ['title' => 'Workshop Kalligrafie', 'description' => 'Einführung in die Federschrift, Material wird gestellt.', 'location' => 'Vereinsheim', 'starts_at' => $d(14, '10:00'), 'capacity' => '10', 'price' => '15,00'], $id(1));
+    md_event_register($ws, $id(2), false, null, $id(2));
+    md_event_register($ws, $id(9), true, null, $id(9));
+    $past = date('Y-m-d H:i:s', strtotime('-60 days 18:00'));
+    md_exec("INSERT INTO md_events (organizer_id, title, description, location, starts_at, capacity, price_cents, status, created_at) VALUES (?,?,?,?,?,?,?,?,?)", [$id(1), 'Neujahrsempfang', 'Rückblick und Ausblick.', 'Vereinsheim', $past, 40, 0, 'open', date('Y-m-d H:i:s', strtotime('-90 days'))]);
+    echo "Demo-Veranstaltungen: 3\n";
+}
