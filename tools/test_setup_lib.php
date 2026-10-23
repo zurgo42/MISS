@@ -17,10 +17,29 @@ function md_ts_guard(bool $reset): ?string
     try { md_db(); } catch (Throwable $e) { return 'Keine Datenbankverbindung: ' . $e->getMessage(); }
     if (md_table_exists('svmembers')) {
         $others = md_q("SELECT membership_number FROM svmembers WHERE membership_number NOT LIKE 'DEMO%' OR membership_number IS NULL LIMIT 3");
-        if ($others) return 'Abbruch: svmembers enthält Mitglieder, die keine Demo-Figuren sind (z. B. ' . implode(', ', array_column($others, 'membership_number')) . '). Das sieht nach einer echten Datenbank aus – das Testsystem braucht eine eigene, leere Datenbank.';
-        if ((int)md_one('SELECT COUNT(*) c FROM svmembers')['c'] > 0 && !$reset) return 'Das Testsystem ist schon eingerichtet. Zum Neuaufbau (löscht alle Testdaten) mit Zurücksetzen starten, nach einem Update „Datenbank aktualisieren“ wählen.';
+        if ($others) return 'Abbruch: svmembers enthält Mitglieder, die keine Demo-Figuren sind (z. B. ' . implode(', ', array_column($others, 'membership_number')) . '). Das sieht nach echten Daten aus – das Testsystem läuft nur in einer Datenbank, die ausschließlich Demo-Daten enthält.';
+        if (md_ts_mode() === 'shared' && count(md_ts_idmap()) < 12) return 'Abbruch: In svmembers fehlen Demo-Mitglieder (' . count(md_ts_idmap()) . ' von 12 gefunden). Zuerst die Demo der Sitzungsverwaltung laden.';
+        if (md_table_exists('md_profiles') && (int)md_one('SELECT COUNT(*) c FROM md_profiles')['c'] > 0 && !$reset) return 'Das Testsystem ist schon eingerichtet. Zum Neuaufbau (löscht alle Testdaten der Mitgliederverwaltung) mit Zurücksetzen starten, nach einem Update „Datenbank aktualisieren“ wählen.';
     }
     return null;
+}
+
+/**
+ * 'fresh': noch keine Mitgliedertabelle (wird als Testversion angelegt) · 'own': Testversion von uns angelegt (Marker) ·
+ * 'shared': Mitgliedertabelle der Sitzungsverwaltung mit deren Demo-Figuren – sie bleibt unverändert, nur md_-Tabellen kommen dazu.
+ */
+function md_ts_mode(): string
+{
+    if (!md_table_exists('svmembers')) return 'fresh';
+    if (md_table_exists('md_settings') && (md_one("SELECT setting_value v FROM md_settings WHERE setting_key = 'test.own_sv'")['v'] ?? '') === '1') return 'own';
+    return 'shared';
+}
+
+function md_ts_idmap(): array
+{
+    $m = [];
+    foreach (md_q("SELECT member_id, membership_number FROM svmembers WHERE membership_number LIKE 'DEMO%'") as $r) $m[(int)substr($r['membership_number'], 4)] = (int)$r['member_id'];
+    return $m;
 }
 
 function md_ts_random_password(): string
@@ -40,6 +59,7 @@ function md_ts_schema(): array
         md_run_sql_file($pdo, dirname(__DIR__) . '/sql/sv_stub.sql');
         $log[] = 'Mitgliedertabelle svmembers (Testversion) angelegt.';
     } elseif (!in_array('password_hash', md_table_columns('svmembers'), true)) {
+        if (md_ts_mode() !== 'own') throw new RuntimeException('In der Mitgliedertabelle der Sitzungsverwaltung fehlt die Spalte password_hash. Sie wird nicht verändert – bitte die Sitzungsverwaltung auf den aktuellen Stand bringen.');
         $pdo->exec('ALTER TABLE svmembers ADD COLUMN password_hash VARCHAR(255) DEFAULT NULL');
         $log[] = 'svmembers.password_hash ergänzt.';
     }
@@ -58,7 +78,7 @@ function md_ts_schema(): array
 function md_test_update(): array
 {
     if (!md_is_test_instance()) return ['MD_TEST_INSTANCE ist nicht true.'];
-    return md_ts_schema();
+    try { return md_ts_schema(); } catch (Throwable $e) { return ['FEHLER: ' . $e->getMessage()]; }
 }
 
 /** Baut das Testsystem komplett neu auf. Gibt [Meldungen, Zugangsdaten] zurück (Zugangsdaten: Name, Nummer, E-Mail, Rolle, Passwort). */
@@ -67,33 +87,45 @@ function md_test_setup(bool $reset): array
     if ($err = md_ts_guard($reset)) return [[$err], []];
     $pdo = md_db();
     $log = [];
+    $mode = md_ts_mode();
     ob_start();
     try {
-        if ($reset) {
+        if ($reset && $mode !== 'fresh') {
             $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
             foreach (array_map('current', md_q("SHOW TABLES LIKE 'md\\_%'")) as $t) $pdo->exec("DROP TABLE `$t`");
-            foreach (['svmembers', 'svressorts'] as $t) if (md_table_exists($t)) $pdo->exec("DROP TABLE `$t`");
+            if ($mode === 'own') foreach (['svmembers', 'svressorts'] as $t) if (md_table_exists($t)) $pdo->exec("DROP TABLE `$t`");
             $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
             foreach (glob(MD_STORAGE_DIR . '/photos/*') ?: [] as $f) @unlink($f);
-            $log[] = 'Alte Testdaten gelöscht.';
+            $log[] = $mode === 'own' ? 'Alte Testdaten gelöscht.' : 'Alte Testdaten der Mitgliederverwaltung gelöscht (die Tabellen der Sitzungsverwaltung bleiben unverändert).';
+            $mode = md_ts_mode();
         }
         $log = array_merge($log, md_ts_schema());
+        $shared = $mode === 'shared';
+        if (!$shared && !md_one("SELECT 1 FROM md_settings WHERE setting_key = 'test.own_sv'")) md_exec("INSERT INTO md_settings (setting_key, setting_value, description) VALUES ('test.own_sv', '1', 'Testsystem hat die Mitgliedertabelle selbst angelegt')");
+        $idmap = $shared ? md_ts_idmap() : [];
         $data = demo_build(date('Y-m-d'));
+        if ($shared) {   // Ressorts der vorhandenen Ressortliste über den Namen zuordnen
+            $real = [];
+            try { foreach (md_q('SELECT ID, Ressort FROM svressorts') as $r) $real[mb_strtolower($r['Ressort'])] = (int)$r['ID']; } catch (Throwable $e) {}
+            $demoRes = array_column($data['svressorts'], 'Ressort', 'ID');
+            foreach ($data['md_member_functions'] as &$mf) $mf['ressort_id'] = $mf['ressort_id'] ? ($real[mb_strtolower($demoRes[$mf['ressort_id']] ?? '')] ?? null) : null;
+            unset($mf);
+        }
         $pdo->beginTransaction();
-        foreach (['svmembers', 'svressorts'] as $t) demo_insert($pdo, $t, $data[$t]);
+        if (!$shared) foreach (['svmembers', 'svressorts'] as $t) demo_insert($pdo, $t, $data[$t]);
         foreach (array_diff(DEMO_MD_TABLES, ['md_functions']) as $t) {
             if ($t === 'md_settings') {   // vorhandene Einstellungen (z. B. Mahnstufen) nicht doppelt anlegen
                 foreach ($data[$t] as $st) if (!md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$st['setting_key']])) demo_insert($pdo, $t, [$st]);
                 continue;
             }
-            demo_insert($pdo, $t, $data[$t]);
+            demo_insert($pdo, $t, $data[$t], $idmap);
         }
         $pdo->commit();
-        demo_photos($pdo, $data['svmembers']);
-        demo_seed_sepa(); demo_seed_mail(); demo_seed_events(); demo_seed_lists_apply(); demo_seed_datev();
-        demo_issue_receipts();
+        demo_photos($pdo, $data['svmembers'], $idmap);
+        demo_seed_sepa($idmap); demo_seed_mail($idmap); demo_seed_events($idmap); demo_seed_lists_apply($idmap); demo_seed_datev($idmap);
+        demo_issue_receipts($idmap);
         md_seed_permissions();
-        $log[] = '12 Testfiguren mit Beispieldaten angelegt (Beiträge, Lastschrift-Mandate, Veranstaltungen, Verteiler, Anträge, DATEV-Konten).';
+        $log[] = '12 Testfiguren mit Beispieldaten angelegt (Beiträge, Lastschrift-Mandate, Veranstaltungen, Verteiler, Anträge, DATEV-Konten).' . ($shared ? ' Die Mitgliedertabelle der Sitzungsverwaltung wurde nicht verändert.' : '');
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         ob_end_clean();
@@ -102,11 +134,14 @@ function md_test_setup(bool $reset): array
     ob_end_clean();
     $creds = [];
     foreach (md_q("SELECT * FROM svmembers WHERE membership_number LIKE 'DEMO%' ORDER BY member_id") as $m) {
-        $pw = md_ts_random_password();
-        if ($e = md_password_set((int)$m['member_id'], $pw)) { $log[] = 'Passwort für ' . $m['membership_number'] . ': ' . $e; continue; }
+        $pw = null;
+        if (empty($m['password_hash'])) {   // vorhandene Passwörter (z. B. aus der Demo der Sitzungsverwaltung) bleiben unberührt
+            $pw = md_ts_random_password();
+            if ($e = md_password_set((int)$m['member_id'], $pw)) { $log[] = 'Passwort für ' . $m['membership_number'] . ': ' . $e; continue; }
+        }
         $f = md_one('SELECT f.code FROM md_member_functions mf JOIN md_functions f ON f.function_id = mf.function_id WHERE mf.member_id = ? AND (mf.valid_to IS NULL OR mf.valid_to >= ?) ORDER BY f.sv_aktiv_level DESC LIMIT 1', [$m['member_id'], date('Y-m-d')]);
-        $creds[] = ['name' => $m['first_name'] . ' ' . $m['last_name'], 'number' => $m['membership_number'], 'email' => $m['email'], 'role' => trim(($m['role'] ?? '') . ($f ? ', ' . $f['code'] : '') . (!empty($m['is_admin']) ? ', Admin' : ''), ', '), 'password' => $pw];
+        $creds[] = ['name' => $m['first_name'] . ' ' . $m['last_name'], 'number' => $m['membership_number'], 'email' => $m['email'], 'role' => trim(($m['role'] ?? '') . ($f ? ', ' . $f['code'] : '') . (!empty($m['is_admin']) ? ', Admin' : ''), ', '), 'password' => $pw ?? '(vorhanden – wie in der Sitzungsverwaltung)'];
     }
-    $log[] = 'Passwörter gesetzt (werden nur jetzt angezeigt).';
+    $log[] = 'Passwörter: nur für Figuren ohne Passwort neu gesetzt (werden nur jetzt angezeigt).';
     return [$log, $creds];
 }

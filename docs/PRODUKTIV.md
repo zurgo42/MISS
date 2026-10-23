@@ -2,7 +2,7 @@
 
 Diese Anleitung bringt die Mitgliederverwaltung als **Testsystem** auf deinen Webserver, damit externe Tester über das Internet damit arbeiten können – mit **erfundenen Daten**, einer **eigenen Datenbank** und Zugriffsschutz. Der spätere Echtbetrieb steht am Ende (Checkliste).
 
-> **Wichtig:** Das Testsystem läuft nicht in der Datenbank der Sitzungsverwaltung und nicht mit echten Mitgliedern. Die Testdaten wären sonst mit echten Daten vermischt und für Tester sichtbar. Die Mitgliederverwaltung läuft ohnehin nur im Standalone-Betrieb der Sitzungsverwaltung; im Adapterbetrieb wird sie nicht gebraucht.
+> **Wichtig:** Das Testsystem darf nie mit echten Mitgliedern in derselben Datenbank laufen, denn Tester könnten sie sehen. Läuft auf dem Server ohnehin nur eine Testinstanz der Sitzungsverwaltung mit Demo-Daten, kann die Mitgliederverwaltung deren Datenbank mitbenutzen (Weg A); der Einrichter prüft, dass dort nur Demo-Figuren stehen. Die Mitgliederverwaltung läuft nur im Standalone-Betrieb der Sitzungsverwaltung; im Adapterbetrieb wird sie nicht gebraucht.
 
 ## 1. Voraussetzungen
 
@@ -19,7 +19,9 @@ Ob die PHP-Erweiterungen vorhanden sind, zeigt im Hosting-Panel meist „PHP-Inf
 ## 2. Aufbau
 
 - Eigenes Verzeichnis oder eine Subdomain, z. B. `https://dein-verein.de/Mitgliederverwaltung-Test/`.
-- **Eigene Datenbank** nur für das Testsystem (z. B. `…_mvtest`) mit eigenem Benutzer.
+- **Datenbank:** Es zählt nur, dass sie **ausschließlich Demo-Daten** enthält – das prüft der Einrichter und bricht sonst ab. Zwei Wege:
+  - **A – gemeinsam mit der Sitzungsverwaltung (Testinstanz mit deren Demo):** Die Mitgliederverwaltung nutzt dieselbe Datenbank und legt nur ihre `md_`-Tabellen an. `svmembers`, `svressorts` und alles der Sitzungsverwaltung bleiben **unverändert** (auch beim Zurücksetzen); die Demo-Figuren DEMO0001–DEMO0012 sind dieselben, und die Anmeldung gilt für beide Anwendungen. Voraussetzung: die Demo der Sitzungsverwaltung ist geladen und `svmembers` hat die Spalte `password_hash`.
+  - **B – eigene Datenbank:** Wenn es keine Testinstanz der Sitzungsverwaltung gibt. Der Einrichter legt dann eine einfache Mitgliedertabelle selbst an.
 - **Zugriffsschutz** (Benutzername/Passwort des Webservers) vor dem gesamten Verzeichnis. Das verhindert, dass Suchmaschinen oder Unbefugte das Testsystem sehen.
 
 ## 3. Schritt für Schritt
@@ -31,8 +33,9 @@ Ob die PHP-Erweiterungen vorhanden sind, zeigt im Hosting-Panel meist „PHP-Inf
    `…/config.example.php` · `…/src/db.php` · `…/sql/schema.sql` · `…/storage/` · `…/tools/install.php`
    Wenn eine davon Inhalt zeigt, ist `.htaccess` nicht aktiv: Hoster bitten, `AllowOverride All` für das Verzeichnis zu setzen, bevor du weitermachst.
 
-### 3.2 Datenbank anlegen
-Im Hosting-Panel eine neue MySQL-Datenbank mit Benutzer anlegen (Zeichensatz utf8mb4). Servername, Datenbankname, Benutzer und Passwort notieren.
+### 3.2 Datenbank
+- **Weg A:** Zugangsdaten der Datenbank der Sitzungsverwaltungs-Testinstanz verwenden (steht in deren `config.php`).
+- **Weg B:** Im Hosting-Panel eine neue, leere MySQL-Datenbank mit Benutzer anlegen (Zeichensatz utf8mb4). Servername, Datenbankname, Benutzer und Passwort notieren.
 
 ### 3.3 `config.php` anlegen
 `config.example.php` kopieren in `config.php` (im selben Verzeichnis) und anpassen:
@@ -71,7 +74,9 @@ Hinweis: Die vorhandene `.htaccess` im Zielverzeichnis enthält bereits Sperren;
 - **Mit SSH:** `php tools/test_setup.php` im Zielverzeichnis. Es legt die Tabellen an, lädt die 12 Testfiguren samt Beispieldaten und gibt die Zugangsdaten **einmalig** aus.
 - **Ohne SSH:** `https://…/Mitgliederverwaltung-Test/setup_test.php?token=<MD_SETUP_TOKEN>` aufrufen → „Einrichten“. Die Zugangsdaten erscheinen **einmalig** auf der Seite (notieren!). Danach „Diese Datei jetzt löschen“ (oder per FTP entfernen).
 
-Das Einrichten bricht ab, wenn die Datenbank Mitglieder enthält, die keine Testfiguren sind. Dadurch lässt sich die falsche Datenbank nicht versehentlich überschreiben.
+Das Einrichten bricht ab, wenn die Datenbank Mitglieder enthält, die keine Demo-Figuren sind. Dadurch lässt sich eine Datenbank mit echten Daten nicht versehentlich überschreiben.
+
+Bei Weg A bekommen nur Figuren ohne Passwort ein neues; vorhandene Passwörter aus der Demo der Sitzungsverwaltung bleiben und gelten auch hier. Bei Weg B erhalten alle zwölf neue Passwörter.
 
 ### 3.6 Prüfen
 1. `…/login.php` aufrufen, mit einer Testfigur anmelden (E-Mail oder Mitgliedsnummer + Passwort). Oben steht das Banner „Testsystem – alle Daten sind erfunden“.
@@ -89,11 +94,11 @@ Das Einrichten bricht ab, wenn die Datenbank Mitglieder enthält, die keine Test
 | Aufgabe | So geht’s |
 |---|---|
 | **Neue Version einspielen** | Neue Dateien per FTP drüberkopieren, **`config.php` und `storage/` behalten**; danach `php tools/test_setup.php --update` bzw. im Browser `setup_test.php` → „Datenbank aktualisieren“ (legt nur Neues an, löscht nichts). Wenn `setup_test.php` gelöscht wurde, neu hochladen. Eine Meldung „Datenbank nicht auf dem neuesten Stand“ (503) bedeutet, dass dieser Schritt fehlt. |
-| **Testdaten zurücksetzen** | `php tools/test_setup.php --reset` bzw. im Browser „Alles löschen und neu aufbauen“ (löscht alle Testdaten, vergibt neue Passwörter). |
+| **Testdaten zurücksetzen** | `php tools/test_setup.php --reset` bzw. im Browser „Alles löschen und neu aufbauen“. Löscht alle Testdaten der Mitgliederverwaltung. Weg A: Die Tabellen der Sitzungsverwaltung bleiben unangetastet. Weg B: neue Passwörter. |
 | **E-Mails** | Das Testsystem versendet keine Mails (`MD_TEST_INSTANCE`). Alle Nachrichten stehen unter *E-Mail* im Ausgang (nur für Admin-Figuren sichtbar). Einladungs- und Passwort-Links sind dort ebenfalls lesbar. |
 | **Fehlermeldungen** | Leere Seite/500: PHP-Fehlerprotokoll des Hosters prüfen. Häufige Ursachen: fehlende PHP-Erweiterung, falsche Zugangsdaten in `config.php`. |
 | **Rückmeldungen sammeln** | Tester melden: Adresse der Seite, Testfigur, Schritte, erwartet/erlebt, Screenshot (siehe `docs/TESTER.md`). |
-| **Abbau nach dem Test** | Datenbank im Panel löschen, Verzeichnis per FTP löschen, Verzeichnisschutz und Tester-Zugänge beenden. |
+| **Abbau nach dem Test** | Verzeichnis per FTP löschen, Verzeichnisschutz und Tester-Zugänge beenden; bei Weg B die Datenbank löschen, bei Weg A die `md_`-Tabellen entfernen (oder zurücksetzen). |
 
 ## 5. Sicherheitshinweise für das Testsystem
 
