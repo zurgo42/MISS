@@ -47,6 +47,7 @@ require_once __DIR__ . '/login.php';
 require_once __DIR__ . '/events.php';
 require_once __DIR__ . '/lists.php';
 require_once __DIR__ . '/apply.php';
+require_once __DIR__ . '/datev.php';
 require_once __DIR__ . '/migrate.php';
 require_once __DIR__ . '/import.php';
 require_once __DIR__ . '/finance.php';

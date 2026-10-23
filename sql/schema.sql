@@ -544,3 +544,38 @@ CREATE TABLE IF NOT EXISTS md_applications (
     decision_note VARCHAR(255) DEFAULT NULL,
     member_id INT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- DATEV-Import: Personenkonten der Mitglieder, Zuordnung von Sach-/Erlöskonten zu Buchungsarten, Protokoll
+CREATE TABLE IF NOT EXISTS md_datev_accounts (
+    account VARCHAR(9) PRIMARY KEY,                -- Personenkonto (Debitor oder Kreditor) in der Buchhaltung
+    member_id INT NOT NULL,
+    type VARCHAR(10) NOT NULL DEFAULT 'debitor'    -- debitor (Forderungen an das Mitglied), kreditor (Zahlungen an das Mitglied)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_datev_kinds (
+    rule_id INT PRIMARY KEY AUTO_INCREMENT,
+    account_from VARCHAR(9) NOT NULL,              -- Gegenkonto (Erlös-/Aufwandskonto) von ... bis
+    account_to VARCHAR(9) NOT NULL,
+    kind VARCHAR(20) NOT NULL                      -- Buchungsart im Kassenbuch (beitrag, spende, eintritt, ...)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_datev_imports (
+    import_id INT PRIMARY KEY AUTO_INCREMENT,
+    file_name VARCHAR(200) DEFAULT NULL,
+    created_at DATETIME NOT NULL,
+    created_by INT DEFAULT NULL,
+    period_from DATE DEFAULT NULL,
+    period_to DATE DEFAULT NULL,
+    rows_total INT NOT NULL DEFAULT 0,
+    paid_count INT NOT NULL DEFAULT 0,                -- Forderungen als bezahlt vermerkt
+    created_count INT NOT NULL DEFAULT 0,             -- neue Buchungen angelegt
+    skipped_count INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS md_datev_rows (
+    fingerprint VARCHAR(40) PRIMARY KEY,           -- Prüfsumme der Buchungszeile: dieselbe Zeile wird nie zweimal übernommen
+    import_id INT NOT NULL,
+    row_no INT NOT NULL,
+    entry_id INT DEFAULT NULL,
+    imported_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

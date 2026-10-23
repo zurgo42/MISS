@@ -143,3 +143,17 @@ function demo_seed_lists_apply(array $idmap = []): void
     }
     echo "Demo-Verteiler und Online-Anträge angelegt.\n";
 }
+
+/** Demo: Personenkonten (Debitor 10001… = Mitglied Nr. 1…) und Kontenregeln für den DATEV-Import. */
+function demo_seed_datev(array $idmap = []): void
+{
+    if (md_one('SELECT 1 FROM md_datev_accounts')) return;
+    foreach (range(1, 12) as $n) md_datev_account_save((string)(10000 + $n), $idmap[$n] ?? $n, 'debitor');
+    foreach ([7, 8] as $n) md_datev_account_save((string)(70000 + $n), $idmap[$n] ?? $n, 'kreditor');
+    md_datev_kind_rule_save('8100', '8199', 'beitrag');
+    md_datev_kind_rule_save('8200', '8299', 'spende');
+    md_datev_kind_rule_save('8300', '8399', 'eintritt');
+    md_datev_kind_rule_save('4100', '4199', 'uebungsleiter');
+    md_datev_kind_rule_save('4200', '4299', 'erstattung');
+    echo "Demo-Personenkonten für den DATEV-Import angelegt.\n";
+}

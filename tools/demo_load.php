@@ -58,5 +58,6 @@ demo_seed_sepa($idmap);
 demo_seed_mail($idmap);
 demo_seed_events($idmap);
 demo_seed_lists_apply($idmap);
+demo_seed_datev($idmap);
 demo_issue_receipts($idmap);
 echo "\nFertig. Demo-Anmeldung (MD_DEMO_MODE): " . md_url('login.php') . "\n";

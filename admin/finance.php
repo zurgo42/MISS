@@ -86,7 +86,7 @@ echo '</select><button>Filtern</button></form>';
 echo '<div class="kpis"><div class="kpi"><span>Offene Forderungen an Mitglieder</span><strong>' . md_money($sum['claims_open']) . '</strong></div><div class="kpi"><span>Eingegangen</span><strong>' . md_money($sum['claims_paid']) . '</strong></div>'
     . '<div class="kpi"><span>Auszahlungen offen</span><strong>' . md_money($sum['pay_open']) . '</strong></div><div class="kpi"><span>Ausgezahlt</span><strong>' . md_money($sum['pay_paid']) . '</strong></div></div>';
 echo '<p><a href="admin/finance.php?' . h(http_build_query(['q' => $q, 'kind' => $fkind, 'status' => $fstatus, 'year' => $fyear, 'export' => 1])) . '">Auswahl als CSV exportieren</a>'
-    . ($edit ? ' · <a href="admin/finance_import.php">Buchungen aus CSV importieren</a>' : '') . '</p>';
+    . ($edit ? ' · <a href="admin/finance_import.php">Buchungen aus CSV importieren</a> · <a href="admin/datev.php">DATEV-Import</a>' : '') . '</p>';
 
 if ($edit) {
     echo '<details class="card"><summary><strong>Neue Buchung</strong></summary><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="add"><div class="addr">';
