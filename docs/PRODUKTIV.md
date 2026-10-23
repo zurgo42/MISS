@@ -1,0 +1,116 @@
+# Testsystem auf dem Server für externe Tester
+
+Diese Anleitung bringt die Mitgliederverwaltung als **Testsystem** auf deinen Webserver, damit externe Tester über das Internet damit arbeiten können – mit **erfundenen Daten**, einer **eigenen Datenbank** und Zugriffsschutz. Der spätere Echtbetrieb steht am Ende (Checkliste).
+
+> **Wichtig:** Das Testsystem läuft nicht in der Datenbank der Sitzungsverwaltung und nicht mit echten Mitgliedern. Die Testdaten wären sonst mit echten Daten vermischt und für Tester sichtbar. Die Mitgliederverwaltung läuft ohnehin nur im Standalone-Betrieb der Sitzungsverwaltung; im Adapterbetrieb wird sie nicht gebraucht.
+
+## 1. Voraussetzungen
+
+| Was | Anforderung |
+|---|---|
+| PHP | 8.1 oder neuer (getestet mit 8.3) mit den Erweiterungen `pdo_mysql`, `mbstring`, `openssl`, `iconv`, `dom`, `gd`; `zip` ist optional (ZIP-Export der Auskunft) |
+| Datenbank | MySQL/MariaDB (MariaDB 10.4+ bzw. MySQL 5.7+), Zeichensatz utf8mb4 |
+| Webserver | Apache mit `.htaccess`-Auswertung (`AllowOverride`). Bei nginx sind die Sperren aus den `.htaccess`-Dateien selbst einzurichten. |
+| HTTPS | Pflicht (Passwörter, Sitzung) |
+| Zugang | FTP/SFTP; SSH ist hilfreich, aber nicht nötig (es gibt einen Einrichter im Browser) |
+
+Ob die PHP-Erweiterungen vorhanden sind, zeigt im Hosting-Panel meist „PHP-Info“; sonst beim Hoster nachfragen.
+
+## 2. Aufbau
+
+- Eigenes Verzeichnis oder eine Subdomain, z. B. `https://dein-verein.de/Mitgliederverwaltung-Test/`.
+- **Eigene Datenbank** nur für das Testsystem (z. B. `…_mvtest`) mit eigenem Benutzer.
+- **Zugriffsschutz** (Benutzername/Passwort des Webservers) vor dem gesamten Verzeichnis. Das verhindert, dass Suchmaschinen oder Unbefugte das Testsystem sehen.
+
+## 3. Schritt für Schritt
+
+### 3.1 Code holen und hochladen
+1. Auf GitHub (Repository `zurgo42/Mitgliederverwaltung`, Zweig `main`): **Code → Download ZIP** und entpacken. (Mit SSH alternativ: `git clone https://github.com/zurgo42/Mitgliederverwaltung.git Mitgliederverwaltung-Test`.)
+2. Den **Inhalt** des entpackten Ordners per FTP in das Zielverzeichnis hochladen (so, dass `index.php` direkt im Zielverzeichnis liegt).
+3. Prüfen, dass die Sperren greifen – diese Adressen müssen **„Forbidden“/403** liefern:
+   `…/config.example.php` · `…/src/db.php` · `…/sql/schema.sql` · `…/storage/` · `…/tools/install.php`
+   Wenn eine davon Inhalt zeigt, ist `.htaccess` nicht aktiv: Hoster bitten, `AllowOverride All` für das Verzeichnis zu setzen, bevor du weitermachst.
+
+### 3.2 Datenbank anlegen
+Im Hosting-Panel eine neue MySQL-Datenbank mit Benutzer anlegen (Zeichensatz utf8mb4). Servername, Datenbankname, Benutzer und Passwort notieren.
+
+### 3.3 `config.php` anlegen
+`config.example.php` kopieren in `config.php` (im selben Verzeichnis) und anpassen:
+
+```php
+define('MD_DB_DRIVER', 'mysql');
+define('MD_DB_HOST', 'localhost');          // laut Hoster
+define('MD_DB_NAME', '…_mvtest');
+define('MD_DB_USER', '…');
+define('MD_DB_PASS', '…');
+define('MD_DEMO_MODE', false);              // muss false sein (Anmeldung mit Passwort)
+define('MD_TEST_INSTANCE', true);           // Testsystem: Banner, kein echter Mailversand
+define('MD_SETUP_TOKEN', '…');              // zufällig, mindestens 20 Zeichen (nur für setup_test.php)
+define('MD_ENCRYPTION_KEY', '…');           // 64 Hex-Zeichen
+define('MD_SV_MODE', 'standalone');
+define('MD_LOGIN_URL', '');                 // leer = eigene Anmeldung
+define('MD_CLUB_NAME', 'Testverein');
+define('MD_PUBLIC_URL', 'https://dein-verein.de/Mitgliederverwaltung-Test');
+```
+
+Den Schlüssel und das Token erzeugst du z. B. auf deinem PC mit `php tools/make_key.php` (liefert 64 Hex-Zeichen; für das Token reichen 24 Zeichen davon) oder mit `openssl rand -hex 32`. `config.php` wird nie ins Repository übernommen.
+
+### 3.4 Zugriffsschutz einrichten
+Im Hosting-Panel „Verzeichnisschutz“ für das Zielverzeichnis aktivieren (Benutzer + Passwort für die Tester). Alternativ in einer `.htaccess` im Zielverzeichnis (ersetze den Pfad zur Passwortdatei, die du mit dem Panel oder `htpasswd` erzeugst):
+
+```apache
+AuthType Basic
+AuthName "Testsystem"
+AuthUserFile /absoluter/pfad/zur/.htpasswd
+Require valid-user
+```
+
+Hinweis: Die vorhandene `.htaccess` im Zielverzeichnis enthält bereits Sperren; füge die vier Zeilen **am Anfang** hinzu, ersetze die Datei nicht.
+
+### 3.5 Einrichten
+- **Mit SSH:** `php tools/test_setup.php` im Zielverzeichnis. Es legt die Tabellen an, lädt die 12 Testfiguren samt Beispieldaten und gibt die Zugangsdaten **einmalig** aus.
+- **Ohne SSH:** `https://…/Mitgliederverwaltung-Test/setup_test.php?token=<MD_SETUP_TOKEN>` aufrufen → „Einrichten“. Die Zugangsdaten erscheinen **einmalig** auf der Seite (notieren!). Danach „Diese Datei jetzt löschen“ (oder per FTP entfernen).
+
+Das Einrichten bricht ab, wenn die Datenbank Mitglieder enthält, die keine Testfiguren sind. Dadurch lässt sich die falsche Datenbank nicht versehentlich überschreiben.
+
+### 3.6 Prüfen
+1. `…/login.php` aufrufen, mit einer Testfigur anmelden (E-Mail oder Mitgliedsnummer + Passwort). Oben steht das Banner „Testsystem – alle Daten sind erfunden“.
+2. Mit der Admin-Figur (Max Mustermann): Seiten *Mitglieder, Finanzen, Beiträge, SEPA, E-Mail, Verteiler, Anmeldungen* öffnen – es dürfen keine Fehlermeldungen erscheinen.
+3. „Passwort vergessen“ ausprobieren: Die E-Mail wird nicht verschickt; den Link siehst du als Admin unter *E-Mail* im Ausgang.
+
+### 3.7 Tester ausstatten
+- Jedem Tester **eine oder zwei Testfiguren** zuteilen (siehe `docs/TESTER.md`: Rollen und Testaufgaben) und das Passwort über einen **anderen Kanal** als die Adresse des Systems schicken. Die Tester können ihr Passwort unter *Mein Zugang* ändern.
+- Zusätzlich die Zugangsdaten des Verzeichnisschutzes mitgeben.
+- `docs/TESTER.md` als Anleitung weitergeben (Datei ist wegen der Webserver-Sperre nur per FTP/E-Mail verfügbar, nicht im Browser).
+- Die Tester über den Rahmen informieren: erfundene Daten, keine echten personenbezogenen Daten eingeben, Vertraulichkeit.
+
+## 4. Betrieb während der Testphase
+
+| Aufgabe | So geht’s |
+|---|---|
+| **Neue Version einspielen** | Neue Dateien per FTP drüberkopieren, **`config.php` und `storage/` behalten**; danach `php tools/test_setup.php --update` bzw. im Browser `setup_test.php` → „Datenbank aktualisieren“ (legt nur Neues an, löscht nichts). Wenn `setup_test.php` gelöscht wurde, neu hochladen. Eine Meldung „Datenbank nicht auf dem neuesten Stand“ (503) bedeutet, dass dieser Schritt fehlt. |
+| **Testdaten zurücksetzen** | `php tools/test_setup.php --reset` bzw. im Browser „Alles löschen und neu aufbauen“ (löscht alle Testdaten, vergibt neue Passwörter). |
+| **E-Mails** | Das Testsystem versendet keine Mails (`MD_TEST_INSTANCE`). Alle Nachrichten stehen unter *E-Mail* im Ausgang (nur für Admin-Figuren sichtbar). Einladungs- und Passwort-Links sind dort ebenfalls lesbar. |
+| **Fehlermeldungen** | Leere Seite/500: PHP-Fehlerprotokoll des Hosters prüfen. Häufige Ursachen: fehlende PHP-Erweiterung, falsche Zugangsdaten in `config.php`. |
+| **Rückmeldungen sammeln** | Tester melden: Adresse der Seite, Testfigur, Schritte, erwartet/erlebt, Screenshot (siehe `docs/TESTER.md`). |
+| **Abbau nach dem Test** | Datenbank im Panel löschen, Verzeichnis per FTP löschen, Verzeichnisschutz und Tester-Zugänge beenden. |
+
+## 5. Sicherheitshinweise für das Testsystem
+
+- `MD_DEMO_MODE` bleibt **false**: Im Demo-Modus kann sich jeder ohne Passwort als beliebige Figur anmelden.
+- `setup_test.php` nach dem Einrichten löschen; das Token nirgends weitergeben.
+- Verzeichnisschutz nicht weglassen; das Testsystem ist für Suchmaschinen gesperrt (`noindex`), aber nicht geheim.
+- `config.php` enthält Datenbankzugang und Schlüssel: nur per FTP/SFTP bearbeiten, nie in ein Ticket oder eine Mail kopieren.
+
+## 6. Später: Echtbetrieb (Checkliste)
+
+Das ist ein eigener Schritt mit anderen Voraussetzungen; die Testinstanz wird dafür nicht „umgeschaltet“, sondern neu und sauber aufgesetzt.
+
+1. **Datenbank:** die der Sitzungsverwaltung (Standalone-Betrieb; `svmembers` mit der Spalte `password_hash`). Vorher vollständige Sicherung.
+2. `config.php` mit `MD_DEMO_MODE=false`, `MD_TEST_INSTANCE=false`, `MD_ENCRYPTION_KEY` (neu erzeugen, **sicher aufbewahren und mitsichern, später nie ändern**), `MD_PUBLIC_URL`, SMTP-Zugang (`MD_MAIL_TRANSPORT='smtp'`).
+3. `php tools/install.php --check`, dann `php tools/install.php` (SSH nötig; ohne SSH bitte Bescheid geben, dann ergänze ich einen Einrichter für den Echtbetrieb). Keine Demo-Daten laden!
+4. Mitglieder per CSV-Import einspielen (*Import*), Funktionen/Rechte, Beitragsgruppen, Vereinsdaten, Gläubiger-ID, Absenderadresse einrichten.
+5. Einladungen verschicken (*E-Mail → Zugänge*).
+6. Vorab klären: Satzung/Beitragsordnung (Mahngebühren, Lastschrift), Datenschutzhinweise und Nutzungsbedingungen, Auftragsverarbeitungsvertrag mit dem Hoster, Verzeichnis der Verarbeitungstätigkeiten (siehe `docs/DATENSCHUTZ.md`), Steuerberater für Spendenbescheinigungen und DATEV.
+7. **Sicherung** einrichten: Datenbank täglich, `storage/` (Fotos) und `config.php` regelmäßig.
+8. Jeden Schritt vorher am Testsystem proben.

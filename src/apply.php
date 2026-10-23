@@ -101,7 +101,7 @@ function md_apply_submit(array $d, string $ip, ?int $now = null): array
     $link = md_public_url('apply_confirm.php?token=' . $token);
     $body = "Hallo $first,\n\nvielen Dank für dein Interesse an $name! Bitte bestätige deine E-Mail-Adresse mit diesem Link (48 Stunden gültig):\n\n$link\n\nDanach prüft der Vorstand deinen Antrag und meldet sich bei dir.\nWenn du dich nicht angemeldet hast, kannst du diese Nachricht ignorieren; dann passiert nichts.\n" . md_mail_footer();
     md_mail_now(null, $email, "Bitte bestätige deine Anmeldung – $name", $body, 'apply');
-    md_exec("UPDATE md_mail_outbox SET body = ? WHERE kind = 'apply' AND to_email = ? AND body LIKE ?", [str_replace($link, '[Link entfernt]', $body), $email, '%' . $token . '%']);
+    if (!md_is_test_instance()) md_exec("UPDATE md_mail_outbox SET body = ? WHERE kind = 'apply' AND to_email = ? AND body LIKE ?", [str_replace($link, '[Link entfernt]', $body), $email, '%' . $token . '%']);
     return [true, ''];
 }
 

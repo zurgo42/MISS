@@ -12,7 +12,7 @@ const MD_MAIL_STATUS = ['queued' => 'wartet', 'sent' => 'versendet', 'failed' =>
 
 function md_mail_transport(): string
 {
-    $t = defined('MD_MAIL_TRANSPORT') ? (string)MD_MAIL_TRANSPORT : (MD_DEMO_MODE ? 'log' : 'mail');
+    $t = defined('MD_MAIL_TRANSPORT') ? (string)MD_MAIL_TRANSPORT : (MD_DEMO_MODE || md_is_test_instance() ? 'log' : 'mail');
     return in_array($t, ['log', 'mail', 'smtp'], true) ? $t : 'mail';
 }
 

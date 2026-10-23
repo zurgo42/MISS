@@ -31,7 +31,7 @@ if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) exit("Abbruch: md_
 
 if (in_array('--reset', $argv, true)) {
     $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
-    foreach (array_merge(['md_dunning_letters', 'md_fee_runs', 'md_receipt_events', 'md_receipts', 'md_photos'], array_diff(DEMO_MD_TABLES, ['md_functions', 'md_settings'])) as $t) $pdo->exec("DELETE FROM $t");
+    foreach (array_merge(['md_dunning_letters', 'md_fee_runs', 'md_receipt_events', 'md_receipts', 'md_photos', 'md_sepa_events', 'md_sepa_items', 'md_sepa_batches', 'md_sepa_mandates', 'md_mail_outbox', 'md_mail_campaigns', 'md_mail_optout', 'md_mail_lists', 'md_login_tokens', 'md_login_attempts', 'md_event_regs', 'md_events', 'md_applications', 'md_datev_rows', 'md_datev_imports', 'md_datev_accounts', 'md_datev_kinds'], array_diff(DEMO_MD_TABLES, ['md_functions', 'md_settings'])) as $t) $pdo->exec("DELETE FROM $t");
     $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
     echo "md_-Tabellen geleert.\n";
 }

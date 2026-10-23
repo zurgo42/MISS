@@ -43,3 +43,8 @@ define('MD_MAIL_TRANSPORT', 'log');
 // define('MD_SMTP_USER', ''); define('MD_SMTP_PASS', '');
 // Öffentliche Adresse dieser Anwendung für Links in E-Mails (empfohlen, sonst wird der Host der Anfrage verwendet):
 // define('MD_PUBLIC_URL', 'https://verein.example.org/Mitgliederverwaltung');
+
+// Testsystem für externe Tester (nur auf einer eigenen Testdatenbank mit erfundenen Daten!). Siehe docs/PRODUKTIV.md.
+define('MD_TEST_INSTANCE', false);
+// Nur für den Web-Einrichter setup_test.php (zufälliger Wert, mindestens 20 Zeichen; Datei nach dem Einrichten löschen):
+// define('MD_SETUP_TOKEN', '');

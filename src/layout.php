@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
 
+function md_is_test_instance(): bool
+{
+    return defined('MD_TEST_INSTANCE') && MD_TEST_INSTANCE === true;
+}
+
 function md_header(string $title, ?array $me = null, string $active = ''): void
 {
     $nav = ['dashboard' => ['index.php', 'Mein Dashboard']];
@@ -29,6 +34,7 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
     }
     echo '</div></header><main class="wrap">';
     if (MD_DEMO_MODE) echo '<div class="demo">Demo-Modus mit erfundenen Daten.</div>';
+    elseif (md_is_test_instance()) echo '<div class="demo"><strong>Testsystem</strong> – alle Daten sind erfunden. Bitte keine echten personenbezogenen Daten eingeben.</div>';
 }
 
 function md_footer(): void

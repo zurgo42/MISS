@@ -141,7 +141,7 @@ function md_login_send_link(int $member, string $kind, ?int $by = null): string
     $full = $body . md_mail_footer();
     $err = md_mail_now($member, $to, $subj, $full, $kind, null, $by);
     // der Link steht nur in der gesendeten Nachricht; im Ausgang bleibt er nicht lesbar
-    md_exec("UPDATE md_mail_outbox SET body = ?" . ($err ? ", status = 'cancelled'" : '') . " WHERE member_id = ? AND kind = ? AND body LIKE ?", [str_replace($link, '[Link entfernt]', $full), $member, $kind, '%' . $token . '%']);
+    if (!md_is_test_instance() || $err) md_exec("UPDATE md_mail_outbox SET body = ?" . ($err ? ", status = 'cancelled'" : '') . " WHERE member_id = ? AND kind = ? AND body LIKE ?", [str_replace($link, '[Link entfernt]', $full), $member, $kind, '%' . $token . '%']);
     if (!$err) md_log_change($member, 'account', $kind === 'invite' ? 'Einladung' : 'Passwort-Link', 'per E-Mail gesendet', $by ?? $member, $by && $by !== $member ? 'admin' : 'self');
     return $err;
 }
