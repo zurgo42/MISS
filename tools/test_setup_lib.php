@@ -10,7 +10,7 @@ require_once __DIR__ . '/demo_lib.php';
 /** Prüft die Voraussetzungen. Gibt null oder die Fehlermeldung zurück. */
 function md_ts_guard(bool $reset): ?string
 {
-    if (!md_is_test_instance()) return "MD_TEST_INSTANCE ist nicht true. Das Testsystem wird nur auf einer eigenen Testdatenbank eingerichtet (config.php).";
+    if (!md_is_test_instance()) return "MD_TEST_INSTANCE ist nicht true. Dieses Skript richtet ein Testsystem für externe Tester auf einem Server ein (MD_TEST_INSTANCE=true und MD_DEMO_MODE=false in config.php). Für die lokale Demo (MD_DEMO_MODE=true): php tools/demo_load.php --reset bzw. php tools/demo_setup.php.";
     if (MD_DEMO_MODE) return 'MD_DEMO_MODE muss false sein: Testsysteme arbeiten mit echter Anmeldung (Passwörter).';
     if (MD_DB_DRIVER !== 'mysql') return "MD_DB_DRIVER muss 'mysql' sein.";
     if (!preg_match('/^[0-9a-fA-F]{64}$/', defined('MD_ENCRYPTION_KEY') ? (string)MD_ENCRYPTION_KEY : '')) return "MD_ENCRYPTION_KEY fehlt in config.php (Schlüssel erzeugen: php tools/make_key.php).";
