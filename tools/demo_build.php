@@ -17,14 +17,14 @@ function demo_build(string $anchor): array
 
     // id, Vorname, Nachname, Mail, Rolle, aktiv, Funktion, Admin, aktiv?
     $members = [
-        [1,  'Max',    'Mustermann', 'max',    'vorstand',      19, 'FVo', 1, 1],
+        [1,  'Max',    'Mustermann', 'max',    'vorstand',      19, 'FVo', 0, 1],
         [2,  'Erika',  'Musterfrau', 'erika',  'vorstand',      19, 'FVv', 0, 1],
         [3,  'Lukas',  'Beispiel',   'lukas',  'vorstand',      19, 'Vo',  0, 1],
         [4,  'Julia',  'Sommer',     'julia',  'gf',            18, 'GF',  1, 1],
         [5,  'Thomas', 'Winter',     'thomas', 'assistenz',     17, 'VA',  1, 1],
-        [6,  'Sabine', 'Herbst',     'sabine', 'assistenz',     11, 'SV',  1, 1],
+        [6,  'Sabine', 'Herbst',     'sabine', 'Mitglied',      0,  null,  0, 1],
         [7,  'Hans',   'Lehmann',    'hans',   'fuehrungsteam', 17, 'RL',  0, 1],
-        [8,  'Anna',   'Frühling',   'anna',   'fuehrungsteam', 15, 'RL',  0, 1],
+        [8,  'Anna',   'Frühling',   'anna',   'Mitglied',      0,  null,  0, 1],
         [9,  'Petra',  'Nord',       'petra',  'fuehrungsteam', 14, 'RL',  0, 1],
         [10, 'Karl',   'Prüfer',     'karl',   'Mitglied',      3,  'FP',  0, 1],
         [11, 'Mia',    'Technik',    'mia',    'Mitglied',      10, 'AD',  1, 1],
@@ -103,36 +103,51 @@ function demo_build(string $anchor): array
 
     // Kontakte: id => [Art => Wert]
     $C = [
-        1 => ['email' => 'max.privat@example.com', 'phone' => '0511 5550101', 'mobile' => '0170 5550101', 'website' => 'https://mustermann-steuern.example.com', 'linkedin' => 'linkedin.com/in/max-mustermann-demo'],
-        2 => ['email' => 'erika.privat@example.com', 'mobile' => '0171 5550102', 'instagram' => '@erika.musterfrau'],
-        3 => ['email' => 'lukas.privat@example.com', 'mobile' => '0172 5550103', 'mastodon' => '@lukas@social.example.com', 'website' => 'https://lukas-beispiel.example.com'],
-        4 => ['email' => 'julia.sommer@example.com', 'phone' => '040 5550104', 'mobile' => '0173 5550104', 'xing' => 'xing.com/profile/Julia_Sommer_demo'],
-        5 => ['email' => 'thomas.winter@example.com', 'mobile' => '0174 5550105'],
-        6 => ['email' => 'sabine.herbst@example.com', 'phone' => '089 5550106', 'instagram' => '@sabine.backt', 'whatsapp' => '0175 5550106'],
-        7 => ['email' => 'hans.lehmann@example.com', 'phone' => '0551 5550107', 'fax' => '0551 5550199', 'website' => 'https://lehmann-uni.example.com', 'youtube' => 'youtube.com/@lehmann-vortraege-demo'],
-        8 => ['email' => 'anna.fruehling@example.com', 'mobile' => '0176 5550108', 'facebook' => 'facebook.com/anna.fruehling.demo'],
-        9 => ['email' => 'petra.nord@example.com', 'mobile' => '0177 5550109', 'instagram' => '@petra.nord', 'x' => '@petranord', 'tiktok' => '@petra.reist', 'telegram' => '@petranord'],
-        10 => ['email' => 'karl.pruefer@example.com', 'phone' => '0711 5550110'],
+        1 => ['phone' => '0511 5550101', 'mobile' => '0170 5550101', 'website' => 'https://mustermann-steuern.example.com', 'linkedin' => 'linkedin.com/in/max-mustermann-demo'],
+        2 => ['mobile' => '0171 5550102', 'instagram' => '@erika.musterfrau'],
+        3 => ['mobile' => '0172 5550103', 'mastodon' => '@lukas@social.example.com', 'website' => 'https://lukas-beispiel.example.com'],
+        4 => ['phone' => '040 5550104', 'mobile' => '0173 5550104', 'xing' => 'xing.com/profile/Julia_Sommer_demo'],
+        5 => ['mobile' => '0174 5550105'],
+        6 => ['phone' => '089 5550106', 'instagram' => '@sabine.backt', 'whatsapp' => '0175 5550106'],
+        7 => ['phone' => '0551 5550107', 'fax' => '0551 5550199', 'website' => 'https://lehmann-uni.example.com', 'youtube' => 'youtube.com/@lehmann-vortraege-demo'],
+        8 => ['mobile' => '0176 5550108', 'facebook' => 'facebook.com/anna.fruehling.demo'],
+        9 => ['mobile' => '0177 5550109', 'instagram' => '@petra.nord', 'x' => '@petranord', 'tiktok' => '@petra.reist', 'telegram' => '@petranord'],
+        10 => ['phone' => '0711 5550110'],
         11 => ['phone' => '069 5550111', 'mastodon' => '@mia@chaos.example.com'],
-        12 => ['email' => 'rolf.ehemals@example.com', 'phone' => '0451 5550112'],
+        12 => ['phone' => '0451 5550112'],
     ];
     $contacts = [];
     foreach ($C as $id => $list) foreach ($list as $k => $v) $contacts[] = ['member_id' => $id, 'kind' => $k, 'value' => $v];
 
     // Sichtbarkeit: abweichend vom Standard (Beispiele für jede Stufe)
     $vis = [
-        [1, 'birthdate', 'admin'], [1, 'address.2', 'all'], [1, 'contact.linkedin', 'all'], [1, 'contact.website', 'all'],
-        [2, 'birthdate', 'group'], [2, 'contact.instagram', 'all'], [2, 'photo.2', 'me'],
-        [3, 'contact.mastodon', 'all'], [3, 'contact.website', 'all'], [3, 'address.2', 'group'], [3, 'relationship_status', 'me'],
+        [1, 'birthdate', 'me'], [1, 'address.2', 'all'], [1, 'contact.linkedin', 'all'], [1, 'contact.website', 'all'],
+        [2, 'birthdate', 'all'], [2, 'contact.instagram', 'all'], [2, 'photo.2', 'me'],
+        [3, 'contact.mastodon', 'all'], [3, 'contact.website', 'all'], [3, 'address.2', 'all'], [3, 'relationship_status', 'me'],
         [4, 'contact.phone', 'all'], [4, 'contact.mobile', 'all'], [4, 'address.1', 'me'], [4, 'birthdate', 'all'],
-        [5, 'address.1', 'me'], [5, 'contact.mobile', 'group'],
-        [6, 'contact.instagram', 'all'], [6, 'contact.email', 'all'],
+        [5, 'address.1', 'me'], [5, 'contact.mobile', 'all'],
+        [6, 'contact.instagram', 'all'], [6, 'email', 'all'],
         [7, 'address.2', 'all'], [7, 'contact.website', 'all'], [7, 'contact.youtube', 'all'], [7, 'wishes_text', 'all'],
-        [8, 'contact.facebook', 'group'], [8, 'birthdate', 'group'],
-        [9, 'contact.instagram', 'all'], [9, 'contact.x', 'all'], [9, 'contact.tiktok', 'all'], [9, 'contact.email', 'all'], [9, 'wishes_text', 'all'],
+        [8, 'contact.facebook', 'all'], [8, 'birthdate', 'all'],
+        [9, 'contact.instagram', 'all'], [9, 'contact.x', 'all'], [9, 'contact.tiktok', 'all'], [9, 'email', 'all'], [9, 'wishes_text', 'all'],
         [10, 'address.1', 'me'], [10, 'contact.phone', 'me'],
         [11, 'contact.mastodon', 'all'], [11, 'address.1', 'me'],
+        // damit das Mitgliederverzeichnis nicht leer wirkt: Beruf, Interessen, Wohnort und E-Mail bei vielen sichtbar
+        [1, 'occupation', 'all'], [1, 'address.1', 'all'], [1, 'email', 'all'], [1, 'contact.phone', 'all'],
+        [2, 'occupation', 'all'], [2, 'hobbies', 'all'], [2, 'address.1', 'all'], [2, 'email', 'all'], [2, 'contact.mobile', 'all'],
+        [3, 'occupation', 'all'], [3, 'interests', 'all'], [3, 'address.1', 'all'], [3, 'email', 'all'],
+        [4, 'occupation', 'all'], [4, 'email', 'all'],
+        [5, 'occupation', 'all'], [5, 'hobbies', 'all'],
+        [6, 'occupation', 'all'], [6, 'hobbies', 'all'], [6, 'address.1', 'all'],
+        [7, 'occupation', 'all'], [7, 'interests', 'all'], [7, 'address.1', 'all'], [7, 'email', 'all'], [7, 'contact.phone', 'all'],
+        [8, 'occupation', 'all'], [8, 'address.1', 'all'], [8, 'hobbies', 'all'],
+        [9, 'occupation', 'all'], [9, 'interests', 'all'], [9, 'address.1', 'all'], [9, 'contact.mobile', 'all'],
+        [10, 'occupation', 'all'], [10, 'email', 'all'],
+        [11, 'occupation', 'all'], [11, 'email', 'all'],
     ];
+    $visMap = [];
+    foreach ($vis as [$vid, $vkey, $vlvl]) $visMap[$vid . '|' . $vkey] = [$vid, $vkey, $vlvl];   // spätere Einträge gewinnen
+    $vis = array_values($visMap);
     $visibility = array_map(fn($v) => ['member_id' => $v[0], 'field_key' => $v[1], 'level' => $v[2]], $vis);
 
     // Gruppen und Funktionen
@@ -144,8 +159,8 @@ function demo_build(string $anchor): array
     // [Mitglied, Code, von, bis, Level (null = Standard der Funktion), Ressort-ID]
     $svressorts = [[1, 'R01', 'Finanzen'], [2, 'R02', 'Bildung'], [3, 'R03', 'Öffentlichkeitsarbeit'], [4, 'R04', 'Sport & Gesundheit'], [5, 'R05', 'Veranstaltungen']];
     $mf = [[1, 'FVo', ($Y - 7) . '-05-01', null, null, null], [1, 'Ka', ($Y - 7) . '-05-01', null, null, null], [2, 'FVv', ($Y - 6) . '-05-01', null, null, null], [3, 'Vo', ($Y - 4) . '-05-01', null, null, null],
-           [4, 'GF', ($Y - 10) . '-03-01', null, null, null], [5, 'VA', ($Y - 9) . '-09-01', null, 17, null], [6, 'SV', ($Y - 7) . '-02-01', null, null, null],
-           [7, 'RL', ($Y - 12) . '-10-01', null, 17, 2], [8, 'RL', ($Y - 8) . '-05-01', null, 15, 4], [9, 'RL', ($Y - 5) . '-01-01', null, 14, 3],
+           [4, 'GF', ($Y - 10) . '-03-01', null, null, null], [5, 'VA', ($Y - 9) . '-09-01', null, 17, null], 
+           [7, 'RL', ($Y - 12) . '-10-01', null, 17, 2], [9, 'RL', ($Y - 5) . '-01-01', null, 14, 3],
            [10, 'FP', ($Y - 3) . '-05-01', null, 3, null], [11, 'AD', ($Y - 4) . '-04-01', null, 10, null], [5, 'MB', ($Y - 2) . '-01-01', null, null, null],
            [12, 'Vo', ($Y - 12) . '-05-01', ($Y - 3) . '-04-30', null, null], [12, 'Vx', ($Y - 3) . '-05-01', null, 0, null],
            [3, 'PL', ($Y - 6) . '-01-01', ($Y - 3) . '-12-31', null, null], [7, 'JT', ($Y - 3) . '-01-01', null, 12, 5]];

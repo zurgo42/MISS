@@ -40,9 +40,9 @@ md_show_flash();
 echo '<h1>Mein Zugang</h1><section class="card"><h2>Passwort ändern</h2>';
 if (empty($me['password_hash'])) echo '<p class="muted">Du hast noch kein eigenes Passwort. Du kannst jetzt eins festlegen.</p>';
 echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="password">'
-    . (empty($me['password_hash']) ? '' : '<label class="block">Aktuelles Passwort<input type="password" name="current" autocomplete="current-password" required></label>')
-    . '<label class="block">Neues Passwort (mindestens ' . MD_PASSWORD_MIN . ' Zeichen)<input type="password" name="password" autocomplete="new-password" required></label>'
-    . '<label class="block">Wiederholen<input type="password" name="password2" autocomplete="new-password" required></label><button>Passwort speichern</button></form></section>';
+    . (empty($me['password_hash']) ? '' : md_password_field('current', 'Aktuelles Passwort', 'current-password'))
+    . md_password_field('password', 'Neues Passwort (mindestens ' . MD_PASSWORD_MIN . ' Zeichen)', 'new-password')
+    . md_password_field('password2', 'Wiederholen', 'new-password') . '<button>Passwort speichern</button></form></section>';
 echo '<section class="card"><h2>Rechnungen und Mahnungen</h2><p class="muted">Wie sollen wir dir Rechnungen und Zahlungserinnerungen zustellen? Die E-Mail geht an ' . h($me['email']) . '. Die Unterlagen siehst du auch jederzeit im Dashboard.</p>'
     . '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="channel"><label class="block"><input type="radio" name="letter_channel" value="post"' . ($ch === 'post' ? ' checked' : '') . '> per Post</label>'
     . '<label class="block"><input type="radio" name="letter_channel" value="mail"' . ($ch === 'mail' ? ' checked' : '') . '> per E-Mail</label><button>Speichern</button></form></section>';

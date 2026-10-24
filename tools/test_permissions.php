@@ -22,7 +22,9 @@ $check('Erika: Mitglieder nur ansehen', md_perm($erika, 'members'), 'view');
 $check('Erika: kein Import, keine Einstellungen', [md_perm($erika, 'import'), md_perm($erika, 'settings')], ['none', 'none']);
 $check('Hans (RL): nur Verzeichnis', [md_perm($hans, 'directory'), md_perm($hans, 'members'), md_perm($hans, 'finance')], ['view', 'none', 'none']);
 $check('Karl (FP): Finanzen ansehen, nicht bearbeiten', [md_perm($karl, 'finance'), md_can($karl, 'finance', 'edit')], ['view', false]);
-$check('Admin-Flag (Max): immer alles', [md_perm($max, 'settings'), md_perm($max, 'import')], ['edit', 'edit']);
+$mia = md_one("SELECT * FROM svmembers WHERE membership_number = 'DEMO0011'");
+$check('Admin-Flag (Mia): immer alles', [md_perm($mia, 'settings'), md_perm($mia, 'import')], ['edit', 'edit']);
+$check('Max ist kein Admin mehr, hat aber Finanzrechte', [!empty($max['is_admin']), md_perm($max, 'finance')], [false, 'edit']);
 $check('Lukas: abgelaufene PL-Funktion zählt nicht', md_perm($lukas, 'import'), 'none');
 
 md_db()->beginTransaction();

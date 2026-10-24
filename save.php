@@ -20,9 +20,14 @@ $pdo->beginTransaction();
 try {
     switch ($section) {
         case 'profile':
-            $n = md_save_profile($mid, $_POST, $aid, $via, array_keys(array_filter(MD_PROFILE_FIELDS, fn($f) => $f[2] === ($_POST['group'] ?? ''))));
+            $fields = array_keys(array_filter(MD_PROFILE_FIELDS, fn($f) => $f[2] === ($_POST['group'] ?? '')));
+            $n = md_save_profile($mid, $_POST, $aid, $via, $fields);
             $n += md_save_visibility($mid, $_POST, $aid, $via);
-            $msg = $n ? "$n Änderung(en) gespeichert." : 'Keine Änderungen.';
+            if (($_POST['group'] ?? '') === 'Persönliche Daten' && isset($_POST['email'])) {
+                [$changed, $eerr] = md_change_email($mid, (string)$_POST['email'], $aid, $via);
+                if ($eerr) { $msg = $eerr; $kind = 'err'; } else $n += $changed;
+            }
+            if ($kind !== 'err') $msg = $n ? "$n Änderung(en) gespeichert." : 'Keine Änderungen.';
             break;
         case 'addresses':
             $n = md_save_addresses($mid, $_POST, $aid, $via) + md_save_visibility($mid, $_POST, $aid, $via);

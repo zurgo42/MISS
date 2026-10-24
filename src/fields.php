@@ -36,7 +36,6 @@ const MD_PROFILE_FIELDS = [
 const MD_ADDRESS_FIELDS = ['label' => 'Bezeichnung', 'street' => 'Straße, Nr.', 'zip' => 'PLZ', 'city' => 'Ort', 'country' => 'Land'];
 
 const MD_CONTACT_KINDS = [
-    'email'     => 'E-Mail (privat)',
     'phone'     => 'Telefon',
     'mobile'    => 'Mobil',
     'fax'       => 'Fax',
@@ -68,10 +67,11 @@ const MD_LEDGER_KINDS = [
 function md_visibility_keys(): array
 {
     $keys = [];
-    foreach (MD_PROFILE_FIELDS as $k => $f) $keys[$k] = [$f[0], $f[3]];
-    foreach (MD_SLOTS as $s) $keys["address.$s"] = ["Adresse $s", $s === 1 ? 'admin' : 'me'];
-    foreach (MD_SLOTS as $s) $keys["photo.$s"] = ["Foto $s", $s === 1 ? 'all' : 'group'];
-    foreach (MD_CONTACT_KINDS as $k => $label) $keys["contact.$k"] = [$label, in_array($k, ['email', 'phone', 'mobile'], true) ? 'admin' : 'me'];
+    foreach (MD_PROFILE_FIELDS as $k => $f) $keys[$k] = [$f[0], in_array($k, ['nickname', 'intro_text'], true) ? 'all' : 'me'];
+    $keys['email'] = ['E-Mail-Adresse', 'me'];
+    foreach (MD_SLOTS as $s) $keys["address.$s"] = ["Adresse $s", 'me'];
+    foreach (MD_SLOTS as $s) $keys["photo.$s"] = ["Foto $s", $s === 1 ? 'all' : 'me'];
+    foreach (MD_CONTACT_KINDS as $k => $label) $keys["contact.$k"] = [$label, 'me'];
     return $keys;
 }
 

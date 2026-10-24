@@ -38,7 +38,7 @@ $check('angelegt (jedes Mitglied)', [(bool)$ev, $e], [true, '']);
 $E = md_event_get((int)$ev);
 $check('Veranstalter, Status, Gebühr', [(int)$E['organizer_id'], $E['status'], (int)$E['price_cents'], (int)$E['capacity']], [$karl, 'open', 1000, 2]);
 $check('Veranstalter verwaltet, Fremder nicht', [md_event_can_manage($E, md_one('SELECT * FROM svmembers WHERE member_id = ?', [$karl])), md_event_can_manage($E, md_one('SELECT * FROM svmembers WHERE member_id = ?', [$hans]))], [true, false]);
-$check('Verwaltung (Recht events) verwaltet fremde Veranstaltungen', md_event_can_manage($E, md_one('SELECT * FROM svmembers WHERE member_id = ?', [$max])), true);
+$check('Verwaltung (Recht events) verwaltet fremde Veranstaltungen', md_event_can_manage($E, md_one('SELECT * FROM svmembers WHERE member_id = ?', [$julia])), true);
 
 echo "-- Anmelden\n";
 $check('Anmeldung A (sichtbar)', md_event_register((int)$ev, $max, true, 'bringe Kuchen', $max), ['registered', '']);

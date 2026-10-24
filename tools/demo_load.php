@@ -4,6 +4,7 @@
  * (Mitgliedsnummern DEMO0001–DEMO0012) bereits vorhanden sind. svmembers und svressorts werden NICHT verändert.
  *
  *   php tools/demo_load.php            laden (md_-Tabellen müssen leer sein)
+ *   php tools/demo_load.php --sync-sv  zusätzlich Rolle/Admin/Funktion der DEMO-Konten in svmembers an die Demo-Daten angleichen (nur diese Spalten, nur DEMO-Konten)
  *   php tools/demo_load.php --reset    vorher alle md_-Tabellen leeren (nur md_, nie sv*)
  *   php tools/demo_load.php --ignore-others   auch laden, wenn svmembers weitere (Test-)Konten enthält; diese bleiben unverändert
  *
@@ -53,6 +54,7 @@ demo_photos($pdo, $data['svmembers'], $idmap);
 if (function_exists('md_seed_permissions')) { md_seed_permissions(); md_dunning_seed(); }
 // Vereinsangaben (md_settings) ergänzen, soweit noch nicht gesetzt
 foreach ($data['md_settings'] as $st) if (!md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$st['setting_key']])) md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$st['setting_key'], $st['setting_value'], $st['description']]);
+if (in_array('--sync-sv', $argv, true)) demo_sync_sv($data['svmembers'], $idmap);
 demo_ensure_key($root);
 demo_seed_sepa($idmap);
 demo_seed_mail($idmap);

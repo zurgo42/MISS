@@ -208,3 +208,25 @@ function md_delete_photo(int $member, int $slot, int $actor, string $via): void
     md_exec('DELETE FROM md_photos WHERE member_id = ? AND slot = ?', [$member, $slot]);
     md_log_change($member, "photo.$slot", 'Foto vorhanden', null, $actor, $via);
 }
+
+/**
+ * Ändert die E-Mail-Adresse (= Anmeldename). Prüft Format und Eindeutigkeit, protokolliert und benachrichtigt die alte Adresse.
+ * Gibt [geändert 0|1, Fehlertext] zurück.
+ */
+function md_change_email(int $member, string $new, int $actor, string $via): array
+{
+    $new = trim($new);
+    $m = md_one('SELECT * FROM svmembers WHERE member_id = ?', [$member]);
+    if (!$m) return [0, 'Mitglied nicht gefunden.'];
+    if (mb_strtolower($new) === mb_strtolower((string)$m['email'])) return [0, ''];
+    if (!filter_var($new, FILTER_VALIDATE_EMAIL) || mb_strlen($new) > 255) return [0, 'Bitte eine gültige E-Mail-Adresse eingeben.'];
+    if (md_one('SELECT 1 FROM svmembers WHERE LOWER(email) = LOWER(?) AND member_id <> ?', [$new, $member])) return [0, 'Diese E-Mail-Adresse gehört schon zu einem anderen Konto.'];
+    md_exec('UPDATE svmembers SET email = ? WHERE member_id = ?', [$new, $member]);
+    md_log_change($member, 'account', 'E-Mail-Adresse', $m['email'] . ' → ' . $new, $actor, $via);
+    // Die bisherige Adresse erfährt davon (Schutz vor unbemerkter Übernahme des Kontos)
+    if (md_mail_address_of($member) !== null && $m['email'] !== '' && filter_var($m['email'], FILTER_VALIDATE_EMAIL) && !preg_match('/@platzhalter\.|\.invalid$/i', (string)$m['email'])) {
+        $club = md_club();
+        try { md_mail_now($member, (string)$m['email'], 'Deine E-Mail-Adresse wurde geändert – ' . ($club['name'] ?: MD_CLUB_NAME), "Hallo {$m['first_name']},\n\ndie E-Mail-Adresse deines Zugangs wurde auf $new geändert. Wenn du das nicht warst, melde dich bitte sofort beim Verein.\n" . md_mail_footer(), 'other'); } catch (Throwable $e) {}
+    }
+    return [1, ''];
+}

@@ -35,37 +35,24 @@ $showFinance = !$staff || md_can($actor, 'finance', 'view');
 $terms = md_terms_status($mid);
 $changes = md_recent_changes($mid, 12);
 $hidden = fn(string $name) => $staff ? '<input type="hidden" name="member" value="' . $mid . '">' : '';
+$acc = function (string $id, string $title, string $body, bool $open = false, string $sub = '', string $cls = ''): string {
+    return '<details class="acc ' . $cls . '" id="' . h($id) . '"' . ($open ? ' open' : '') . '><summary>' . $title . ($sub !== '' ? '<span class="sub">' . $sub . '</span>' : '') . '</summary><div class="accbody">' . $body . '</div></details>';
+};
 $form = function (string $section, string $anchor, string $extra = '') use ($mid, $hidden): string {
     return '<input type="hidden" name="section" value="' . $section . '"><input type="hidden" name="anchor" value="' . $anchor . '">'
         . md_csrf_field() . $hidden('') . $extra;
 };
 
-md_header('Dashboard', $actor, 'dashboard');
-md_show_flash();
-if ($staff) {
-    echo '<div class="flash warn">Verwaltungsmodus: ' . ($canEdit ? 'Du bearbeitest' : 'Du siehst (nur lesend)') . ' die Daten von <strong>' . h($m['first_name'] . ' ' . $m['last_name'])
-        . '</strong>.' . ($canEdit ? ' Änderungen werden als „Admin“ protokolliert.' : '') . ($masked ? " $masked Angabe(n) mit „Nur ich“ sind für dich ausgeblendet." : '') . ' <a href="admin/index.php">zur Liste</a></div>';
-} elseif (!$ownConsent) {
-    echo '<div class="flash warn"><strong>Nur Ansicht:</strong> Solange du den Nutzungsbedingungen nicht zugestimmt hast, kannst du nichts ändern und siehst nur deine eigenen Daten.</div>';
-}
 
-// ---- Kopf
-$primary = $photos[1] ?? reset($photos) ?: null;
-echo '<section class="card head">';
-echo $primary ? '<img class="portrait" src="photo.php?id=' . (int)$primary['photo_id'] . '" alt="">' : '<span class="avatar big">' . h(md_initials($m)) . '</span>';
-echo '<div><h1>' . h(trim(($p['title'] ?? '') . ' ' . $m['first_name'] . ' ' . $m['last_name'])) . '</h1>';
-echo '<p class="muted">Mitgliedsnr. ' . h($m['membership_number']) . ' · ' . h(MD_STATUS[$p['status'] ?? 'aktiv'] ?? '') . ($p['join_date'] ? ' · Mitglied seit ' . h(md_date($p['join_date'])) : '') . '</p>';
-echo '<p>';
-foreach ($funcs as $f) if (!$f['valid_to'] || $f['valid_to'] >= date('Y-m-d')) echo '<span class="chip fn">' . h($f['name']) . '</span> ';
-foreach ($groups as $g) echo '<span class="chip">' . h($g['name']) . '</span> ';
-echo '</p></div></section>';
-
-// ---- Zustimmung
+// ======================================================================= Bausteine
+// ---- Nutzungsbedingungen
+$termsBlock = '';
+$termsOk = $terms['state'] === 'ok';
 if ($terms['state'] !== 'none') {
     $c = $terms['current'];
-    $cls = $terms['state'] === 'ok' ? 'ok' : 'warn';
-    echo '<section class="card" id="terms"><h2>Nutzungsbedingungen</h2><div class="flash ' . $cls . '">';
-    if ($terms['state'] === 'ok') {
+    ob_start();
+    echo '<div class="flash ' . ($termsOk ? 'ok' : 'warn') . '">';
+    if ($termsOk) {
         $cs = $terms['consent'];
         echo 'Zugestimmt zu Version ' . h($cs['version_label']) . ' am ' . h(md_date($cs['consented_at'])) . ' (' . h(['self' => 'online', 'admin' => 'durch Verwaltung', 'paper' => 'schriftlich', 'import' => 'Import'][$cs['channel']] ?? $cs['channel']) . ').';
     } elseif ($terms['state'] === 'outdated') {
@@ -74,94 +61,131 @@ if ($terms['state'] !== 'none') {
         echo 'Die Zustimmung zu den Nutzungsbedingungen liegt noch nicht vor.';
     }
     echo '</div><p><a href="terms.php?id=' . (int)$c['terms_id'] . '">Nutzungsbedingungen lesen (Version ' . h($c['version_label']) . ')</a></p>';
-    if ($terms['state'] !== 'ok' && !$staff) {
+    if (!$termsOk && !$staff) {
         echo '<form method="post" action="save.php">' . $form('consent', 'terms', '<input type="hidden" name="terms_id" value="' . (int)$c['terms_id'] . '">')
             . '<label class="check"><input type="checkbox" name="agree" value="1"> Ich habe die Nutzungsbedingungen gelesen und stimme zu.</label> <button>Zustimmung speichern</button></form>';
-    } elseif ($terms['state'] === 'ok' && $terms['consent'] && !$staff) {
+    } elseif ($termsOk && $terms['consent'] && !$staff) {
         echo '<form method="post" action="save.php" onsubmit="return confirm(\'Zustimmung wirklich widerrufen?\')">' . $form('consent_revoke', 'terms', '<input type="hidden" name="consent_id" value="' . (int)$terms['consent']['consent_id'] . '">')
             . '<button class="link">Zustimmung widerrufen</button></form>';
     } elseif ($staff) {
         echo '<p class="muted">Zustimmungen erfasst die Verwaltung unter <a href="admin/terms.php?member=' . $mid . '">Nutzungsbedingungen</a>.</p>';
     }
-    echo '</section>';
+    $termsBlock = $acc('terms', 'Nutzungsbedingungen', ob_get_clean(), !$termsOk, $termsOk ? 'zugestimmt' : 'Zustimmung fehlt', $termsOk ? '' : 'warn');
 }
 
-// ---- Meine Daten (Auskunft, Löschung) – nur für die eigenen Daten, unabhängig von der Zustimmung
-if (!$staff) {
-    $myReq = md_q("SELECT * FROM md_privacy_requests WHERE member_id = ? ORDER BY request_id DESC LIMIT 5", [$mid]);
-    $openErase = false;
-    foreach ($myReq as $rq) if ($rq['kind'] === 'erasure' && $rq['status'] === 'open') $openErase = true;
-    echo '<section class="card" id="privacy"><h2>Meine Daten</h2><p>Du kannst jederzeit alle über dich gespeicherten Daten ansehen oder herunterladen:</p><p>'
-        . '<a href="privacy_export.php?format=html" target="_blank">Ansehen und drucken</a> · <a href="privacy_export.php?format=json">JSON-Datei</a>' . (class_exists('ZipArchive') ? ' · <a href="privacy_export.php?format=zip">ZIP mit Fotos</a>' : '') . '</p>';
-    if ($openErase) echo '<div class="flash warn">Dein Löschantrag liegt der Verwaltung vor.</div>';
-    else echo '<details><summary>Löschung meiner Daten beantragen</summary><p class="muted">Die Verwaltung prüft den Antrag und antwortet innerhalb eines Monats. Während der Mitgliedschaft und aufgrund von Aufbewahrungspflichten (z. B. Buchungen, Spendenbescheinigungen) können nicht alle Daten sofort gelöscht werden.</p>'
-        . '<form method="post" action="save.php">' . $form('privacy_request', 'privacy') . '<label class="block">Anmerkung (optional)<input name="note"></label><button>Löschung beantragen</button></form></details>';
-    if ($myReq) {
-        echo '<ul class="plain">';
-        foreach ($myReq as $rq) echo '<li class="muted">' . ($rq['kind'] === 'access' ? 'Auskunft' : 'Löschantrag') . ' vom ' . h(md_date(substr($rq['received_at'], 0, 10))) . ': ' . ['open' => 'offen', 'done' => 'erledigt', 'refused' => 'abgelehnt'][$rq['status']] . ($rq['response_note'] ? ' – ' . h($rq['response_note']) : '') . '</li>';
-        echo '</ul>';
+// ---- Kopf mit Sonderfunktionen
+$primary = $photos[1] ?? reset($photos) ?: null;
+ob_start();
+echo '<section class="card head">';
+echo $primary ? '<img class="portrait" src="photo.php?id=' . (int)$primary['photo_id'] . '" alt="">' : '<span class="avatar big">' . h(md_initials($m)) . '</span>';
+echo '<div class="grow"><h1>' . h(trim(($p['title'] ?? '') . ' ' . $m['first_name'] . ' ' . $m['last_name'])) . '</h1>';
+echo '<p class="muted">Mitgliedsnr. ' . h($m['membership_number']) . ' · ' . h(MD_STATUS[$p['status'] ?? 'aktiv'] ?? '') . ($p['join_date'] ? ' · Mitglied seit ' . h(md_date($p['join_date'])) : '') . '</p>';
+echo '<p>';
+foreach ($funcs as $f) if (!$f['valid_to'] || $f['valid_to'] >= date('Y-m-d')) echo '<span class="chip fn">' . h($f['name']) . '</span> ';
+foreach ($groups as $g) echo '<span class="chip">' . h($g['name']) . '</span> ';
+echo '</p>';
+$special = !$staff ? md_special_groups($actor) : [];
+if ($special) {
+    echo '<details class="acc inner" id="sonder"><summary>Sonderfunktionen:</summary><div class="accbody">';
+    foreach ($special as $gname => $items) {
+        echo '<p class="spgroup"><strong>' . h($gname) . ':</strong> ';
+        foreach ($items as [$url, $label]) echo '<a class="btn small" href="' . h($url) . '">' . h($label) . '</a> ';
+        echo '</p>';
     }
-    echo '</section>';
+    echo '</div></details>';
+}
+echo '</div></section>';
+$headBlock = ob_get_clean();
+
+// ---- Meine Veranstaltungen
+$eventsBlock = '';
+if (!$staff) {
+    $myEv = md_q("SELECT e.*, r.status rstatus FROM md_event_regs r JOIN md_events e ON e.event_id = r.event_id WHERE r.member_id = ? AND r.status IN ('registered','waitlist') AND e.starts_at >= ? AND e.status = 'open' ORDER BY e.starts_at", [$mid, date('Y-m-d H:i:s')]);
+    $orgEv = md_q("SELECT * FROM md_events WHERE organizer_id = ? AND starts_at >= ? AND status = 'open' ORDER BY starts_at", [$mid, date('Y-m-d H:i:s')]);
+    $soon = md_q("SELECT * FROM md_events WHERE status = 'open' AND starts_at >= ? AND organizer_id <> ? AND event_id NOT IN (SELECT event_id FROM md_event_regs WHERE member_id = ? AND status <> 'cancelled') ORDER BY starts_at LIMIT 3", [date('Y-m-d H:i:s'), $mid, $mid]);
+    ob_start();
+    echo '<ul class="plain evlist">';
+    foreach ($myEv as $e) echo '<li>' . h(md_event_dt($e['starts_at'])) . ' · <a href="event.php?id=' . (int)$e['event_id'] . '">' . h($e['title']) . '</a> <span class="chip ' . ($e['rstatus'] === 'registered' ? 'ok' : 'warn') . '">' . ($e['rstatus'] === 'registered' ? 'angemeldet' : 'Warteliste') . '</span></li>';
+    foreach ($orgEv as $e) echo '<li>' . h(md_event_dt($e['starts_at'])) . ' · <a href="event.php?id=' . (int)$e['event_id'] . '">' . h($e['title']) . '</a> <span class="chip">ich veranstalte</span></li>';
+    if (!$myEv && !$orgEv) echo '<li class="muted">Du bist zurzeit für keine Veranstaltung angemeldet.</li>';
+    echo '</ul>';
+    if ($soon) { echo '<h3>Demnächst</h3><ul class="plain evlist">'; foreach ($soon as $e) echo '<li>' . h(md_event_dt($e['starts_at'])) . ' · <a href="event.php?id=' . (int)$e['event_id'] . '">' . h($e['title']) . '</a></li>'; echo '</ul>'; }
+    echo '<p><a class="btn small" href="events.php">Alle Veranstaltungen</a> <a class="btn small secondary" href="event.php?new=1">Veranstaltung anlegen</a></p>';
+    $eventsBlock = $acc('events', 'Meine Veranstaltungen', ob_get_clean(), (bool)($myEv || $orgEv), count($myEv) + count($orgEv) ? (count($myEv) + count($orgEv)) . ' anstehend' : '');
 }
 
-echo '<fieldset class="roset"' . ($canEdit ? '' : ' disabled') . '>';
-
-// ---- Fotos
-echo '<section class="card" id="photos"><h2>Fotos</h2><div class="grid3">';
-foreach (MD_SLOTS as $s) {
-    $ph = $photos[$s] ?? null;
-    echo '<div class="slot"><div class="slotimg">' . ($ph ? '<img src="photo.php?id=' . (int)$ph['photo_id'] . '" alt="">' : '<span class="muted">Platz ' . $s . ' frei</span>') . '</div>';
-    echo '<form method="post" action="save.php" enctype="multipart/form-data">' . $form('photo_upload', 'photos', '<input type="hidden" name="slot" value="' . $s . '">');
-    echo '<input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp" required>';
-    echo '<input type="text" name="caption" placeholder="Bildunterschrift" value="' . h($ph['caption'] ?? '') . '">';
-    echo '<div class="row"><label>Sichtbar für ' . md_vis_select("photo.$s", $vmap) . '</label><button>' . ($ph ? 'Ersetzen' : 'Hochladen') . '</button></div></form>';
-    if ($ph) echo '<form method="post" action="save.php" onsubmit="return confirm(\'Foto löschen?\')">' . $form('photo_delete', 'photos', '<input type="hidden" name="slot" value="' . $s . '">') . '<button class="link">Löschen</button></form>';
-    echo '</div>';
-}
-echo '</div><p class="muted">Bilder werden auf max. 900 px verkleinert; Standortdaten werden entfernt.</p></section>';
-
-// ---- Profilfelder (je Gruppe eine Karte)
+// ---- Persönliche Daten
 $byGroup = [];
 foreach (MD_PROFILE_FIELDS as $k => $f) $byGroup[$f[2]][$k] = $f;
-foreach ($byGroup as $gname => $fields) {
-    $aid = 'g_' . preg_replace('/[^a-z]/', '', strtolower($gname));
-    echo '<section class="card" id="' . $aid . '"><h2>' . h($gname) . '</h2><form method="post" action="save.php">' . $form('profile', $aid, '<input type="hidden" name="group" value="' . h($gname) . '">');
-    if ($gname === 'Persönliche Daten') {
-        echo '<p class="muted">Name und Anmelde-E-Mail (' . h($m['first_name'] . ' ' . $m['last_name'] . ', ' . $m['email']) . ') ändert die Verwaltung.</p>';
+$fieldRow = function (string $k, array $f) use ($p, $vmap): string {
+    $o = '<div class="field"><label for="f_' . $k . '">' . h($f[0]) . '</label><div class="inp">';
+    $val = (string)($p[$k] ?? '');
+    if ($f[1] === 'textarea') $o .= '<textarea id="f_' . $k . '" name="' . $k . '" rows="3">' . h($val) . '</textarea>';
+    elseif ($f[1] === 'select') {
+        $o .= '<select id="f_' . $k . '" name="' . $k . '">';
+        foreach ($f[4] as $opt) $o .= '<option' . ($opt === $val ? ' selected' : '') . '>' . h($opt) . '</option>';
+        $o .= '</select>';
+    } else $o .= '<input id="f_' . $k . '" name="' . $k . '" type="text" value="' . h($f[1] === 'date' ? md_date($val) : $val) . '"' . ($f[1] === 'date' ? ' placeholder="TT.MM.JJJJ"' : '') . '>';
+    return $o . '</div>' . md_vis_toggle($k, $vmap) . '</div>';
+};
+ob_start();
+echo '<form method="post" action="save.php">' . $form('profile', 'personal', '<input type="hidden" name="group" value="Persönliche Daten">');
+echo '<div class="rowfields"><label>Anrede<select name="salutation">';
+foreach (MD_PROFILE_FIELDS['salutation'][4] as $opt) echo '<option' . ($opt === (string)($p['salutation'] ?? '') ? ' selected' : '') . '>' . h($opt) . '</option>';
+echo '</select></label><label>Titel<input name="title" value="' . h($p['title'] ?? '') . '"></label><span></span></div>';
+echo '<div class="field"><label for="f_email">E-Mail-Adresse</label><div class="inp"><input id="f_email" name="email" type="email" value="' . h($m['email']) . '" autocomplete="email"><span class="muted">Mit dieser Adresse meldest du dich an; Rechnungen und Nachrichten kommen hierhin.</span></div>' . md_vis_toggle('email', $vmap) . '</div>';
+foreach ($byGroup['Persönliche Daten'] as $k => $f) if (!in_array($k, ['salutation', 'title'], true)) echo $fieldRow($k, $f);
+echo '<button>Speichern</button></form>';
+$personalBlock = $acc('personal', 'Persönliche Daten: ' . h($m['first_name'] . ' ' . $m['last_name']), ob_get_clean());
+
+// ---- Fotos
+ob_start();
+echo '<p class="muted">Diese Fotos erscheinen im Mitgliederverzeichnis, wenn du sie freigibst (Foto 1 ist das Hauptbild). Sie werden auf höchstens 900 px verkleinert, Standortdaten werden entfernt.</p><div class="photoslots">';
+foreach (MD_SLOTS as $sl) {
+    $ph = $photos[$sl] ?? null;
+    echo '<div class="pslot"><div class="slotimg sm">' . ($ph ? '<img src="photo.php?id=' . (int)$ph['photo_id'] . '" alt="">' : 'frei') . '</div><span class="muted">Foto ' . $sl . '</span>';
+    echo '<form method="post" action="save.php" enctype="multipart/form-data">' . $form('photo_upload', 'photos', '<input type="hidden" name="slot" value="' . $sl . '">')
+        . '<span class="btn small filebtn">' . ($ph ? 'Ersetzen' : 'Hochladen') . '<input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp" data-autosubmit required title="Foto wählen"></span></form>';
+    if ($ph) {
+        echo '<form method="post" action="save.php">' . $form('photo_vis', 'photos') . md_vis_toggle("photo.$sl", $vmap, 'im Verzeichnis', true) . '</form>';
+        echo '<form method="post" action="save.php" onsubmit="return confirm(\'Foto löschen?\')">' . $form('photo_delete', 'photos', '<input type="hidden" name="slot" value="' . $sl . '">') . '<button class="small danger">Löschen</button></form>';
     }
-    foreach ($fields as $k => $f) {
-        echo '<div class="field"><label for="f_' . $k . '">' . h($f[0]) . '</label><div class="inp">';
-        $val = (string)($p[$k] ?? '');
-        if ($f[1] === 'textarea') echo '<textarea id="f_' . $k . '" name="' . $k . '" rows="3">' . h($val) . '</textarea>';
-        elseif ($f[1] === 'select') {
-            echo '<select id="f_' . $k . '" name="' . $k . '">';
-            foreach ($f[4] as $o) echo '<option' . ($o === $val ? ' selected' : '') . '>' . h($o) . '</option>';
-            echo '</select>';
-        } else echo '<input id="f_' . $k . '" name="' . $k . '" type="text" value="' . h($f[1] === 'date' ? md_date($val) : $val) . '"' . ($f[1] === 'date' ? ' placeholder="TT.MM.JJJJ"' : '') . '>';
-        echo '</div>' . md_vis_select($k, $vmap) . '</div>';
-    }
-    echo '<button>Speichern</button></form></section>';
+    echo '</div>';
+}
+echo '</div>';
+$photosBlock = $acc('photos', 'Foto(s) für das Mitgliederverzeichnis', ob_get_clean());
+
+// ---- Beruf & Interessen, Vorstellung
+$groupBlocks = '';
+foreach (['Beruf & Interessen' => 'work', 'Vorstellung' => 'intro'] as $gname => $aid) {
+    ob_start();
+    echo '<form method="post" action="save.php">' . $form('profile', $aid, '<input type="hidden" name="group" value="' . h($gname) . '">');
+    foreach ($byGroup[$gname] as $k => $f) echo $fieldRow($k, $f);
+    echo '<button>Speichern</button></form>';
+    $groupBlocks .= $acc($aid, h($gname), ob_get_clean());
 }
 
 // ---- Adressen
-echo '<section class="card" id="addresses"><h2>Adressen</h2><form method="post" action="save.php">' . $form('addresses', 'addresses');
-foreach (MD_SLOTS as $s) {
-    $a = $addr[$s] ?? [];
-    echo '<fieldset><legend>Adresse ' . $s . '</legend><div class="addr">';
-    foreach (MD_ADDRESS_FIELDS as $f => $label) echo '<label>' . h($label) . '<input name="address_' . $s . '_' . $f . '" value="' . h($a[$f] ?? '') . '"></label>';
-    echo '</div><div class="row"><span class="muted">Sichtbar für</span>' . md_vis_select("address.$s", $vmap) . '</div></fieldset>';
+ob_start();
+echo '<form method="post" action="save.php">' . $form('addresses', 'addresses');
+foreach (MD_SLOTS as $sl) {
+    $a = $addr[$sl] ?? [];
+    echo '<fieldset><legend>Adresse ' . $sl . '</legend><div class="addr">';
+    foreach (MD_ADDRESS_FIELDS as $f => $label) echo '<label>' . h($label) . '<input name="address_' . $sl . '_' . $f . '" value="' . h($a[$f] ?? '') . '"></label>';
+    echo '</div><div class="row"><span></span>' . md_vis_toggle("address.$sl", $vmap) . '</div></fieldset>';
 }
-echo '<button>Speichern</button></form></section>';
+echo '<button>Speichern</button></form>';
+$addrBlock = $acc('addresses', 'Adressen', ob_get_clean());
 
 // ---- Kontakt
-echo '<section class="card" id="contacts"><h2>Kontakt &amp; Social Media</h2><form method="post" action="save.php">' . $form('contacts', 'contacts');
-foreach (MD_CONTACT_KINDS as $k => $label) {
-    echo '<div class="field"><label for="c_' . $k . '">' . h($label) . '</label><div class="inp"><input id="c_' . $k . '" name="contact_' . $k . '" value="' . h($contacts[$k] ?? '') . '"></div>' . md_vis_select("contact.$k", $vmap) . '</div>';
-}
-echo '<button>Speichern</button></form></section>';
+ob_start();
+echo '<form method="post" action="save.php">' . $form('contacts', 'contacts');
+foreach (MD_CONTACT_KINDS as $k => $label) echo '<div class="field"><label for="c_' . $k . '">' . h($label) . '</label><div class="inp"><input id="c_' . $k . '" name="contact_' . $k . '" value="' . h($contacts[$k] ?? '') . '"></div>' . md_vis_toggle("contact.$k", $vmap) . '</div>';
+echo '<button>Speichern</button></form>';
+$contactBlock = $acc('contacts', 'Kontakt &amp; Social Media', ob_get_clean());
 
-// ---- Verein
-echo '<section class="card" id="club"><h2>Vereinsdaten</h2>';
+// ---- Vereinsdaten
+ob_start();
 if ($canClub) {
     echo '<form method="post" action="save.php">' . $form('club', 'club') . '<div class="addr">';
     echo '<label>Status<select name="status">';
@@ -211,20 +235,63 @@ if ($canClub) {
     }
     echo ' <button>Funktion zuordnen</button></form>';
 }
-echo '</section>';
+$clubBlock = $acc('club', 'Vereinsdaten', ob_get_clean());
+
 
 // ---- Zugang (Verwaltung): Einladung und Passwort-Link
+$accessBlock = '';
 if ($staff && $canClub && md_can($actor, 'mail', 'edit')) {
     $has = !empty($target['password_hash']);
     $chn = md_one('SELECT letter_channel FROM md_profiles WHERE member_id = ?', [$mid])['letter_channel'] ?? 'post';
-    echo '<section class="card" id="access"><h2>Zugang</h2><p>Passwort: <strong>' . ($has ? 'gesetzt' : 'noch nicht gesetzt') . '</strong> · E-Mail: ' . (md_mail_address_of($mid) ? h($target['email']) : '<span class="bad">keine gültige Adresse</span>') . ' · Rechnungen und Mahnungen: ' . ($chn === 'mail' ? 'per E-Mail' : 'per Post') . '</p>';
+    ob_start();
+    echo '<p>Passwort: <strong>' . ($has ? 'gesetzt' : 'noch nicht gesetzt') . '</strong> · E-Mail: ' . (md_mail_address_of($mid) ? h($target['email']) : '<span class="bad">keine gültige Adresse</span>') . ' · Rechnungen und Mahnungen: ' . ($chn === 'mail' ? 'per E-Mail' : 'per Post') . '</p>';
     if (md_mail_address_of($mid)) echo '<form method="post" action="save.php">' . $form('invite', 'access') . '<button>' . ($has ? 'Link zum Zurücksetzen senden' : 'Einladung senden') . '</button> <span class="muted">Das Mitglied legt das Passwort selbst fest; die Verwaltung sieht es nie.</span></form>';
-    echo '</section>';
+    $accessBlock = $acc('access', 'Zugang', ob_get_clean());
 }
 
+
 // ---- Finanzen
+$financeBlock = '';
+if ($showFinance || md_can($actor, 'fees', 'view') || md_can($actor, 'sepa', 'view')) {
+ob_start();
+if (!$staff || md_can($actor, 'fees', 'view')) {
+    $fa = md_fee_assignment($mid, date('Y-m-d'), date('Y-m-d'));
+    $feeHist = md_q('SELECT f.*, g.name, g.amount_cents, g.rhythm FROM md_member_fees f JOIN md_fee_groups g ON g.group_id = f.group_id WHERE f.member_id = ? ORDER BY f.valid_from DESC, f.fee_id DESC LIMIT 6', [$mid]);
+    echo '<h3>Beitrag</h3>';
+    if ($fa) {
+        $amt = $fa['amount_override_cents'] !== null ? (int)$fa['amount_override_cents'] : (int)$fa['group_cents'];
+        echo '<p><strong>' . h($fa['group_name']) . '</strong> · ' . md_money($amt) . ' ' . h(MD_RHYTHMS[$fa['rhythm']]) . ($fa['discount_percent'] !== null ? ', ' . (int)$fa['discount_percent'] . ' % Ermäßigung' : '') . ' <span class="muted">seit ' . h(md_date($fa['valid_from'])) . '</span></p>';
+        if ($fa['reason'] && ($fa['amount_override_cents'] !== null || $fa['discount_percent'] !== null)) echo '<p class="muted">Abweichung: ' . h($fa['reason']) . ($fa['approved_by'] ? ' (bewilligt von ' . h($fa['approved_by']) . ')' : '') . '</p>';
+    } else echo '<p class="muted">Keine Beitragsgruppe zugeordnet.</p>';
+    if ($staff && md_can($actor, 'fees', 'edit')) {
+        echo '<details class="acc inner"><summary>Beitragsgruppe zuordnen oder ändern</summary><div class="accbody"><form method="post" action="save.php">' . $form('fee_assign', 'finance') . '<div class="addr"><label>Gruppe<select name="group_id">';
+        foreach (md_fee_groups(true) as $g) echo '<option value="' . (int)$g['group_id'] . '"' . ($fa && (int)$fa['group_id'] === (int)$g['group_id'] ? ' selected' : '') . '>' . h($g['name'] . ' (' . md_money((int)$g['amount_cents']) . ' ' . MD_RHYTHMS[$g['rhythm']] . ')') . '</option>';
+        echo '</select></label><label>Gültig ab<input name="valid_from" value="' . date('d.m.Y') . '"></label><label>Abweichender Betrag in €<input name="override" placeholder="optional"></label><label>oder Ermäßigung in %<input name="discount" size="4" placeholder="optional"></label>'
+            . '<label>Grund (bei Abweichung Pflicht)<input name="reason"></label><label>Bewilligt von<input name="approved_by" placeholder="Name/Funktion"></label></div><button>Speichern</button></form></div></details>';
+    }
+    if (count($feeHist) > 1) { echo '<p class="muted">Bisher: '; foreach (array_slice($feeHist, 1) as $fh) echo h($fh['name']) . ' (' . h(md_date($fh['valid_from'])) . ($fh['valid_to'] ? ' – ' . h(md_date($fh['valid_to'])) : '') . ') '; echo '</p>'; }
+}
+
+
+// ---- Lastschrift (eigene Daten bzw. Verwaltung mit Recht "SEPA")
+if (!$staff || md_can($actor, 'sepa', 'view')) {
+    $mandates = md_q('SELECT * FROM md_sepa_mandates WHERE member_id = ? ORDER BY mandate_id DESC', [$mid]);
+    if ($mandates || ($staff && md_can($actor, 'sepa', 'edit'))) {
+        echo '<h3>Lastschrift</h3>';
+        if (!$mandates) echo '<p class="muted">Kein Lastschriftmandat. Beiträge werden per Überweisung bezahlt.</p>';
+        foreach ($mandates as $mn) {
+            [$usable, $why] = md_sepa_mandate_usable($mn, date('Y-m-d'));
+            echo '<p' . ($mn['status'] === 'revoked' ? ' class="muted"' : '') . '><strong>' . h($mn['mandate_ref']) . '</strong> · IBAN …' . h($mn['iban_last4']) . ' · unterschrieben ' . h(md_date($mn['signed_on'])) . ' · ' . h(MD_SEPA_STATUS[$mn['status']])
+                . ($mn['status_reason'] ? ' (' . h($mn['status_reason']) . ')' : '') . ($mn['status'] === 'active' && !$usable ? ' <span class="bad">– ' . h($why) . '</span>' : '') . '</p>';
+        }
+        if ($staff && md_can($actor, 'sepa', 'edit')) echo '<p><a href="admin/sepa.php#mandates">Mandate verwalten</a></p>';
+        elseif (!$staff && $mandates) echo '<p class="muted">Zum Ändern oder Widerrufen des Mandats wende dich bitte an die Verwaltung.</p>';
+    }
+}
+
+
 if ($showFinance) {
-echo '<section class="card" id="finance"><h2>' . ($staff ? 'Finanzen ' : 'Meine Finanzen ') . $year . '</h2><div class="kpis">';
+echo '<h3>Übersicht ' . $year . '</h3><div class="kpis">';
 $kpi = fn(string $label, int $c, string $cls = '') => '<div class="kpi ' . $cls . '"><span>' . h($label) . '</span><strong>' . md_money($c) . '</strong></div>';
 echo $kpi('Offene Forderungen', $fin['open_claims'], $fin['overdue'] ? 'bad' : '');
 echo $kpi('Beiträge bezahlt', $fin['fees_paid']) . $kpi('Eintrittsgelder', $fin['tickets_paid']) . $kpi('Spenden', $fin['donations']);
@@ -260,66 +327,56 @@ if ($myLetters) {
     foreach ($myLetters as $lt) { $ls = json_decode($lt['snapshot'], true); echo '<li><a href="admin/dunning_print.php?id=' . (int)$lt['letter_id'] . '" target="_blank">' . h($ls['level_name'] ?? 'Mahnung') . ' ' . h($lt['letter_no']) . '</a> · ' . md_money((int)$lt['total_cents']) . ' · Frist ' . h(md_date($lt['deadline'])) . '</li>'; }
     echo '</ul>';
 }
-echo '</section>';
 }
-echo '</fieldset>';
-
-// ---- Beitrag (außerhalb des gesperrten Bereichs: Zuordnung braucht das Recht "Beiträge", nicht "Mitglieder bearbeiten")
-if (!$staff || md_can($actor, 'fees', 'view')) {
-    $fa = md_fee_assignment($mid, date('Y-m-d'), date('Y-m-d'));
-    $feeHist = md_q('SELECT f.*, g.name, g.amount_cents, g.rhythm FROM md_member_fees f JOIN md_fee_groups g ON g.group_id = f.group_id WHERE f.member_id = ? ORDER BY f.valid_from DESC, f.fee_id DESC LIMIT 6', [$mid]);
-    echo '<section class="card" id="fee"><h2>Beitrag</h2>';
-    if ($fa) {
-        $amt = $fa['amount_override_cents'] !== null ? (int)$fa['amount_override_cents'] : (int)$fa['group_cents'];
-        echo '<p><strong>' . h($fa['group_name']) . '</strong> · ' . md_money($amt) . ' ' . h(MD_RHYTHMS[$fa['rhythm']]) . ($fa['discount_percent'] !== null ? ', ' . (int)$fa['discount_percent'] . ' % Ermäßigung' : '') . ' <span class="muted">seit ' . h(md_date($fa['valid_from'])) . '</span></p>';
-        if ($fa['reason'] && ($fa['amount_override_cents'] !== null || $fa['discount_percent'] !== null)) echo '<p class="muted">Abweichung: ' . h($fa['reason']) . ($fa['approved_by'] ? ' (bewilligt von ' . h($fa['approved_by']) . ')' : '') . '</p>';
-    } else echo '<p class="muted">Keine Beitragsgruppe zugeordnet.</p>';
-    if ($staff && md_can($actor, 'fees', 'edit')) {
-        echo '<details><summary>Beitragsgruppe zuordnen oder ändern</summary><form method="post" action="save.php">' . $form('fee_assign', 'fee') . '<div class="addr"><label>Gruppe<select name="group_id">';
-        foreach (md_fee_groups(true) as $g) echo '<option value="' . (int)$g['group_id'] . '"' . ($fa && (int)$fa['group_id'] === (int)$g['group_id'] ? ' selected' : '') . '>' . h($g['name'] . ' (' . md_money((int)$g['amount_cents']) . ' ' . MD_RHYTHMS[$g['rhythm']] . ')') . '</option>';
-        echo '</select></label><label>Gültig ab<input name="valid_from" value="' . date('d.m.Y') . '"></label><label>Abweichender Betrag in €<input name="override" placeholder="optional"></label><label>oder Ermäßigung in %<input name="discount" size="4" placeholder="optional"></label>'
-            . '<label>Grund (bei Abweichung Pflicht)<input name="reason"></label><label>Bewilligt von<input name="approved_by" placeholder="Name/Funktion"></label></div><button>Speichern</button></form></details>';
-    }
-    if (count($feeHist) > 1) { echo '<p class="muted">Bisher: '; foreach (array_slice($feeHist, 1) as $fh) echo h($fh['name']) . ' (' . h(md_date($fh['valid_from'])) . ($fh['valid_to'] ? ' – ' . h(md_date($fh['valid_to'])) : '') . ') '; echo '</p>'; }
-    echo '</section>';
-}
-
-// ---- Veranstaltungen (eigene Anmeldungen und eigene Veranstaltungen)
-if (!$staff) {
-    $myEv = md_q("SELECT e.*, r.status rstatus FROM md_event_regs r JOIN md_events e ON e.event_id = r.event_id WHERE r.member_id = ? AND r.status IN ('registered','waitlist') AND e.starts_at >= ? AND e.status = 'open' ORDER BY e.starts_at", [$mid, date('Y-m-d H:i:s')]);
-    $orgEv = md_q("SELECT * FROM md_events WHERE organizer_id = ? AND starts_at >= ? AND status = 'open' ORDER BY starts_at", [$mid, date('Y-m-d H:i:s')]);
-    if ($myEv || $orgEv) {
-        echo '<section class="card" id="events"><h2>Veranstaltungen</h2><ul class="plain">';
-        foreach ($myEv as $e) echo '<li>' . h(md_event_dt($e['starts_at'])) . ' · <a href="event.php?id=' . (int)$e['event_id'] . '">' . h($e['title']) . '</a> <span class="muted">(' . ($e['rstatus'] === 'registered' ? 'angemeldet' : 'Warteliste') . ')</span></li>';
-        foreach ($orgEv as $e) echo '<li>' . h(md_event_dt($e['starts_at'])) . ' · <a href="event.php?id=' . (int)$e['event_id'] . '">' . h($e['title']) . '</a> <span class="muted">(ich veranstalte)</span></li>';
-        echo '</ul><p><a href="events.php">Alle Veranstaltungen</a></p></section>';
-    }
-}
-
-// ---- Lastschrift (eigene Daten bzw. Verwaltung mit Recht "SEPA")
-if (!$staff || md_can($actor, 'sepa', 'view')) {
-    $mandates = md_q('SELECT * FROM md_sepa_mandates WHERE member_id = ? ORDER BY mandate_id DESC', [$mid]);
-    if ($mandates || ($staff && md_can($actor, 'sepa', 'edit'))) {
-        echo '<section class="card" id="sepa"><h2>Lastschrift</h2>';
-        if (!$mandates) echo '<p class="muted">Kein Lastschriftmandat. Beiträge werden per Überweisung bezahlt.</p>';
-        foreach ($mandates as $mn) {
-            [$usable, $why] = md_sepa_mandate_usable($mn, date('Y-m-d'));
-            echo '<p' . ($mn['status'] === 'revoked' ? ' class="muted"' : '') . '><strong>' . h($mn['mandate_ref']) . '</strong> · IBAN …' . h($mn['iban_last4']) . ' · unterschrieben ' . h(md_date($mn['signed_on'])) . ' · ' . h(MD_SEPA_STATUS[$mn['status']])
-                . ($mn['status_reason'] ? ' (' . h($mn['status_reason']) . ')' : '') . ($mn['status'] === 'active' && !$usable ? ' <span class="bad">– ' . h($why) . '</span>' : '') . '</p>';
-        }
-        if ($staff && md_can($actor, 'sepa', 'edit')) echo '<p><a href="admin/sepa.php#mandates">Mandate verwalten</a></p>';
-        elseif (!$staff && $mandates) echo '<p class="muted">Zum Ändern oder Widerrufen des Mandats wende dich bitte an die Verwaltung.</p>';
-        echo '</section>';
-    }
+$financeBlock = $acc('finance', ($staff ? 'Finanzen ' : 'Meine Finanzen ') . $year, ob_get_clean(), false, $fin['open_claims'] > 0 ? 'offen: ' . md_money($fin['open_claims']) : '');
 }
 
 // ---- Protokoll
-echo '<section class="card" id="log"><h2>Änderungsprotokoll</h2><table><thead><tr><th>Wann</th><th>Was</th><th>Alt</th><th>Neu</th><th>Wer</th></tr></thead><tbody>';
+ob_start();
+echo '<table><thead><tr><th>Wann</th><th>Was</th><th>Alt</th><th>Neu</th><th>Wer</th></tr></thead><tbody>';
 foreach ($changes as $c) {
     $who = $c['changed_via'] === 'admin' ? 'Admin ' . trim($c['first_name'] . ' ' . $c['last_name']) : ['import' => 'Import', 'system' => 'System (Tagesabgleich)'][$c['changed_via']] ?? 'selbst';
     $long = fn($v) => $v === null ? '–' : (mb_strlen($v) > 60 ? mb_substr($v, 0, 60) . '…' : $v);
     echo '<tr><td>' . h(date('d.m.Y H:i', strtotime($c['changed_at']))) . '</td><td>' . h(md_field_label($c['field_key'])) . '</td><td>' . h($long($c['old_value'])) . '</td><td>' . h($long($c['new_value'])) . '</td><td>' . h($who) . '</td></tr>';
 }
 if (!$changes) echo '<tr><td colspan="5" class="muted">Noch keine Änderungen.</td></tr>';
-echo '</tbody></table></section>';
+echo '</tbody></table>';
+$logBlock = $acc('log', 'Änderungsprotokoll', ob_get_clean());
+
+// ---- DSGVO Datenauskunft – nur für die eigenen Daten, unabhängig von der Zustimmung
+$privacyBlock = '';
+if (!$staff) {
+    ob_start();
+    $myReq = md_q("SELECT * FROM md_privacy_requests WHERE member_id = ? ORDER BY request_id DESC LIMIT 5", [$mid]);
+    $openErase = false;
+    foreach ($myReq as $rq) if ($rq['kind'] === 'erasure' && $rq['status'] === 'open') $openErase = true;
+    echo '<p>Du kannst jederzeit alle über dich gespeicherten Daten ansehen oder herunterladen:</p><p>'
+        . '<a class="btn small" href="privacy_export.php?format=html" target="_blank">Ansehen und drucken</a> <a class="btn small secondary" href="privacy_export.php?format=json">JSON-Datei</a>' . (class_exists('ZipArchive') ? ' <a class="btn small secondary" href="privacy_export.php?format=zip">ZIP mit Fotos</a>' : '') . '</p>';
+    if ($openErase) echo '<div class="flash warn">Dein Löschantrag liegt der Verwaltung vor.</div>';
+    else echo '<details class="acc inner"><summary>Löschung meiner Daten beantragen</summary><div class="accbody"><p class="muted">Die Verwaltung prüft den Antrag und antwortet innerhalb eines Monats. Während der Mitgliedschaft und aufgrund von Aufbewahrungspflichten (z. B. Buchungen, Spendenbescheinigungen) können nicht alle Daten sofort gelöscht werden.</p>'
+        . '<form method="post" action="save.php">' . $form('privacy_request', 'privacy') . '<label class="block">Anmerkung (optional)<input name="note"></label><button>Löschung beantragen</button></form></div></details>';
+    if ($myReq) {
+        echo '<ul class="plain">';
+        foreach ($myReq as $rq) echo '<li class="muted">' . ($rq['kind'] === 'access' ? 'Auskunft' : 'Löschantrag') . ' vom ' . h(md_date(substr($rq['received_at'], 0, 10))) . ': ' . ['open' => 'offen', 'done' => 'erledigt', 'refused' => 'abgelehnt'][$rq['status']] . ($rq['response_note'] ? ' – ' . h($rq['response_note']) : '') . '</li>';
+        echo '</ul>';
+    }
+    $privacyBlock = $acc('privacy', 'DSGVO Datenauskunft', ob_get_clean());
+}
+
+// ======================================================================= Ausgabe
+md_header('Dashboard', $actor, 'dashboard');
+md_show_flash();
+if ($staff) {
+    echo '<div class="flash warn">Verwaltungsmodus: ' . ($canEdit ? 'Du bearbeitest' : 'Du siehst (nur lesend)') . ' die Daten von <strong>' . h($m['first_name'] . ' ' . $m['last_name'])
+        . '</strong>.' . ($canEdit ? ' Änderungen werden als „Admin“ protokolliert.' : '') . ($masked ? " $masked Angabe(n), die nicht im Verzeichnis freigegeben sind, sind für dich ausgeblendet." : '') . ' <a href="admin/index.php">zur Liste</a></div>';
+} elseif (!$ownConsent) {
+    echo '<div class="flash warn"><strong>Nur Ansicht:</strong> Solange du den Nutzungsbedingungen nicht zugestimmt hast, kannst du nichts ändern und siehst nur deine eigenen Daten.</div>';
+}
+echo $headBlock;
+if (!$termsOk) echo $termsBlock;
+echo $eventsBlock;
+echo '<fieldset class="roset"' . ($canEdit ? '' : ' disabled') . '>' . $personalBlock . $photosBlock . $groupBlocks . $addrBlock . $contactBlock . $clubBlock . $accessBlock . '</fieldset>';
+echo $financeBlock . $logBlock;
+if ($termsOk) echo $termsBlock;
+echo $privacyBlock;
 md_footer();

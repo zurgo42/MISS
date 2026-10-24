@@ -25,8 +25,8 @@ if (!$t) {
 } else {
     if ($err) echo '<div class="flash err">' . h($err) . '</div>';
     echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="token" value="' . h($token) . '">'
-        . '<label class="block">Neues Passwort (mindestens ' . MD_PASSWORD_MIN . ' Zeichen)<input type="password" name="password" autocomplete="new-password" required autofocus style="width:100%"></label>'
-        . '<label class="block">Wiederholen<input type="password" name="password2" autocomplete="new-password" required style="width:100%"></label><p><button>Passwort speichern</button></p></form>';
+        . md_password_field('password', 'Neues Passwort (mindestens ' . MD_PASSWORD_MIN . ' Zeichen)', 'new-password', true)
+        . md_password_field('password2', 'Wiederholen', 'new-password') . '<p><button>Passwort speichern</button></p></form>';
 }
 echo '</section>';
 md_footer();

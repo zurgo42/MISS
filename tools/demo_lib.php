@@ -156,3 +156,27 @@ function demo_seed_datev(array $idmap = []): void
     md_datev_kind_rule_save('4200', '4299', 'erstattung');
     echo "Demo-Personenkonten für den DATEV-Import angelegt.\n";
 }
+
+/**
+ * Gleicht Rolle, Admin-Kennzeichen, Funktion und Stufe der Demo-Figuren in svmembers an die Demo-Daten an
+ * (nur bei Mitgliedertabellen der Sitzungsverwaltung nötig, die schon Demo-Figuren mit anderen Rollen enthalten). Ändert nur diese Spalten, nur für DEMO-Konten.
+ */
+function demo_sync_sv(array $svmembers, array $idmap = []): int
+{
+    $cols = md_sv_columns();
+    $n = 0;
+    foreach ($svmembers as $m) {
+        $id = $idmap[$m['member_id']] ?? $m['member_id'];
+        $set = [];
+        $par = [];
+        foreach (['is_admin' => $m['is_admin'], 'is_active' => $m['is_active'], 'aktiv' => $m['aktiv'], 'funktion' => $m['funktion'], 'role' => md_sv_role_value(strtolower((string)$m['role']))] as $c => $v) {
+            if (in_array($c, $cols, true)) { $set[] = "$c = ?"; $par[] = $v; }
+        }
+        if (!$set) continue;
+        $par[] = $id;
+        $par[] = sprintf('DEMO%04d', $m['member_id']);
+        $n += md_exec('UPDATE svmembers SET ' . implode(', ', $set) . " WHERE member_id = ? AND membership_number = ?", $par);
+    }
+    echo "Rollen und Admin-Kennzeichen von $n Demo-Konten in svmembers angeglichen.\n";
+    return $n;
+}

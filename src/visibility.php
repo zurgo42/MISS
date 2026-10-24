@@ -22,6 +22,7 @@ function md_can_see(array $viewer, int $ownerId, string $key, array $vmap): bool
 {
     if ((int)$viewer['member_id'] === $ownerId) return true;
     if (!md_consent_ok((int)$viewer['member_id'])) return false;
+    if (md_is_admin($viewer) || md_can($viewer, 'members', 'edit')) return true;   // Verwaltung sieht ohnehin alles
     $level = $vmap[$key] ?? 'me';
     switch ($level) {
         case 'all':   return true;
@@ -29,4 +30,15 @@ function md_can_see(array $viewer, int $ownerId, string $key, array $vmap): bool
         case 'admin': return md_is_privileged($viewer);
         default:      return false;
     }
+}
+
+/** Sichtbarkeits-Einstellungen aller Mitglieder auf einmal (für das Mitgliederverzeichnis): member_id => [Schlüssel => Stufe]. Schlüssel 0 = Standard. */
+function md_visibility_maps_all(): array
+{
+    $def = [];
+    foreach (md_visibility_keys() as $k => [, $d]) $def[$k] = $d;
+    foreach (md_q('SELECT field_key, level FROM md_visibility_defaults') as $r) $def[$r['field_key']] = $r['level'];
+    $maps = [0 => $def];
+    foreach (md_q('SELECT member_id, field_key, level FROM md_visibility') as $r) $maps[(int)$r['member_id']][$r['field_key']] = $r['level'];
+    return $maps;
 }

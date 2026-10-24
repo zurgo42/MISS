@@ -24,8 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (MD_DEMO_MODE && !isset($_GET['echt']) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     md_header('Demo-Anmeldung');
     echo '<h1>Demo-Anmeldung</h1><p class="muted">Wähle eine Figur. Es sind dieselben wie in der Sitzungsverwaltung. <a href="login.php?echt=1">Echte Anmeldung mit Passwort ausprobieren</a></p><div class="grid3">';
+    $ph1 = [];
+    foreach (md_q('SELECT member_id, photo_id FROM md_photos WHERE slot = 1') as $r) $ph1[(int)$r['member_id']] = (int)$r['photo_id'];
     foreach (md_q('SELECT * FROM svmembers ORDER BY member_id') as $m) {
-        echo '<a class="card pick" href="login.php?as=' . (int)$m['member_id'] . '"><span class="avatar">' . h(md_initials($m)) . '</span><strong>'
+        $pic = isset($ph1[(int)$m['member_id']]) ? '<img class="thumb" src="photo.php?id=' . $ph1[(int)$m['member_id']] . '&pick=1" alt="">' : '<span class="avatar">' . h(md_initials($m)) . '</span>';
+        echo '<a class="card pick" href="login.php?as=' . (int)$m['member_id'] . '">' . $pic . '<strong>'
             . h($m['first_name'] . ' ' . $m['last_name']) . '</strong><span class="muted">' . h($m['role']) . (($fkt = $m['funktion'] ?? $m['Funktion'] ?? '') ? ' · ' . h($fkt) : '') . (!empty($m['is_admin']) ? ' · Admin' : '') . '</span></a>';
     }
     echo '</div>';
@@ -38,7 +41,7 @@ if ($err) echo '<div class="flash err">' . h($err) . '</div>';
 md_show_flash();
 echo '<form method="post" action="login.php' . (isset($_GET['echt']) ? '?echt=1' : '') . '" autocomplete="on">' . md_csrf_field()
     . '<label class="block">E-Mail-Adresse oder Mitgliedsnummer<input name="ident" value="' . h($ident) . '" autocomplete="username" required autofocus style="width:100%"></label>'
-    . '<label class="block">Passwort<input type="password" name="password" autocomplete="current-password" required style="width:100%"></label>'
+    . md_password_field('password', 'Passwort', 'current-password')
     . '<p><button>Anmelden</button></p></form>'
     . '<p class="muted"><a href="forgot.php">Passwort vergessen oder noch keins?</a></p></section>';
 md_footer();

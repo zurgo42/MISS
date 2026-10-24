@@ -54,6 +54,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 md_flash('Einstellungen gespeichert.');
             } else md_flash('Bitte gültige Werte eingeben (Freibetrag in €, Level 0–19).', 'err');
+        } elseif ($act === 'logo' || $act === 'logo_remove') {
+            $oldFile = md_setting('club.logo_file', '');
+            $new = '';
+            $lerr = '';
+            if ($act === 'logo') {
+                $f = $_FILES['logo'] ?? [];
+                $info = ($f['error'] ?? 1) === UPLOAD_ERR_OK && $f['size'] <= 2 * 1024 * 1024 ? @getimagesize($f['tmp_name']) : false;
+                if (!$info || !in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_GIF, IMAGETYPE_WEBP], true)) $lerr = 'Bitte ein Bild (PNG, JPEG, GIF oder WebP) bis 2 MB wählen.';
+                else {
+                    $src = @imagecreatefromstring((string)file_get_contents($f['tmp_name']));
+                    if (!$src) $lerr = 'Bild nicht lesbar.';
+                    else {   // neu kodieren (entfernt Zusatzdaten), höchstens 400 px
+                        [$w, $h] = [imagesx($src), imagesy($src)];
+                        $sc = min(1, 400 / max($w, $h));
+                        $dst = imagecreatetruecolor(max(1, (int)round($w * $sc)), max(1, (int)round($h * $sc)));
+                        imagealphablending($dst, false); imagesavealpha($dst, true);
+                        imagefill($dst, 0, 0, imagecolorallocatealpha($dst, 0, 0, 0, 127));
+                        imagecopyresampled($dst, $src, 0, 0, 0, 0, imagesx($dst), imagesy($dst), $w, $h);
+                        $new = 'logo_' . bin2hex(random_bytes(4)) . '.png';
+                        if (!is_dir(MD_STORAGE_DIR)) mkdir(MD_STORAGE_DIR, 0775, true);
+                        imagepng($dst, MD_STORAGE_DIR . '/' . $new);
+                    }
+                }
+            }
+            if ($lerr) md_flash($lerr, 'err');
+            else {
+                if (md_one("SELECT 1 FROM md_settings WHERE setting_key = 'club.logo_file'")) md_exec("UPDATE md_settings SET setting_value = ? WHERE setting_key = 'club.logo_file'", [$new]);
+                else md_exec("INSERT INTO md_settings (setting_key, setting_value, description) VALUES ('club.logo_file', ?, 'Logo des Vereins (Datei in storage)')", [$new]);
+                if ($oldFile !== '') @unlink(MD_STORAGE_DIR . '/' . basename($oldFile));
+                md_log_change($aid, 'settings', 'Logo', $new !== '' ? 'hochgeladen' : 'entfernt', $aid, 'self');
+                md_flash($new !== '' ? 'Logo gespeichert.' : 'Logo entfernt (Standardzeichen).');
+            }
         } elseif ($act === 'club') {
             $changed = 0;
             foreach (MD_CLUB_FIELDS as $k => [$label]) {
@@ -148,6 +180,12 @@ echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="acti
 echo '<section class="card" id="groups"><h2>Teilgruppen</h2><ul class="plain">';
 foreach (md_q('SELECT g.*, (SELECT COUNT(*) FROM md_member_groups mg WHERE mg.group_id = g.group_id) n FROM md_groups g ORDER BY g.name') as $g) echo '<li>' . h($g['name']) . ' <span class="muted">(' . h($g['kind']) . ', ' . (int)$g['n'] . ' Mitglieder)</span></li>';
 echo '</ul><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="group_add"><div class="addr"><label>Neue Teilgruppe<input name="name"></label><label>Art<select name="kind"><option value="region">Region</option><option value="interesse">Interesse</option><option value="projekt">Projekt</option></select></label></div><button>Anlegen</button></form></section>';
+
+// ---- Logo
+echo '<section class="card" id="logo"><h2>Logo</h2><p class="muted">Erscheint links in der Titelleiste und auf der Anmeldeseite (PNG, JPEG, GIF oder WebP bis 2 MB; wird auf höchstens 400 px verkleinert, quadratisch oder querformatig mit transparentem Hintergrund passt am besten).</p>'
+    . '<p>' . md_logo_html() . ' ' . (md_setting('club.logo_file', '') !== '' ? 'eigenes Logo' : 'Standardzeichen (noch kein Logo hochgeladen)') . '</p>'
+    . '<form method="post" enctype="multipart/form-data">' . md_csrf_field() . '<input type="hidden" name="action" value="logo"><input type="file" name="logo" accept="image/png,image/jpeg,image/gif,image/webp" required> <button class="small">Hochladen</button></form>'
+    . (md_setting('club.logo_file', '') !== '' ? '<form method="post" style="margin-top:6px">' . md_csrf_field() . '<input type="hidden" name="action" value="logo_remove"><button class="small danger">Logo entfernen</button></form>' : '') . '</section>';
 
 // ---- Verein (Spendenbescheinigungen)
 $club = md_club();

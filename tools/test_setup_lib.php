@@ -82,7 +82,7 @@ function md_test_update(): array
 }
 
 /** Baut das Testsystem komplett neu auf. Gibt [Meldungen, Zugangsdaten] zurück (Zugangsdaten: Name, Nummer, E-Mail, Rolle, Passwort). */
-function md_test_setup(bool $reset): array
+function md_test_setup(bool $reset, bool $syncSv = false): array
 {
     if ($err = md_ts_guard($reset)) return [[$err], []];
     $pdo = md_db();
@@ -124,6 +124,7 @@ function md_test_setup(bool $reset): array
         demo_photos($pdo, $data['svmembers'], $idmap);
         demo_seed_sepa($idmap); demo_seed_mail($idmap); demo_seed_events($idmap); demo_seed_lists_apply($idmap); demo_seed_datev($idmap);
         demo_issue_receipts($idmap);
+        if ($syncSv && $shared) demo_sync_sv($data['svmembers'], $idmap);
         md_seed_permissions();
         $log[] = '12 Testfiguren mit Beispieldaten angelegt (Beiträge, Lastschrift-Mandate, Veranstaltungen, Verteiler, Anträge, DATEV-Konten).' . ($shared ? ' Die Mitgliedertabelle der Sitzungsverwaltung wurde nicht verändert.' : '');
     } catch (Throwable $e) {
