@@ -11,6 +11,8 @@ const people = ['Max', 'Erika', 'Lukas', 'Julia', 'Thomas', 'Sabine', 'Hans', 'A
 const bg = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf', 'c1f0d0', 'fbe6a2', 'f3c6e0', 'cde7be', 'b9d7ea', 'f9d5bb', 'd9d9d9'];
 const av = (i, size) => createAvatar(lorelei, { seed: people[i] + '-' + i, size, backgroundColor: [bg[i]], radius: 0 }).toString();
 for (let i = 0; i < 12; i++) writeFileSync(out + `portrait_${i + 1}.svg`, av(i, 400));
+// Porträts der weiteren Demo-Mitglieder 13–52
+for (let n = 13; n <= 52; n++) writeFileSync(out + `portrait_${n}.svg`, createAvatar(lorelei, { seed: 'demo-mitglied-' + n, size: 400, backgroundColor: [bg[n % 12]], radius: 0 }).toString());
 const b64 = (s) => Buffer.from(s).toString('base64');
 const rnd = (seed) => { let x = seed * 9301 + 49297; return () => (x = (x * 9301 + 49297) % 233280) / 233280; };
 

@@ -125,3 +125,11 @@ Die letzte Zeile muss `0 Mitglied(er) würden angepasst` melden: Die Demo-Funkti
 Admins sind Max, Julia, Thomas, Sabine und Mia; sie sehen im Dashboard den Bearbeitungsmodus für andere Mitglieder.
 
 Zurücksetzen: `D:\xampp\php\php.exe tools\demo_load.php --reset` leert nur die `md_`-Tabellen und lädt sie neu.
+
+
+## Demo-Figuren und weitere Mitglieder
+
+- **Wählbar** sind auf der Demo-Startseite elf Figuren mit ihren Rollen (Finanzvorstand, Vorstand, Geschäftsführung, Assistenz, Ressortleitung, Finanzprüfung, Technik-Admin, Mitglied aktiv, Mitglied passiv). Die Startseite ist wie die der Sitzungsverwaltung aufgebaut (Leistungen oben, Demo-Zugang darunter).
+- **Weitere 60 einfache Mitglieder** (DEMO0013–DEMO0072) füllen Mitgliederverzeichnis und Verwaltungsseiten: 40 „aktive“ mit Foto, unterschiedlich vielen Inhalten, Beitragsgruppe und akzeptierten Nutzungsbedingungen (13–52), 20 „passive“ nur mit Grunddaten (53–72). Sie sind nicht als Demo-Zugang wählbar.
+- Bei einer vorhandenen Demo der Sitzungsverwaltung ergänzt `php tools/demo_load.php --reset --sync-sv` die fehlenden Demo-Mitglieder in `svmembers` (nur neue Zeilen DEMO0013 ff.) und gleicht Rollen/Admin der zwölf Figuren an.
+- Die Bilder (gezeichnete Porträts, CC0) liegen in `assets/demo/`, siehe dort `LIZENZ.md`.

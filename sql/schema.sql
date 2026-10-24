@@ -579,3 +579,11 @@ CREATE TABLE IF NOT EXISTS md_datev_rows (
     entry_id INT DEFAULT NULL,
     imported_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- persönliche Einstellungen (z. B. gewählte Spalten im Mitgliederverzeichnis)
+CREATE TABLE IF NOT EXISTS md_user_prefs (
+    member_id INT NOT NULL,
+    pref_key VARCHAR(40) NOT NULL,
+    pref_value TEXT,
+    PRIMARY KEY (member_id, pref_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

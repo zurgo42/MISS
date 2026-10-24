@@ -40,6 +40,7 @@ if ((int)md_one('SELECT COUNT(*) c FROM md_profiles')['c'] > 0) exit("Abbruch: m
 
 $anchor = date('Y-m-d');
 $data = demo_build($anchor);
+demo_ensure_extra_members($data['svmembers'], $idmap);
 // Ressorts der echten Ressortliste über den Namen zuordnen (falls vorhanden)
 $real = [];
 try { foreach (md_q('SELECT ID, Ressort FROM svressorts') as $r) $real[mb_strtolower($r['Ressort'])] = (int)$r['ID']; } catch (Throwable $e) {}

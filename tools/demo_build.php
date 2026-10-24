@@ -62,8 +62,7 @@ function demo_build(string $anchor): array
             'Erste Ansprechpartnerin im Sekretariat.', 'Einen Newsletter, der wirklich gelesen wird.', '2019-02-01', 'aktiv'],
         7 => ['Herr', 'Prof.', null, '1964-12-01', 'Hochschullehrer', 'Universität Lehmstadt', 'verheiratet', "Wandern\nKlavier", 'Wissenschaft, Weiterbildung',
             'Ich leite die Kurse im Ressort Bildung und halte gern Vorträge.', 'Mehr Kooperation zwischen den Regionalgruppen.', '2011-10-01', 'aktiv'],
-        8 => ['Frau', null, null, '1983-04-17', 'Physiotherapeutin', 'Praxis am Markt', 'verheiratet', "Laufen\nSchwimmen", 'Gesundheit, Sport',
-            'Ich leite die Bewegungsangebote des Vereins.', 'Hallenzeiten, die sich besser planen lassen.', '2015-05-01', 'aktiv'],
+        8 => ['Frau', null, null, '1983-04-17', null, null, null, null, null, null, null, '2015-05-01', 'aktiv'],   // passives Mitglied: nur Grunddaten
         9 => ['Frau', null, 'Pe', '1992-08-25', 'Journalistin', 'freiberuflich', 'ledig', "Reisen\nSchach", 'Öffentlichkeitsarbeit, Social Media',
             'Presse und Social Media – wer etwas posten will, meldet sich bei mir.', 'Mehr Beteiligung der jüngeren Mitglieder.', '2020-01-01', 'aktiv'],
         10 => ['Herr', null, null, '1958-06-11', 'Wirtschaftsprüfer i. R.', null, 'verwitwet', "Garten\nBriefmarken", 'Prüfung, Rechnungswesen',
@@ -90,7 +89,6 @@ function demo_build(string $anchor): array
         5 => [['Privat', 'Birkenweg 9', '24103', 'Kiel', 'Deutschland']],
         6 => [['Privat', 'Rosenstraße 5', '80331', 'München', 'Deutschland']],
         7 => [['Privat', 'Professorenpfad 2', '37073', 'Göttingen', 'Deutschland'], ['Dienstlich', 'Universitätsplatz 1', '37073', 'Göttingen', 'Deutschland'], ['Ferienhaus', 'Seeblick 14', '17255', 'Wesenberg', 'Deutschland']],
-        8 => [['Privat', 'Sonnenhang 6', '79098', 'Freiburg', 'Deutschland']],
         9 => [['Privat', 'Nordstraße 31', '10115', 'Berlin', 'Deutschland']],
         10 => [['Privat', 'Eichenhof 1', '70173', 'Stuttgart', 'Deutschland']],
         11 => [['Privat', 'Serverstraße 404', '', 'Frankfurt am Main', 'Deutschland']],   // PLZ fehlt absichtlich (Demo-Fall Spendenbescheinigung)
@@ -110,7 +108,6 @@ function demo_build(string $anchor): array
         5 => ['mobile' => '0174 5550105'],
         6 => ['phone' => '089 5550106', 'instagram' => '@sabine.backt', 'whatsapp' => '0175 5550106'],
         7 => ['phone' => '0551 5550107', 'fax' => '0551 5550199', 'website' => 'https://lehmann-uni.example.com', 'youtube' => 'youtube.com/@lehmann-vortraege-demo'],
-        8 => ['mobile' => '0176 5550108', 'facebook' => 'facebook.com/anna.fruehling.demo'],
         9 => ['mobile' => '0177 5550109', 'instagram' => '@petra.nord', 'x' => '@petranord', 'tiktok' => '@petra.reist', 'telegram' => '@petranord'],
         10 => ['phone' => '0711 5550110'],
         11 => ['phone' => '069 5550111', 'mastodon' => '@mia@chaos.example.com'],
@@ -128,7 +125,6 @@ function demo_build(string $anchor): array
         [5, 'address.1', 'me'], [5, 'contact.mobile', 'all'],
         [6, 'contact.instagram', 'all'], [6, 'email', 'all'],
         [7, 'address.2', 'all'], [7, 'contact.website', 'all'], [7, 'contact.youtube', 'all'], [7, 'wishes_text', 'all'],
-        [8, 'contact.facebook', 'all'], [8, 'birthdate', 'all'],
         [9, 'contact.instagram', 'all'], [9, 'contact.x', 'all'], [9, 'contact.tiktok', 'all'], [9, 'email', 'all'], [9, 'wishes_text', 'all'],
         [10, 'address.1', 'me'], [10, 'contact.phone', 'me'],
         [11, 'contact.mastodon', 'all'], [11, 'address.1', 'me'],
@@ -140,7 +136,6 @@ function demo_build(string $anchor): array
         [5, 'occupation', 'all'], [5, 'hobbies', 'all'],
         [6, 'occupation', 'all'], [6, 'hobbies', 'all'], [6, 'address.1', 'all'],
         [7, 'occupation', 'all'], [7, 'interests', 'all'], [7, 'address.1', 'all'], [7, 'email', 'all'], [7, 'contact.phone', 'all'],
-        [8, 'occupation', 'all'], [8, 'address.1', 'all'], [8, 'hobbies', 'all'],
         [9, 'occupation', 'all'], [9, 'interests', 'all'], [9, 'address.1', 'all'], [9, 'contact.mobile', 'all'],
         [10, 'occupation', 'all'], [10, 'email', 'all'],
         [11, 'occupation', 'all'], [11, 'email', 'all'],
@@ -153,7 +148,7 @@ function demo_build(string $anchor): array
     // Gruppen und Funktionen
     $mg = [[1, 'Regionalgruppe Nord'], [1, 'Schachgruppe'], [2, 'Regionalgruppe Nord'], [3, 'Regionalgruppe Süd'], [3, 'Projektgruppe Satzung'],
            [4, 'Regionalgruppe Nord'], [5, 'Regionalgruppe Nord'], [5, 'Projektgruppe Satzung'], [6, 'Regionalgruppe Süd'],
-           [7, 'Wandergruppe'], [7, 'Regionalgruppe Süd'], [8, 'Regionalgruppe Süd'], [8, 'Wandergruppe'], [9, 'Regionalgruppe Nord'], [9, 'Schachgruppe'],
+           [7, 'Wandergruppe'], [7, 'Regionalgruppe Süd'], [9, 'Regionalgruppe Nord'], [9, 'Schachgruppe'],
            [10, 'Regionalgruppe Süd'], [11, 'Regionalgruppe Süd'], [11, 'Projektgruppe Satzung']];
     $memberGroups = array_map(fn($x) => ['member_id' => $x[0], 'group_id' => $gid[$x[1]] + 1, 'since' => ($Y - 3) . '-01-01', 'until' => null], $mg);
     // [Mitglied, Code, von, bis, Level (null = Standard der Funktion), Ressort-ID]
@@ -200,7 +195,6 @@ function demo_build(string $anchor): array
     // Übungsleiterpauschale (Quartalsweise)
     foreach ([['03-31', 'I. Quartal'], ['06-30', 'II. Quartal'], ['09-30', 'III. Quartal']] as [$md, $q]) {
         $L[] = [7, 'uebungsleiter', 600.0, "$Y-$md", null, date('Y-m-d', strtotime("$Y-$md +5 days")), 'paid', "Übungsleiterpauschale $q $Y (Kurse Bildung)", 'U' . $Y . '7' . substr($md, 1, 1)];
-        $L[] = [8, 'uebungsleiter', 300.0, "$Y-$md", null, date('Y-m-d', strtotime("$Y-$md +5 days")), 'paid', "Übungsleiterpauschale $q $Y (Bewegungsangebote)", 'U' . $Y . '8' . substr($md, 1, 1)];
     }
     $ledger = [];
     foreach ($L as $r) {
@@ -222,7 +216,7 @@ function demo_build(string $anchor): array
         [3, 1, $dt(-600, '20:05:00'), 'self', 3, null, null], [4, 2, $dt(-118, '08:30:00'), 'self', 4, null, null],
         [5, 2, $dt(-117, '11:02:00'), 'self', 5, null, null], [6, 2, $dt(-100, '14:15:00'), 'self', 6, null, null],
         [7, 2, $dt(-95, '09:50:00'), 'admin', 6, 'telefonisch bestätigt, durch Sekretariat erfasst', null],
-        [8, 2, $dt(-90, '19:20:00'), 'self', 8, null, null], [9, 2, $dt(-88, '12:00:00'), 'self', 9, null, null],
+        [9, 2, $dt(-88, '12:00:00'), 'self', 9, null, null],
         [10, 2, $dt(-70, '12:00:00'), 'paper', 5, 'Brief vom ' . date('d.m.Y', strtotime('-72 days', $A)) . ', Eingang Geschäftsstelle', null],
         [12, 1, $dt(-900, '10:00:00'), 'self', 12, null, $dt(-300, '10:00:00')],
     ];
@@ -276,6 +270,20 @@ function demo_build(string $anchor): array
     $importProfiles = [['name' => 'Beispiel: Excel-Export Altverwaltung', 'source_software' => 'Excel', 'delimiter_char' => ';',
         'mapping' => json_encode(['map' => ['membership_number' => 'Mitgl-Nr', 'first_name' => 'Vorname', 'last_name' => 'Nachname', 'email' => 'E-Mail', 'birthdate' => 'Geb.-Datum',
             'join_date' => 'Eintritt', 'street' => 'Strasse', 'zip' => 'PLZ', 'city' => 'Ort', 'groups' => 'Gruppe'], 'opts' => ['update_existing' => true, 'placeholder_email' => false]], JSON_UNESCAPED_UNICODE)]];
+
+    // 60 weitere einfache Mitglieder (40 aktive mit Inhalten, 20 nur Grunddaten)
+    require_once __DIR__ . '/demo_extra.php';
+    $ex = demo_extra($Y, array_map(fn($i) => $i + 1, $gid), $dt);
+    foreach (['svmembers', 'md_profiles', 'md_addresses', 'md_contacts', 'md_visibility', 'md_member_groups', 'md_member_fees', 'md_terms_consents'] as $k) {
+        if ($k === 'svmembers') array_push($svmembers, ...$ex[$k]);
+        elseif ($k === 'md_profiles') array_push($profiles, ...$ex[$k]);
+        elseif ($k === 'md_addresses') array_push($addresses, ...$ex[$k]);
+        elseif ($k === 'md_contacts') array_push($contacts, ...$ex[$k]);
+        elseif ($k === 'md_visibility') array_push($visibility, ...$ex[$k]);
+        elseif ($k === 'md_member_groups') array_push($memberGroups, ...$ex[$k]);
+        elseif ($k === 'md_member_fees') array_push($memberFees, ...$ex[$k]);
+        else array_push($consents, ...$ex[$k]);
+    }
 
     return [
         'generator' => 'tools/demo_build.php', 'anchor_date' => $anchor,

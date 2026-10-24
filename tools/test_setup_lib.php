@@ -104,6 +104,7 @@ function md_test_setup(bool $reset, bool $syncSv = false): array
         if (!$shared && !md_one("SELECT 1 FROM md_settings WHERE setting_key = 'test.own_sv'")) md_exec("INSERT INTO md_settings (setting_key, setting_value, description) VALUES ('test.own_sv', '1', 'Testsystem hat die Mitgliedertabelle selbst angelegt')");
         $idmap = $shared ? md_ts_idmap() : [];
         $data = demo_build(date('Y-m-d'));
+        if ($shared) demo_ensure_extra_members($data['svmembers'], $idmap);
         if ($shared) {   // Ressorts der vorhandenen Ressortliste über den Namen zuordnen
             $real = [];
             try { foreach (md_q('SELECT ID, Ressort FROM svressorts') as $r) $real[mb_strtolower($r['Ressort'])] = (int)$r['ID']; } catch (Throwable $e) {}

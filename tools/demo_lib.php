@@ -21,13 +21,16 @@ function demo_photos(PDO $pdo, array $svmembers, array $idmap = []): void
     $src = dirname(__DIR__) . '/assets/demo';
     if (!is_dir($dir)) mkdir($dir, 0775, true);
     foreach (glob("$dir/*_demo.svg") ?: [] as $f) unlink($f);
-    $counts = [1 => 3, 2 => 2, 3 => 3, 4 => 1, 5 => 1, 6 => 2, 7 => 3, 8 => 2, 9 => 3, 10 => 1, 11 => 0, 12 => 0];
+    $counts = [1 => 3, 2 => 2, 3 => 3, 4 => 1, 5 => 1, 6 => 2, 7 => 3, 8 => 0, 9 => 3, 10 => 1, 11 => 0, 12 => 0];
     $kinds = [1 => 'portrait', 2 => 'treffen', 3 => 'urlaub'];
     foreach ($svmembers as $m) {
-        $demoId = $m['member_id'];
+        $demoId = (int)$m['member_id'];
         $id = $idmap[$demoId] ?? $demoId;
-        for ($s = 1; $s <= $counts[$demoId]; $s++) {
-            $from = "$src/{$kinds[$s]}_$demoId.svg";
+        if ($demoId <= 12) $slots = $counts[$demoId] ? range(1, $counts[$demoId]) : [];
+        else $slots = $demoId <= 52 ? array_values(array_filter([1, $demoId % 3 === 0 ? 2 : 0, $demoId % 5 === 0 ? 3 : 0])) : [];   // 13–52 aktiv mit Foto, 53–72 ohne
+        foreach ($slots as $s) {
+            $n = $demoId <= 12 ? $demoId : ($demoId % 12) + 1;
+            $from = $s === 1 ? "$src/portrait_$demoId.svg" : "$src/{$kinds[$s]}_$n.svg";
             if (!is_file($from)) continue;
             $name = sprintf('%d_%d_demo.svg', $id, $s);
             copy($from, "$dir/$name");
@@ -36,6 +39,28 @@ function demo_photos(PDO $pdo, array $svmembers, array $idmap = []): void
         }
     }
     echo "Fotos angelegt.\n";
+}
+
+/**
+ * Ergänzt fehlende Demo-Mitglieder (DEMO0013–DEMO0072) in einer vorhandenen Mitgliedertabelle (Sitzungsverwaltung) und erweitert $idmap.
+ * Nur INSERT, nur Nummern DEMO…, nichts Vorhandenes wird verändert.
+ */
+function demo_ensure_extra_members(array $svmembers, array &$idmap): int
+{
+    $n = 0;
+    foreach ($svmembers as $m) {
+        $num = (int)$m['member_id'];
+        if ($num <= 12 || isset($idmap[$num])) continue;
+        $nr = sprintf('DEMO%04d', $num);
+        $row = md_one('SELECT member_id FROM svmembers WHERE membership_number = ?', [$nr]);
+        if (!$row) {
+            md_exec('INSERT INTO svmembers (membership_number, first_name, last_name, email, role) VALUES (?,?,?,?,?)', [$nr, $m['first_name'], $m['last_name'], $m['email'], md_sv_role_value('mitglied')]);
+            $row = ['member_id' => (int)md_db()->lastInsertId()];
+            $n++;
+        }
+        $idmap[$num] = (int)$row['member_id'];
+    }
+    return $n;
 }
 
 /** Stellt für die Demo eine Einzelbestätigung aus (Julias Spende), damit die Liste der Bestätigungen nicht leer ist. Braucht src/bootstrap.php. */

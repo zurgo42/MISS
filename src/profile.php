@@ -230,3 +230,15 @@ function md_change_email(int $member, string $new, int $actor, string $via): arr
     }
     return [1, ''];
 }
+
+function md_pref_get(int $member, string $key, ?string $default = null): ?string
+{
+    $r = md_one('SELECT pref_value FROM md_user_prefs WHERE member_id = ? AND pref_key = ?', [$member, $key]);
+    return $r ? $r['pref_value'] : $default;
+}
+
+function md_pref_set(int $member, string $key, string $value): void
+{
+    if (md_one('SELECT 1 FROM md_user_prefs WHERE member_id = ? AND pref_key = ?', [$member, $key])) md_exec('UPDATE md_user_prefs SET pref_value = ? WHERE member_id = ? AND pref_key = ?', [$value, $member, $key]);
+    else md_exec('INSERT INTO md_user_prefs (member_id, pref_key, pref_value) VALUES (?,?,?)', [$member, $key, $value]);
+}

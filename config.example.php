@@ -48,3 +48,6 @@ define('MD_MAIL_TRANSPORT', 'log');
 define('MD_TEST_INSTANCE', false);
 // Nur für den Web-Einrichter setup_test.php (zufälliger Wert, mindestens 20 Zeichen; Datei nach dem Einrichten löschen):
 // define('MD_SETUP_TOKEN', '');
+
+// Adresse der Sitzungsverwaltung (für den Link auf der Demo-Startseite, optional)
+// define('MD_SV_URL', '/Sitzungsverwaltung/');

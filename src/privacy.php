@@ -86,6 +86,7 @@ function md_privacy_purge(int $member, int $actor, bool $early = false, ?string 
         // Lastschriftmandate beenden (die Unterlagen bleiben bis zur Anonymisierung wegen der Rückgabefristen)
         md_exec("UPDATE md_sepa_mandates SET status = 'revoked', status_reason = 'Austritt', status_at = ? WHERE member_id = ? AND status <> 'revoked'", [md_now(), $member]);
         md_exec('DELETE FROM md_login_tokens WHERE member_id = ?', [$member]);
+        md_exec('DELETE FROM md_user_prefs WHERE member_id = ?', [$member]);
         md_exec('DELETE FROM md_event_regs WHERE member_id = ?', [$member]);
         // Zugang sperren und Kontaktadresse entfernen (die Zeile selbst bleibt für Buchungen und die Sitzungsverwaltung)
         $sets = ['email = ?'];

@@ -16,6 +16,9 @@ $by = fn(string $nr) => (int)md_one('SELECT member_id FROM svmembers WHERE membe
 $max = $by('DEMO0001'); $lukas = $by('DEMO0003'); $sabine = $by('DEMO0006'); $petra = $by('DEMO0009'); $mia = $by('DEMO0011'); $hans = $by('DEMO0007');
 $Y = (int)date('Y'); $N = $Y + 1;
 
+// Die weiteren Demo-Mitglieder (ab Nr. 13) bleiben außen vor, damit die Zahlen unten den 12 Figuren entsprechen
+md_db()->beginTransaction();
+md_exec('DELETE FROM md_member_fees WHERE member_id > 12');
 echo "-- Zeiträume\n";
 $check('Jahr', md_fee_period("$N"), ['rhythm' => 'yearly', 'start' => "$N-01-01", 'end' => "$N-12-31", 'months' => 12, 'label' => "$N"]);
 $check('Halbjahr 2', [md_fee_period("$N-H2")['start'], md_fee_period("$N-H2")['end'], md_fee_period("$N-H2")['months']], ["$N-07-01", "$N-12-31", 6]);
@@ -40,7 +43,7 @@ $check('Ausgetretener wird übersprungen', $by_($rolf)['action'], 'skip');
 $check('laufendes Jahr: schon berechnet, nichts doppelt', count(array_filter(md_fee_run_plan((string)$Y), fn($r) => $r['action'] === 'create')), 0);
 $check('anderer Rhythmus: Quartalslauf berechnet niemanden (alle jährlich)', count(array_filter(md_fee_run_plan("$N-Q1"), fn($r) => $r['action'] === 'create')), 0);
 
-md_db()->beginTransaction();
+
 echo "-- Gruppen und Zuordnung\n";
 $check('Gruppe ohne Betrag abgelehnt', md_fee_group_save(null, ['name' => 'X', 'amount' => 'abc']), 'Betrag ungültig (z. B. 120,00; 0 für beitragsfrei).');
 $check('Doppelter Name abgelehnt', md_fee_group_save(null, ['name' => 'vollmitglied', 'amount' => '10']), 'Es gibt schon eine Gruppe mit diesem Namen.');

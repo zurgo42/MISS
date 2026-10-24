@@ -7,6 +7,17 @@ if (!md_consent_ok((int)$me['member_id']) || !md_can($me, 'directory', 'view')) 
     exit;
 }
 $meId = (int)$me['member_id'];
+// Spalten, die der Benutzer für sich gewählt hat (Name und Foto sind immer da)
+const DIR_COLUMNS = ['groups' => 'Teilgruppen', 'zipcity' => 'PLZ / Ort', 'phone' => 'Telefon', 'email' => 'E-Mail', 'interests' => 'Interessen', 'occupation' => 'Beruf', 'funcs' => 'Funktionen', 'join' => 'Eintritt', 'status' => 'Status'];
+const DIR_DEFAULT = ['groups', 'zipcity', 'phone', 'email'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    md_csrf_check();
+    $chosen = array_values(array_intersect(array_keys(DIR_COLUMNS), (array)($_POST['cols'] ?? [])));
+    md_pref_set($meId, 'dir.cols', !empty($_POST['reset']) ? implode(',', DIR_DEFAULT) : implode(',', $chosen));
+    header('Location: ' . md_url('directory.php' . (!empty($_POST['back']) ? '?' . preg_replace('/[^A-Za-z0-9%=&_.\-+]/', '', (string)$_POST['back']) : '')));
+    exit;
+}
+$cols = array_values(array_intersect(array_keys(DIR_COLUMNS), explode(',', (string)md_pref_get($meId, 'dir.cols', implode(',', DIR_DEFAULT)))));
 $seeAll = md_is_admin($me) || md_can($me, 'members', 'edit');
 $privileged = md_is_privileged($me);
 $today = date('Y-m-d');
@@ -34,10 +45,13 @@ foreach ($rows as $r) {
         return match ($v[$k] ?? 'me') { 'all' => true, 'admin' => $privileged, 'group' => $privileged || (bool)array_intersect($myGroups, array_keys($groupsOf[$id] ?? [])), default => false };
     };
     $d = ['id' => $id, 'name' => $r['first_name'] . ' ' . $r['last_name'], 'last' => $r['last_name'], 'nick' => ($r['nickname'] && $see('nickname')) ? $r['nickname'] : '', 'status' => $r['status'] ?: 'aktiv', 'join' => $r['join_date'],
-          'funcs' => $funcsOf[$id] ?? [], 'groups' => $groupsOf[$id] ?? [], 'email' => $see('email') ? $r['email'] : '', 'phone' => '', 'city' => '', 'cities' => [], 'photos' => [], 'details' => []];
+          'funcs' => $funcsOf[$id] ?? [], 'groups' => $groupsOf[$id] ?? [], 'email' => $see('email') ? $r['email'] : '', 'phone' => '', 'city' => '', 'zipcity' => '', 'cities' => [], 'photos' => [], 'details' => [],
+          'interests' => '', 'occupation' => ($r['occupation'] && $see('occupation')) ? $r['occupation'] : ''];
+    if ($r['interests'] && $see('interests')) $d['interests'] = $r['interests'];
+    elseif ($r['hobbies'] && $see('hobbies')) $d['interests'] = $r['hobbies'];
     foreach ($photosOf[$id] ?? [] as $s => $pid) if ($see("photo.$s")) $d['photos'][$s] = $pid;
     foreach (($addrOf[$id] ?? []) as $s => $a) if ($see("address.$s")) {
-        if ($a['city'] !== '' && $a['city'] !== null) $d['cities'][] = $a['city'];
+        if ($a['city'] !== '' && $a['city'] !== null) { $d['cities'][] = $a['city']; if ($d['zipcity'] === '') $d['zipcity'] = trim($a['zip'] . ' ' . $a['city']); }
         $d['details'][$a['label'] ?: "Adresse $s"] = trim($a['street'] . ', ' . $a['zip'] . ' ' . $a['city'], ', ');
     }
     $d['city'] = $d['cities'][0] ?? '';
@@ -108,25 +122,45 @@ echo $sel('group', 'Teilgruppe', $allGroups, $fGroup) . $sel('func', 'Funktion',
 echo '<div class="alpha"><a href="' . h($url(['letter' => '', 'page' => ''])) . '"' . ($fLetter === '' ? ' class="on"' : '') . '>Alle</a>';
 foreach (array_keys($letters) as $L) echo '<a href="' . h($url(['letter' => $L, 'page' => ''])) . '"' . ($fLetter === $L ? ' class="on"' : '') . '>' . h($L) . '</a>';
 echo '</div>';
+$back = http_build_query(array_filter($keep + ['page' => $page > 1 ? $page : ''], fn($x) => $x !== '' && $x !== null));
+echo '<details class="acc inner"><summary>Spalten wählen</summary><div class="accbody"><form method="post" class="colform">' . md_csrf_field() . '<input type="hidden" name="back" value="' . h($back) . '"><div class="colpick">';
+foreach (DIR_COLUMNS as $k => $label) echo '<label class="check"><input type="checkbox" name="cols[]" value="' . $k . '"' . (in_array($k, $cols, true) ? ' checked' : '') . '> ' . h($label) . '</label>';
+echo '</div><p><button class="small">Speichern</button> <button class="small secondary" name="reset" value="1">Standard</button> <span class="muted">Gilt nur für dich. Name und Foto sind immer sichtbar.</span></p></form></div></details>';
 echo '<p class="muted">' . $total . ' Treffer' . ($total !== count($people) ? ' von ' . count($people) : '') . '.</p>';
-echo '<section class="card"><table class="dir"><thead><tr><th></th><th>Name</th><th>Funktion / Teilgruppen</th><th>Ort</th><th>Kontakt</th><th></th></tr></thead><tbody>';
+$colspan = 2 + count($cols);
+$th = fn(string $k) => '<th>' . h(DIR_COLUMNS[$k]) . '</th>';
+echo '<section class="card"><table class="dir"><thead><tr><th></th><th>Name</th>' . implode('', array_map($th, $cols)) . '</tr></thead><tbody>';
 foreach ($slice as $d) {
     $first = $d['photos'] ? reset($d['photos']) : null;
+    $hasMore = $d['details'] || count($d['photos']) > 1;
     echo '<tr><td class="ph">' . ($first ? '<img class="thumb" src="photo.php?id=' . $first . '" alt="">' : '<span class="avatar">' . h(mb_strtoupper(mb_substr($d['name'], 0, 1) . mb_substr($d['last'], 0, 1))) . '</span>') . '</td>';
-    echo '<td><strong>' . h($d['name']) . '</strong>' . ($d['nick'] ? '<br><span class="muted">„' . h($d['nick']) . '“</span>' : '') . ($d['status'] !== 'aktiv' ? '<br><span class="chip">' . h(MD_STATUS[$d['status']] ?? $d['status']) . '</span>' : '') . '</td><td>';
-    foreach ($d['funcs'] as $fn) echo '<span class="chip fn">' . h($fn) . '</span> ';
-    foreach ($d['groups'] as $gn) echo '<span class="chip">' . h($gn) . '</span> ';
-    echo '</td><td>' . h($d['city']) . '</td><td>' . ($d['email'] ? '<a href="mailto:' . h($d['email']) . '">' . h($d['email']) . '</a>' : '') . ($d['phone'] ? '<br><span class="muted">' . h($d['phone']) . '</span>' : '') . '</td><td>';
-    if ($d['details'] || count($d['photos']) > 1) {
-        echo '<details><summary>Mehr</summary><div style="margin-top:6px">';
-        foreach ($d['photos'] as $pid) echo '<img class="thumb" style="margin-right:6px" src="photo.php?id=' . $pid . '" alt="">';
-        echo '<dl>';
-        foreach ($d['details'] as $k => $val) echo '<dt>' . h($k) . '</dt><dd>' . nl2br(h($val)) . '</dd>';
-        echo '</dl></div></details>';
+    echo '<td><strong>' . h($d['name']) . '</strong>' . ($d['nick'] ? ' <span class="muted">„' . h($d['nick']) . '“</span>' : '') . ($hasMore ? '<br><button type="button" class="more">Mehr ▸</button>' : '') . '</td>';
+    foreach ($cols as $c) {
+        echo '<td' . (in_array($c, ['zipcity', 'phone', 'join'], true) ? ' style="white-space:nowrap"' : '') . '>';
+        switch ($c) {
+            case 'groups': foreach ($d['groups'] as $gn) echo '<span class="chip">' . h($gn) . '</span> '; break;
+            case 'funcs': foreach ($d['funcs'] as $fn) echo '<span class="chip fn">' . h($fn) . '</span> '; break;
+            case 'zipcity': echo h($d['zipcity']); break;
+            case 'phone': echo h($d['phone']); break;
+            case 'email': echo $d['email'] ? '<a href="mailto:' . h($d['email']) . '">' . h($d['email']) . '</a>' : ''; break;
+            case 'interests': echo h(str_replace("\n", ', ', mb_strimwidth($d['interests'], 0, 80, '…'))); break;
+            case 'occupation': echo h($d['occupation']); break;
+            case 'join': echo h($d['join'] ? md_date($d['join']) : ''); break;
+            case 'status': echo h(MD_STATUS[$d['status']] ?? $d['status']); break;
+        }
+        echo '</td>';
     }
-    echo '</td></tr>';
+    echo '</tr>';
+    if ($hasMore) {
+        echo '<tr class="more" hidden><td colspan="' . $colspan . '"><div class="moreph">';
+        foreach ($d['photos'] as $pid) echo '<img class="thumb" src="photo.php?id=' . $pid . '" alt="">';
+        echo '</div><dl class="moregrid">';
+        foreach ($d['details'] as $k => $val) echo '<div><dt>' . h($k) . '</dt><dd>' . nl2br(h($val)) . '</dd></div>';
+        if (in_array('groups', $cols, true) === false && $d['groups']) echo '<div><dt>Teilgruppen</dt><dd>' . h(implode(', ', $d['groups'])) . '</dd></div>';
+        echo '</dl></td></tr>';
+    }
 }
-if (!$slice) echo '<tr><td colspan="6" class="muted">Keine Treffer. <a href="directory.php">Filter zurücksetzen</a></td></tr>';
+if (!$slice) echo '<tr><td colspan="' . $colspan . '" class="muted">Keine Treffer. <a href="directory.php">Filter zurücksetzen</a></td></tr>';
 echo '</tbody></table></section>';
 if ($pages > 1) {
     echo '<div class="pager">Seite ';

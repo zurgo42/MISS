@@ -45,34 +45,57 @@ function md_logo_html(): string
     return '<img class="logo" src="logo.php?v=' . h(md_setting('club.logo_file', '') ?: 'default') . '" alt="" width="36" height="36">';
 }
 
+function md_dark_mode(): bool
+{
+    return ($_COOKIE['darkMode'] ?? '') === 'enabled';
+}
+
+/** Kopfbereich bis einschließlich Reiterleisten und Beginn des Inhalts. Aufbau wie in der Sitzungsverwaltung. */
 function md_header(string $title, ?array $me = null, string $active = ''): void
 {
-    $nav = $me ? ['dashboard' => ['index.php', 'Mein Dashboard']] : [];
+    $nav = [];
     $consent = $me && md_consent_ok((int)$me['member_id']);
-    if ($me) $nav['events'] = ['events.php', 'Veranstaltungen'];
+    if ($me) { $nav['dashboard'] = ['index.php', 'Mein Dashboard']; $nav['events'] = ['events.php', 'Veranstaltungen']; }
     if ($consent && md_can($me, 'directory', 'view')) $nav['directory'] = ['directory.php', 'Mitgliederverzeichnis'];
     $sub = [];
     foreach (md_special_groups($me) as $gname => $items) if (isset($items[$active])) { $sub = $items; $sub_name = $gname; break; }
-    echo '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><base href="' . h(md_url()) . '">';
-    echo '<title>' . h($title) . ' – ' . h(MD_CLUB_NAME) . '</title><link rel="stylesheet" href="assets/md.css"></head><body>';
-    echo '<header class="top"><div class="wrap"><a class="brand" href="index.php">' . md_logo_html() . '<span class="bname">' . h(MD_CLUB_NAME) . '</span></a><nav>';
-    foreach ($nav as $k => [$url, $label]) echo '<a href="' . $url . '"' . ($k === $active ? ' class="on"' : '') . '>' . h($label) . '</a>';
-    echo '</nav>';
-    if ($me) echo '<span class="who">' . h($me['first_name'] . ' ' . $me['last_name']) . ' · <a href="account.php">Mein Zugang</a> · <a href="logout.php">Abmelden</a></span>';
-    echo '</div></header>';
-    if ($sub) {
-        echo '<div class="subnav"><div class="wrap"><a class="btn small ghost" href="index.php#sonder">← Dashboard</a> <strong class="subname">' . h($sub_name) . ':</strong>';
-        foreach ($sub as $k => [$url, $label]) echo '<a class="btn small' . ($k === $active ? ' on' : '') . '" href="' . h($url) . '">' . h($label) . '</a>';
-        echo '</div></div>';
+    $dark = md_dark_mode();
+    echo '<!DOCTYPE html><html lang="de"' . ($dark ? ' class="dark-mode"' : '') . '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><base href="' . h(md_url()) . '">';
+    echo '<script>(function(){if(document.cookie.indexOf("darkMode=")<0){try{if(localStorage.getItem("darkMode")==="enabled"){document.documentElement.className="dark-mode";document.cookie="darkMode=enabled;path=/;max-age=31536000";}}catch(e){}}})();</script>';
+    echo '<title>' . h($title) . ' – ' . h(MD_CLUB_NAME) . '</title><link rel="stylesheet" href="assets/md.css"></head><body' . ($dark ? ' class="dark-mode"' : '') . '>';
+    echo '<div class="header"><div class="header-inner"><h1><a href="index.php">' . md_logo_html() . 'Mitgliederverwaltung<span class="clubname">' . h(MD_CLUB_NAME) . '</span></a></h1><div class="user-info">';
+    if ($me) {
+        $role = (int)($me['is_admin'] ?? 0) ? 'Admin' : ucfirst((string)($me['role'] ?? 'Mitglied'));
+        echo '<span>' . h($me['first_name'] . ' ' . $me['last_name']) . '</span><span class="role-badge">' . h($role) . '</span>';
+    } elseif (MD_DEMO_MODE) echo '<span>Demo-Modus</span>';
+    echo '<button type="button" class="dark-mode-toggle" id="darkModeToggle" title="Dunkelmodus umschalten"><span class="icon">' . ($dark ? '☀️' : '🌙') . '</span></button>';
+    if ($me) echo '<a class="logout-btn" href="account.php">Mein Zugang</a><a class="logout-btn" href="logout.php">Abmelden</a>';
+    echo '</div></div></div>';
+    if ($nav) {
+        echo '<nav class="tabs">';
+        foreach ($nav as $k => [$url, $label]) echo '<a class="tab' . ($k === $active ? ' active' : '') . '" href="' . $url . '">' . h($label) . '</a>';
+        echo '</nav>';
     }
-    echo '<main class="wrap">';
-    if (MD_DEMO_MODE) echo '<div class="demo">Demo-Modus mit erfundenen Daten.</div>';
+    if ($sub) {
+        echo '<nav class="tabs sub"><a class="btn small ghost" href="index.php#sonder">← Dashboard</a> <strong class="subname">' . h($sub_name) . ':</strong>';
+        foreach ($sub as $k => [$url, $label]) echo '<a class="btn small' . ($k === $active ? ' on' : '') . '" href="' . h($url) . '">' . h($label) . '</a>';
+        echo '</nav>';
+    }
+    echo '<main class="content">';
+    if (MD_DEMO_MODE && $me) echo '<div class="demo">Demo-Modus mit erfundenen Daten.</div>';
     elseif (md_is_test_instance()) echo '<div class="demo"><strong>Testsystem</strong> – alle Daten sind erfunden. Bitte keine echten personenbezogenen Daten eingeben.</div>';
 }
 
 function md_footer(): void
 {
-    echo '<script>' . md_page_js() . '</script></main></body></html>';
+    $club = md_club();
+    $copy = md_setting('footer.copyright', '') ?: '&copy; ' . h($club['name'] ?: MD_CLUB_NAME);
+    $links = '';
+    foreach (['footer.impressum_url' => 'Impressum', 'footer.privacy_url' => 'Datenschutz'] as $k => $label) {
+        $u = trim(md_setting($k, ''));
+        if ($u !== '' && preg_match('~^(https?://|/)~i', $u)) $links .= ' | <a href="' . h($u) . '" target="_blank" rel="noopener">' . $label . '</a>';
+    }
+    echo '</main><footer class="page-footer">' . $copy . $links . '</footer><script>' . md_page_js() . '</script></body></html>';
 }
 
 /** Kleines Skript: Akkordeon per Ankerlink öffnen, Passwort ein-/ausblenden, Dateiauswahl sofort absenden. */
@@ -83,6 +106,8 @@ function md_page_js(): string
   function openHash(){var h=location.hash.slice(1);if(!h)return;var e=document.getElementById(h);while(e){if(e.tagName==='DETAILS')e.open=true;e=e.parentElement;}var t=document.getElementById(h);if(t)t.scrollIntoView();}
   openHash();window.addEventListener('hashchange',openHash);
   document.querySelectorAll('.pw-eye').forEach(function(b){b.addEventListener('click',function(){var i=b.parentElement.querySelector('input');var show=i.type==='password';i.type=show?'text':'password';b.setAttribute('aria-pressed',show);b.title=show?'Passwort verbergen':'Passwort anzeigen';b.classList.toggle('on',show);});});
+  var dm=document.getElementById('darkModeToggle');if(dm){var ic=dm.querySelector('.icon');dm.addEventListener('click',function(){var on=document.documentElement.classList.toggle('dark-mode');document.body.classList.toggle('dark-mode',on);ic.textContent=on?'☀️':'🌙';var v=on?'enabled':'disabled';document.cookie='darkMode='+v+';path=/;max-age=31536000';try{localStorage.setItem('darkMode',v);}catch(e){}});}
+  document.querySelectorAll('button.more').forEach(function(b){b.addEventListener('click',function(){var r=b.closest('tr').nextElementSibling;if(r){r.hidden=!r.hidden;b.textContent=r.hidden?'Mehr ▸':'Weniger ▾';}});});
   document.querySelectorAll('input[data-autosubmit]').forEach(function(i){i.addEventListener('change',function(){if(i.form)i.form.submit();});});
 })();
 JS;
