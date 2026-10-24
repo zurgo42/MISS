@@ -154,10 +154,10 @@ function md_sepa_conf(): array
     $c['lead_days'] = max(1, (int)$c['lead_days']);
     $c['prenotify_days'] = max(0, (int)$c['prenotify_days']);
     if (!in_array($c['format'], ['pain.008.001.08', 'pain.008.001.02'], true)) $c['format'] = 'pain.008.001.08';
-    $club = md_club();
     $fees = md_fee_conf();
-    $c['name'] = $club['name'];
+    $c['name'] = $fees['holder'] !== '' ? $fees['holder'] : md_org_name();
     $c['iban'] = md_iban_normalize($fees['iban']);
+    if ($fees['bic'] !== '' && $c['bic'] === '') $c['bic'] = $fees['bic'];
     return $c;
 }
 
@@ -166,8 +166,8 @@ function md_sepa_conf_problems(array $c): array
     $p = [];
     if (md_crypt_key() === null) $p[] = 'Verschlüsselungsschlüssel fehlt (MD_ENCRYPTION_KEY in config.php, Erzeugen mit php tools/make_key.php)';
     if (!function_exists('openssl_encrypt')) $p[] = 'PHP-Erweiterung openssl fehlt';
-    if (trim($c['name']) === '') $p[] = 'Vereinsname fehlt (Einstellungen → Verein)';
-    if ($c['iban'] === '' || !md_iban_valid($c['iban'])) $p[] = 'IBAN des Vereins fehlt oder ist ungültig (Beiträge → Angaben für Rechnungen)';
+    if (trim($c['name']) === '') $p[] = 'Vereinsname fehlt (Administration → Verein)';
+    if ($c['iban'] === '' || !md_iban_valid($c['iban'])) $p[] = 'IBAN des Vereins fehlt oder ist ungültig (Administration → Vereinskonten)';
     if ($c['creditor_id'] === '' || !md_sepa_creditor_id_valid($c['creditor_id'])) $p[] = 'Gläubiger-ID fehlt oder ist ungültig';
     if ($c['bic'] !== '' && !md_bic_valid($c['bic'])) $p[] = 'BIC des Vereins ist ungültig';
     return $p;

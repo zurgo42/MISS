@@ -125,7 +125,7 @@ echo '</tbody></table></section>';
 
 // ---- Einstellungen
 if ($edit) {
-    echo '<section class="card" id="conf"><h2>Einstellungen</h2><p class="muted">Die IBAN des Vereinskontos steht unter <a href="admin/fees.php#conf">Beiträge → Angaben für Rechnungen</a>, Name und Anschrift unter Einstellungen → Verein. Die Gläubiger-ID beantragt der Verein bei der Deutschen Bundesbank.</p><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="conf"><div class="addr">';
+    echo '<section class="card" id="conf"><h2>Einstellungen</h2><p class="muted">Konto und Zahlungsempfänger stehen unter <a href="admin/settings.php#konten">Administration → Vereinskonten</a>, Vereinsname und Anschrift unter <a href="admin/settings.php#verein">Administration → Verein</a>. Die Gläubiger-ID beantragt der Verein bei der Deutschen Bundesbank.</p><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="conf"><div class="addr">';
     foreach (MD_SEPA_FIELDS as $k => [$label, $def, $hint]) {
         if ($k === 'format') { echo '<label>' . h($label) . '<select name="sepa[format]"><option value="pain.008.001.08"' . ($conf['format'] === 'pain.008.001.08' ? ' selected' : '') . '>pain.008.001.08 (aktuell)</option><option value="pain.008.001.02"' . ($conf['format'] === 'pain.008.001.02' ? ' selected' : '') . '>pain.008.001.02 (älter)</option></select></label>'; continue; }
         echo '<label>' . h($label) . '<input name="sepa[' . $k . ']" value="' . h($conf[$k]) . '" placeholder="' . h($hint) . '"></label>';

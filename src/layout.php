@@ -14,8 +14,8 @@ function md_special_groups(?array $me): array
     $open = $can('members') ? md_apply_open_count() : 0;
     $g = [
         'Mitglieder' => array_filter([
-            'admin' => $can('members') ? ['admin/index.php', 'Mitgliederliste'] : null,
-            'apply' => $can('members') ? ['admin/applications.php', 'Anmeldungen' . ($open ? " ($open)" : '')] : null,
+            'admin' => $can('members') ? ['admin/index.php', 'Mitglieder verwalten'] : null,
+            'apply' => $can('members') ? ['admin/applications.php', 'Mitglied werden' . ($open ? " ($open)" : '')] : null,
             'import' => $can('import', 'edit') ? ['admin/import.php', 'CSV-Import'] : null,
             'terms' => $can('terms') ? ['admin/terms.php', 'Nutzungsbedingungen'] : null,
         ]),
@@ -33,7 +33,7 @@ function md_special_groups(?array $me): array
         ]),
         'System' => array_filter([
             'privacy' => $can('privacy') ? ['admin/privacy.php', 'Datenschutz'] : null,
-            'settings' => $can('settings', 'edit') ? ['admin/settings.php', 'Einstellungen'] : null,
+            'settings' => $can('settings', 'edit') ? ['admin/settings.php', 'Administration'] : null,
         ]),
     ];
     return array_filter($g);
@@ -60,10 +60,11 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
     $sub = [];
     foreach (md_special_groups($me) as $gname => $items) if (isset($items[$active])) { $sub = $items; $sub_name = $gname; break; }
     $dark = md_dark_mode();
+    $orgName = md_org_name();
     echo '<!DOCTYPE html><html lang="de"' . ($dark ? ' class="dark-mode"' : '') . '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><base href="' . h(md_url()) . '">';
     echo '<script>(function(){if(document.cookie.indexOf("darkMode=")<0){try{if(localStorage.getItem("darkMode")==="enabled"){document.documentElement.className="dark-mode";document.cookie="darkMode=enabled;path=/;max-age=31536000";}}catch(e){}}})();</script>';
-    echo '<title>' . h($title) . ' – ' . h(MD_CLUB_NAME) . '</title><link rel="stylesheet" href="assets/md.css"></head><body' . ($dark ? ' class="dark-mode"' : '') . '>';
-    echo '<div class="header"><div class="header-inner"><h1><a href="index.php">' . md_logo_html() . 'Mitgliederverwaltung<span class="clubname">' . h(MD_CLUB_NAME) . '</span></a></h1><div class="user-info">';
+    echo '<title>' . h($title) . ' – ' . h($orgName) . '</title><link rel="stylesheet" href="assets/md.css"></head><body' . ($dark ? ' class="dark-mode"' : '') . '>';
+    echo '<div class="header"><div class="header-inner"><h1><a href="index.php">' . md_logo_html() . 'Mitgliederverwaltung<span class="clubname">' . h($orgName) . '</span></a></h1><div class="user-info">';
     if ($me) {
         $role = (int)($me['is_admin'] ?? 0) ? 'Admin' : ucfirst((string)($me['role'] ?? 'Mitglied'));
         echo '<span>' . h($me['first_name'] . ' ' . $me['last_name']) . '</span><span class="role-badge">' . h($role) . '</span>';
@@ -88,17 +89,19 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
 
 function md_footer(): void
 {
-    $club = md_club();
-    $copy = md_setting('footer.copyright', '') ?: '&copy; ' . h($club['name'] ?: MD_CLUB_NAME);
+    $o = md_org();
+    $copy = md_setting('footer.copyright', '') ?: '&copy; ' . h($o['name']);
     $links = '';
-    foreach (['footer.impressum_url' => 'Impressum', 'footer.privacy_url' => 'Datenschutz'] as $k => $label) {
+    $own = ['footer.impressum_url' => ['Impressum', 'impressum.php', md_impressum_text() !== ''], 'footer.privacy_url' => ['Datenschutz', 'datenschutz.php', trim(md_setting('org.privacy_text', '')) !== '']];
+    foreach ($own as $k => [$label, $page, $has]) {
         $u = trim(md_setting($k, ''));
         if ($u !== '' && preg_match('~^(https?://|/)~i', $u)) $links .= ' | <a href="' . h($u) . '" target="_blank" rel="noopener">' . $label . '</a>';
+        elseif ($has) $links .= ' | <a href="' . $page . '" target="_blank" rel="noopener">' . $label . '</a>';
     }
     echo '</main><footer class="page-footer">' . $copy . $links . '</footer><script>' . md_page_js() . '</script></body></html>';
 }
 
-/** Kleines Skript: Akkordeon per Ankerlink öffnen, Passwort ein-/ausblenden, Dateiauswahl sofort absenden. */
+/** Kleines Skript: Bereiche per Ankerlink öffnen, Passwort ein-/ausblenden, Dateiauswahl sofort absenden. */
 function md_page_js(): string
 {
     return <<<'JS'
@@ -107,6 +110,7 @@ function md_page_js(): string
   openHash();window.addEventListener('hashchange',openHash);
   document.querySelectorAll('.pw-eye').forEach(function(b){b.addEventListener('click',function(){var i=b.parentElement.querySelector('input');var show=i.type==='password';i.type=show?'text':'password';b.setAttribute('aria-pressed',show);b.title=show?'Passwort verbergen':'Passwort anzeigen';b.classList.toggle('on',show);});});
   var dm=document.getElementById('darkModeToggle');if(dm){var ic=dm.querySelector('.icon');dm.addEventListener('click',function(){var on=document.documentElement.classList.toggle('dark-mode');document.body.classList.toggle('dark-mode',on);ic.textContent=on?'☀️':'🌙';var v=on?'enabled':'disabled';document.cookie='darkMode='+v+';path=/;max-age=31536000';try{localStorage.setItem('darkMode',v);}catch(e){}});}
+  var ta=document.getElementById('toggleAll');if(ta){ta.addEventListener('click',function(){var all=document.querySelectorAll('details.acc:not(.inner)');var anyClosed=Array.prototype.some.call(all,function(d){return !d.open;});all.forEach(function(d){d.open=anyClosed;});});}
   document.querySelectorAll('button.more').forEach(function(b){b.addEventListener('click',function(){var r=b.closest('tr').nextElementSibling;if(r){r.hidden=!r.hidden;b.textContent=r.hidden?'Mehr ▸':'Weniger ▾';}});});
   document.querySelectorAll('input[data-autosubmit]').forEach(function(i){i.addEventListener('change',function(){if(i.form)i.form.submit();});});
 })();

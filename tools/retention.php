@@ -2,7 +2,7 @@
 /**
  * retention.php – listet die Löschfristen aller ausgetretenen Mitglieder (nur Anzeige, löscht nichts).
  * Aufruf: php tools/retention.php   (z. B. als monatliche Erinnerung per Cronjob; Ausgabe per Mail an die Verwaltung leiten)
- * Einzige Ausnahme: abgelaufene Online-Anmeldeanträge (unbestätigt nach 3 Tagen, entschieden nach apply.keep_days) werden hier gelöscht.
+ * Einzige Ausnahme: abgelaufene Online-Anmeldeanträge (unbestätigt nach 6 Wochen, entschieden nach apply.keep_days) werden hier gelöscht.
  * Löschen führt die Verwaltung bewusst von Hand auf der Seite "Datenschutz" aus.
  */
 if (PHP_SAPI !== 'cli') exit('nur per Kommandozeile');

@@ -225,7 +225,7 @@ function md_change_email(int $member, string $new, int $actor, string $via): arr
     md_log_change($member, 'account', 'E-Mail-Adresse', $m['email'] . ' → ' . $new, $actor, $via);
     // Die bisherige Adresse erfährt davon (Schutz vor unbemerkter Übernahme des Kontos)
     if (md_mail_address_of($member) !== null && $m['email'] !== '' && filter_var($m['email'], FILTER_VALIDATE_EMAIL) && !preg_match('/@platzhalter\.|\.invalid$/i', (string)$m['email'])) {
-        $club = md_club();
+        $club = md_org();
         try { md_mail_now($member, (string)$m['email'], 'Deine E-Mail-Adresse wurde geändert – ' . ($club['name'] ?: MD_CLUB_NAME), "Hallo {$m['first_name']},\n\ndie E-Mail-Adresse deines Zugangs wurde auf $new geändert. Wenn du das nicht warst, melde dich bitte sofort beim Verein.\n" . md_mail_footer(), 'other'); } catch (Throwable $e) {}
     }
     return [1, ''];

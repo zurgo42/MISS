@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/src/bootstrap.php';
 md_require_schema();
-$club = md_club();
+$club = md_org();
 $name = $club['name'] ?: MD_CLUB_NAME;
 $err = '';
 $done = false;
@@ -44,5 +44,5 @@ $su = trim(md_setting('apply.statute_url', ''));
 echo '<label class="block">Nachricht an den Vorstand (optional)<textarea name="message" rows="3" maxlength="1000" style="width:100%">' . $f('message') . '</textarea></label>'
     . '<label class="block"><input type="checkbox" name="ack_privacy" value="1"' . (!empty($v['ack_privacy']) ? ' checked' : '') . '> Ich habe die ' . ($pu ? '<a href="' . h($pu) . '" target="_blank" rel="noopener">Datenschutzhinweise</a>' : 'Datenschutzhinweise') . ' gelesen. Meine Angaben werden zur Prüfung des Antrags und, bei Aufnahme, zur Mitgliederverwaltung genutzt.*</label>'
     . '<label class="block"><input type="checkbox" name="ack_statute" value="1"' . (!empty($v['ack_statute']) ? ' checked' : '') . '> Ich habe die ' . ($su ? '<a href="' . h($su) . '" target="_blank" rel="noopener">Satzung</a>' : 'Satzung') . ' zur Kenntnis genommen und beantrage die Mitgliedschaft.*</label>'
-    . '<p><button>Antrag absenden</button></p><p class="muted">* Pflichtangaben. Über die Aufnahme entscheidet der Vorstand. Unbestätigte Anträge werden nach 3 Tagen gelöscht.</p></form></section>';
+    . '<p><button>Antrag absenden</button></p><p class="muted">* Pflichtangaben. Über die Aufnahme entscheidet der Vorstand. Unbestätigte Anträge werden nach 6 Wochen gelöscht.</p></form></section>';
 md_footer();

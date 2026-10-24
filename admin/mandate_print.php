@@ -4,7 +4,7 @@ $me = md_require_perm('sepa', 'view');
 $member = (int)($_GET['member'] ?? 0);
 $m = md_one('SELECT * FROM svmembers WHERE member_id = ?', [$member]);
 if (!$m) { http_response_code(404); exit('Mitglied nicht gefunden.'); }
-$club = md_club();
+$club = md_org();
 $conf = md_sepa_conf();
 $rcp = md_donor($member);
 $ref = md_sepa_mandate_ref_next($member);

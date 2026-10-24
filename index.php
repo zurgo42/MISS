@@ -205,7 +205,7 @@ if (!$groups) echo '<li class="muted">keine</li>';
 echo '</ul>';
 if ($canClub) {
     echo '<form class="inline" method="post" action="save.php">' . $form('group_add', 'club') . '<select name="group_id">';
-    foreach (md_q('SELECT * FROM md_groups ORDER BY name') as $g) echo '<option value="' . (int)$g['group_id'] . '">' . h($g['name']) . '</option>';
+    foreach (md_q('SELECT * FROM md_groups WHERE active = 1 ORDER BY name') as $g) echo '<option value="' . (int)$g['group_id'] . '">' . h($g['name']) . '</option>';
     echo '</select> <button>Gruppe zuordnen</button></form>';
 }
 echo '<h3>Funktionen <span class="muted">(alle werden dokumentiert; für die Rechte im Sitzungstool gilt das höchste Level)</span></h3><ul class="plain">';
@@ -226,7 +226,7 @@ if (md_member_is_managed($mid)) {
 }
 if ($canClub) {
     echo '<form class="inline" method="post" action="save.php">' . $form('func_add', 'club') . '<select name="function_id">';
-    foreach (md_q('SELECT * FROM md_functions ORDER BY code') as $f) echo '<option value="' . (int)$f['function_id'] . '">' . h($f['code'] . ' – ' . $f['name'] . ' (Level ' . $f['sv_aktiv_level'] . ')') . '</option>';
+    foreach (md_q('SELECT * FROM md_functions WHERE active = 1 ORDER BY code') as $f) echo '<option value="' . (int)$f['function_id'] . '">' . h($f['code'] . ' – ' . $f['name'] . ' (Level ' . $f['sv_aktiv_level'] . ')') . '</option>';
     echo '</select> <input name="aktiv_level" size="3" placeholder="Level" title="Optional: Level abweichend vom Standard der Funktion (0–19)">';
     if (md_ressorts()) {
         echo ' <select name="ressort_id"><option value="">kein Ressort</option>';
@@ -241,10 +241,10 @@ $clubBlock = $acc('club', 'Vereinsdaten', ob_get_clean());
 // ---- Zugang (Verwaltung): Einladung und Passwort-Link
 $accessBlock = '';
 if ($staff && $canClub && md_can($actor, 'mail', 'edit')) {
-    $has = !empty($target['password_hash']);
+    $has = !empty($m['password_hash']);
     $chn = md_one('SELECT letter_channel FROM md_profiles WHERE member_id = ?', [$mid])['letter_channel'] ?? 'post';
     ob_start();
-    echo '<p>Passwort: <strong>' . ($has ? 'gesetzt' : 'noch nicht gesetzt') . '</strong> · E-Mail: ' . (md_mail_address_of($mid) ? h($target['email']) : '<span class="bad">keine gültige Adresse</span>') . ' · Rechnungen und Mahnungen: ' . ($chn === 'mail' ? 'per E-Mail' : 'per Post') . '</p>';
+    echo '<p>Passwort: <strong>' . ($has ? 'gesetzt' : 'noch nicht gesetzt') . '</strong> · E-Mail: ' . (md_mail_address_of($mid) ? h($m['email']) : '<span class="bad">keine gültige Adresse</span>') . ' · Rechnungen und Mahnungen: ' . ($chn === 'mail' ? 'per E-Mail' : 'per Post') . '</p>';
     if (md_mail_address_of($mid)) echo '<form method="post" action="save.php">' . $form('invite', 'access') . '<button>' . ($has ? 'Link zum Zurücksetzen senden' : 'Einladung senden') . '</button> <span class="muted">Das Mitglied legt das Passwort selbst fest; die Verwaltung sieht es nie.</span></form>';
     $accessBlock = $acc('access', 'Zugang', ob_get_clean());
 }
@@ -373,6 +373,7 @@ if ($staff) {
     echo '<div class="flash warn"><strong>Nur Ansicht:</strong> Solange du den Nutzungsbedingungen nicht zugestimmt hast, kannst du nichts ändern und siehst nur deine eigenen Daten.</div>';
 }
 echo $headBlock;
+echo '<p class="toolbar"><button type="button" class="small secondary" id="toggleAll">Alle ein-/ausklappen</button></p>';
 if (!$termsOk) echo $termsBlock;
 echo $eventsBlock;
 echo '<fieldset class="roset"' . ($canEdit ? '' : ' disabled') . '>' . $personalBlock . $photosBlock . $groupBlocks . $addrBlock . $contactBlock . $clubBlock . $accessBlock . '</fieldset>';

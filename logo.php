@@ -10,7 +10,7 @@ if ($path !== '' && is_file($path)) {
     $mime = $types[strtolower(pathinfo($path, PATHINFO_EXTENSION))] ?? null;
     if ($mime) { header('Content-Type: ' . $mime); readfile($path); exit; }
 }
-$club = md_club();
+$club = md_org();
 $ini = mb_strtoupper(mb_substr(trim($club['name'] ?: MD_CLUB_NAME) ?: 'V', 0, 1));
 header('Content-Type: image/svg+xml');
 header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'");

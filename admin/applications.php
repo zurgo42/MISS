@@ -39,11 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $new = md_q("SELECT * FROM md_applications WHERE status = 'new' ORDER BY confirmed_at");
 $other = md_q("SELECT a.*, s.first_name dfn, s.last_name dln FROM md_applications a LEFT JOIN svmembers s ON s.member_id = a.decided_by WHERE a.status <> 'new' ORDER BY a.app_id DESC LIMIT 50");
 $fg = md_fee_groups(true);
-$groups = md_q('SELECT * FROM md_groups ORDER BY name');
-md_header('Anmeldungen', $me, 'apply');
+$groups = md_q('SELECT * FROM md_groups WHERE active = 1 ORDER BY name');
+md_header('Mitglied werden', $me, 'apply');
 md_show_flash();
-echo '<h1>Online-Anmeldungen</h1><p class="muted">Interessierte füllen <a href="apply.php" target="_blank">apply.php</a> aus und bestätigen ihre E-Mail-Adresse. Hier entscheidet der Vorstand. Bei Aufnahme entsteht das Mitglied samt Anschrift und Beitragsgruppe und bekommt eine Einladung zum Festlegen des Passworts.</p>';
-if (!md_apply_enabled()) echo '<div class="flash warn">Die Online-Anmeldung ist <strong>nicht freigeschaltet</strong> (unten bei den Einstellungen aktivieren).</div>';
+echo '<h1>Mitglied werden – Anträge</h1><p class="muted">Interessierte füllen <a href="apply.php" target="_blank">apply.php</a> aus und bestätigen ihre E-Mail-Adresse. Hier entscheidet der Vorstand. Bei Aufnahme entsteht das Mitglied samt Anschrift und Beitragsgruppe und bekommt eine Einladung zum Festlegen des Passworts.</p>';
+if (!md_apply_enabled()) echo '<div class="flash warn">Die Anmeldeseite „Mitglied werden“ ist <strong>nicht freigeschaltet</strong> (unten bei den Einstellungen aktivieren).</div>';
 echo '<section class="card"><h2>Neue Anträge (' . count($new) . ')</h2>';
 foreach ($new as $a) {
     $pref = $a['fee_group_id'] ? md_one('SELECT name FROM md_fee_groups WHERE group_id = ?', [$a['fee_group_id']]) : null;
@@ -66,14 +66,14 @@ echo '<section class="card"><h2>Bisherige Anträge</h2><table><thead><tr><th>Ein
 foreach ($other as $a) echo '<tr><td>' . h(date('d.m.Y', strtotime($a['created_at']))) . '</td><td>' . h($a['first_name'] . ' ' . $a['last_name']) . '</td><td>' . h(MD_APPLY_STATUS[$a['status']] ?? $a['status']) . ($a['decision_note'] ? '<br><span class="muted">' . h($a['decision_note']) . '</span>' : '') . '</td><td>'
     . ($a['decided_at'] ? h(date('d.m.Y', strtotime($a['decided_at']))) . ' <span class="muted">' . h(trim($a['dfn'] . ' ' . $a['dln'])) . '</span>' : '') . ($a['member_id'] ? ' · <a href="index.php?member=' . (int)$a['member_id'] . '">Mitglied</a>' : '') . '</td></tr>';
 if (!$other) echo '<tr><td colspan="4" class="muted">Noch keine.</td></tr>';
-echo '</tbody></table><p class="muted">Unbestätigte Anträge werden nach 3 Tagen, entschiedene nach ' . (int)max(7, (int)md_setting('apply.keep_days', '90')) . ' Tagen gelöscht.</p></section>';
+echo '</tbody></table><p class="muted">Unbestätigte Anträge werden nach 6 Wochen, entschiedene nach ' . (int)max(7, (int)md_setting('apply.keep_days', '90')) . ' Tagen gelöscht.</p></section>';
 if ($edit) {
     $g = fn($k, $d = '') => h(md_setting("apply.$k", $d));
     echo '<section class="card"><h2>Einstellungen</h2><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="conf">'
-        . '<label class="block"><input type="checkbox" name="apply[enabled]" value="1"' . (md_apply_enabled() ? ' checked' : '') . '> Online-Anmeldung freischalten (<code>apply.php</code>)</label>'
+        . '<label class="block"><input type="checkbox" name="apply[enabled]" value="1"' . (md_apply_enabled() ? ' checked' : '') . '> Seite „Mitglied werden“ freischalten (<code>apply.php</code>)</label>'
         . '<label class="block">Einleitungstext auf der Anmeldeseite<textarea name="apply[intro_text]" rows="3" style="width:100%">' . $g('intro_text') . '</textarea></label>'
         . '<div class="addr"><label>Adresse der Datenschutzhinweise<input name="apply[privacy_url]" value="' . $g('privacy_url') . '" size="36" placeholder="https://…"></label><label>Adresse der Satzung<input name="apply[statute_url]" value="' . $g('statute_url') . '" size="36" placeholder="https://…"></label></div>'
         . '<div class="addr"><label>Benachrichtigung bei neuem Antrag an<input type="email" name="apply[notify_email]" value="' . $g('notify_email') . '" size="30"></label><label>Entschiedene Anträge löschen nach (Tage)<input name="apply[keep_days]" size="4" value="' . $g('keep_days', '90') . '"></label></div>'
-        . '<button>Speichern</button> <span class="muted">Die wählbaren Mitgliedsarten legst du unter Beiträge fest („bei der Online-Anmeldung wählbar“).</span></form></section>';
+        . '<button>Speichern</button> <span class="muted">Die wählbaren Mitgliedsarten legst du unter Administration → Mitgliedsarten und Beiträge fest („online wählbar“).</span></form></section>';
 }
 md_footer();

@@ -62,7 +62,7 @@ echo '<h1>Spendenbescheinigungen</h1><p class="muted">Bescheinigt werden bezahlt
 if ($problems) {
     echo '<div class="flash err"><strong>Vereinsangaben unvollständig – es können keine Bestätigungen ausgestellt werden:</strong><ul>';
     foreach ($problems as $p) echo '<li>' . h($p) . '</li>';
-    echo '</ul>' . (md_can($me, 'settings', 'edit') ? '<a href="admin/settings.php#club">Einstellungen → Verein</a>' : 'Bitte die Verwaltung bitten, die Angaben unter Einstellungen → Verein zu ergänzen.') . '</div>';
+    echo '</ul>' . (md_can($me, 'settings', 'edit') ? '<a href="admin/settings.php#club">Administration → Spendenbescheinigungen</a>' : 'Bitte die Verwaltung bitten, die Angaben unter Einstellungen → Verein zu ergänzen.') . '</div>';
 }
 
 // ---- Jahresbescheinigung

@@ -18,5 +18,5 @@ Unter *Anmeldungen → Einstellungen*: Freischalten (Standard: aus), Einleitungs
 
 - Köderfeld, Zeitprüfung des Formulars (3 s bis 2 h), höchstens 5 Anträge je Absender und 40 je Stunde insgesamt.
 - Die Seite verrät nicht, ob eine Adresse schon Mitglied ist: Bekannte Adressen erhalten nur einen Hinweis mit Passwort-Link, es entsteht kein Antrag.
-- Unbestätigte Anträge werden nach 3 Tagen gelöscht, entschiedene nach 90 Tagen (einstellbar, 7–730). Bereinigt wird beim Öffnen der Seite *Anmeldungen* und durch `tools/retention.php`. Bei Aufnahme gehören die Daten ab dann zum Mitgliedsdatensatz.
+- Unbestätigte Anträge werden nach 6 Wochen gelöscht, entschiedene nach 90 Tagen (einstellbar, 7–730). Bereinigt wird beim Öffnen der Seite *Anmeldungen* und durch `tools/retention.php`. Bei Aufnahme gehören die Daten ab dann zum Mitgliedsdatensatz.
 - Abgelehnte Anträge enthalten personenbezogene Daten; die Aufbewahrung sollte mit dem Datenschutzbeauftragten abgestimmt werden.

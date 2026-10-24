@@ -87,7 +87,8 @@ CREATE TABLE IF NOT EXISTS md_groups (
     group_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(120) NOT NULL UNIQUE,
     kind VARCHAR(30) NOT NULL DEFAULT 'interesse', -- region, interesse, projekt
-    description VARCHAR(255) DEFAULT NULL
+    description VARCHAR(255) DEFAULT NULL,
+    active INT NOT NULL DEFAULT 1                  -- 0 = wird nicht mehr zur Auswahl angeboten
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS md_member_groups (
@@ -105,7 +106,8 @@ CREATE TABLE IF NOT EXISTS md_functions (
     function_id INT PRIMARY KEY AUTO_INCREMENT,
     code VARCHAR(10) NOT NULL UNIQUE,              -- Funktionscodes wie in der Sitzungsverwaltung (Vo, FVo, GF, RL, ...)
     name VARCHAR(120) NOT NULL,
-    sv_aktiv_level INT DEFAULT NULL                -- zugehöriges Berechtigungslevel (svmembers.aktiv), siehe PERMISSIONS.md
+    sv_aktiv_level INT DEFAULT NULL,               -- zugehöriges Berechtigungslevel (svmembers.aktiv), siehe PERMISSIONS.md
+    active INT NOT NULL DEFAULT 1                  -- 0 = wird nicht mehr zur Auswahl angeboten (der Verein hat diese Funktion nicht)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS md_member_functions (
@@ -586,4 +588,17 @@ CREATE TABLE IF NOT EXISTS md_user_prefs (
     pref_key VARCHAR(40) NOT NULL,
     pref_value TEXT,
     PRIMARY KEY (member_id, pref_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Vereinskonten (mehrere möglich): Standardkonto für Rechnungen/Lastschrift und Spendenkonto
+CREATE TABLE IF NOT EXISTS md_bank_accounts (
+    account_id INT PRIMARY KEY AUTO_INCREMENT,
+    label VARCHAR(100) NOT NULL,                   -- interne Bezeichnung, z. B. "Girokonto" oder "Spendenkonto"
+    holder VARCHAR(150) DEFAULT NULL,              -- Kontoinhaber/Zahlungsempfänger (kann vom Vereinsnamen abweichen)
+    iban VARCHAR(34) NOT NULL,
+    bic VARCHAR(11) DEFAULT NULL,
+    bank VARCHAR(100) DEFAULT NULL,
+    use_invoice INT NOT NULL DEFAULT 0,            -- 1 = Konto für Rechnungen, Mahnungen und Lastschrift (genau eines)
+    use_donation INT NOT NULL DEFAULT 0,           -- 1 = Spendenkonto (genau eines)
+    active INT NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -18,7 +18,7 @@ function md_mail_transport(): string
 
 function md_mail_conf(): array
 {
-    $club = md_club();
+    $club = md_org();
     return ['from_email' => trim(md_setting('mail.from_email', '')), 'from_name' => trim(md_setting('mail.from_name', '')) ?: ($club['name'] ?: MD_CLUB_NAME),
             'reply_to' => trim(md_setting('mail.reply_to', '')), 'transport' => md_mail_transport()];
 }
@@ -207,7 +207,7 @@ function md_mail_transport_smtp(array $m, array $conf, array $headers, string $b
 
 function md_mail_footer(): string
 {
-    $club = md_club();
+    $club = md_org();
     return "\n--\n" . $club['name'] . ($club['street'] !== '' ? "\n" . $club['street'] . ', ' . trim($club['zip'] . ' ' . $club['city']) : '');
 }
 
@@ -274,7 +274,7 @@ function md_mail_queue_invoice(int $entryId, int $by): array
     if (md_one("SELECT 1 FROM md_mail_outbox WHERE kind = 'invoice' AND ref = ? AND status IN ('queued','sent')", [$e['reference']])) return [null, 'Diese Rechnung wurde schon per E-Mail versandt oder liegt in der Warteschlange.'];
     $to = md_mail_address_of((int)$e['member_id']);
     if (!$to) return [null, 'Keine gültige E-Mail-Adresse beim Mitglied.'];
-    $club = md_club();
+    $club = md_org();
     [$id, $err] = md_mail_queue((int)$e['member_id'], $to, 'Rechnung ' . $e['reference'] . ' – ' . $club['name'], md_invoice_mail_text($e, $club, md_fee_conf(), md_sepa_debit_info((int)$e['member_id'], $e['due_date'])), 'invoice', $e['reference'], $by);
     if ($id) md_log_change((int)$e['member_id'], 'fee', 'Rechnung ' . $e['reference'], 'per E-Mail zum Versand vorgemerkt', $by, 'admin');
     return [$id, $err];

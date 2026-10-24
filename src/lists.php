@@ -147,7 +147,7 @@ function md_list_send(int $listId, string $subject, string $body, int $actor): a
     if (!$rec) return [null, 0, 'Der Verteiler hat zurzeit keine Empfänger mit gültiger Adresse.'];
     if (count($rec) > MD_LIST_MAX_RECIPIENTS) return [null, 0, 'Zu viele Empfänger (höchstens ' . MD_LIST_MAX_RECIPIENTS . ').'];
     if (md_one('SELECT 1 FROM md_mail_campaigns WHERE list_id = ? AND subject = ? AND body = ? AND created_at >= ?', [$listId, $subject, $body, date('Y-m-d H:i:s', time() - 600)])) return [null, 0, 'Diese Nachricht wurde vor Kurzem schon an den Verteiler gesendet.'];
-    $club = md_club();
+    $club = md_org();
     $pdo = md_db();
     $own = !$pdo->inTransaction();
     if ($own) $pdo->beginTransaction();

@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Online-Anmeldung neuer Mitglieder (läuft über die Mitgliederverwaltung, nicht über die Sitzungsverwaltung).
  * Ablauf: Antrag ausfüllen → E-Mail-Adresse bestätigen (Link, 48 Stunden) → Vorstand prüft → Aufnahme (legt das Mitglied an und lädt es ein) oder Ablehnung.
- * Die Seite verrät nicht, ob eine Adresse schon bekannt ist. Unbestätigte Anträge werden nach 3 Tagen gelöscht, entschiedene nach "apply.keep_days" (Standard 90).
+ * Die Seite verrät nicht, ob eine Adresse schon bekannt ist. Unbestätigte Anträge werden nach 6 Wochen gelöscht, entschiedene nach "apply.keep_days" (Standard 90).
  */
 
 const MD_APPLY_STATUS = ['unconfirmed' => 'E-Mail nicht bestätigt', 'new' => 'neu', 'approved' => 'aufgenommen', 'rejected' => 'abgelehnt'];
@@ -78,7 +78,7 @@ function md_apply_submit(array $d, string $ip, ?int $now = null): array
     $sal = in_array($d['salutation'] ?? '', ['Frau', 'Herr'], true) ? $d['salutation'] : null;
     md_rate_hit('apply|ip|' . $ip);
     md_rate_hit('apply|all');
-    $club = md_club();
+    $club = md_org();
     $name = $club['name'] ?: MD_CLUB_NAME;
     // Adresse ist schon einem Mitglied zugeordnet: kein neuer Antrag, aber ein freundlicher Hinweis an die Adresse (verrät dem Besucher nichts)
     $known = md_one('SELECT member_id FROM svmembers WHERE LOWER(email) = LOWER(?)', [$email]);
@@ -167,7 +167,7 @@ function md_apply_approve(int $appId, array $o, int $actor): array
         return [null, $e->getMessage(), ''];
     }
     $note = '';
-    $club = md_club();
+    $club = md_org();
     if ($err = md_login_send_link($id, 'invite', $actor)) $note = 'Die Einladung konnte nicht gesendet werden (' . $err . '). Bitte im Mitgliedsdatensatz unter Zugang erneut senden.';
     return [$id, '', $note];
 }
@@ -179,7 +179,7 @@ function md_apply_reject(int $appId, string $reason, int $actor): string
     if (!$a || $a['status'] !== 'new') return 'Antrag nicht gefunden oder schon entschieden.';
     $reason = trim($reason);
     md_exec("UPDATE md_applications SET status = 'rejected', decided_at = ?, decided_by = ?, decision_note = ?, token_hash = NULL WHERE app_id = ?", [md_now(), $actor, $reason !== '' ? mb_substr($reason, 0, 255) : null, $appId]);
-    $club = md_club();
+    $club = md_org();
     $name = $club['name'] ?: MD_CLUB_NAME;
     md_mail_now(null, $a['email'], "Deine Anmeldung bei $name", "Hallo {$a['first_name']},\n\nleider können wir deinen Antrag auf Mitgliedschaft nicht annehmen." . ($reason !== '' ? "\n\n$reason" : '') . "\n\nBei Fragen melde dich gern beim Vorstand.\n" . md_mail_footer(), 'apply');
     return '';
@@ -190,7 +190,7 @@ function md_apply_purge(?string $now = null): int
 {
     $now = $now ?? date('Y-m-d H:i:s');
     $keep = max(7, (int)md_setting('apply.keep_days', '90'));
-    $n = md_exec("DELETE FROM md_applications WHERE status = 'unconfirmed' AND created_at < ?", [date('Y-m-d H:i:s', strtotime('-3 days', strtotime($now)))]);
+    $n = md_exec("DELETE FROM md_applications WHERE status = 'unconfirmed' AND created_at < ?", [date('Y-m-d H:i:s', strtotime('-42 days', strtotime($now)))]);
     $n += md_exec("DELETE FROM md_applications WHERE status IN ('approved','rejected') AND decided_at < ?", [date('Y-m-d H:i:s', strtotime("-$keep days", strtotime($now)))]);
     return (int)$n;
 }

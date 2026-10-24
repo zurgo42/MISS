@@ -105,9 +105,9 @@ function md_dunning_issue(int $member, array $entryIds, int $actor, ?string $tod
 {
     $today = $today ?? date('Y-m-d');
     $levels = md_dunning_levels();
-    $club = md_club();
+    $club = md_org();
     if (!$levels) return [null, 'Keine Mahnstufen eingerichtet.'];
-    if ($club['name'] === '' || $club['street'] === '' || $club['city'] === '') return [null, 'Vereinsname und Anschrift fehlen (Einstellungen → Verein).'];
+    if ($club['name'] === '' || $club['street'] === '' || $club['city'] === '') return [null, 'Vereinsname und Anschrift fehlen (Administration → Verein).'];
     $rcp = md_letter_recipient($member);
     if (!$rcp) return [null, 'Für dieses Mitglied fehlt eine vollständige Anschrift (Straße, PLZ, Ort).'];
     $pdo = md_db();

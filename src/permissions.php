@@ -22,7 +22,7 @@ const MD_AREAS = [
     'receipts'  => ['Spendenbescheinigungen', ['none', 'view', 'edit']],
     'privacy'   => ['Datenschutz: Auskunft, Anfragen, Löschfristen', ['none', 'view', 'edit']],
     'import'    => ['CSV-Import Mitglieder', ['none', 'edit']],
-    'settings'  => ['Einstellungen, Rechte, Standard-Sichtbarkeit', ['none', 'edit']],
+    'settings'  => ['Administration: Vereinsangaben, Konten, Mitgliedsarten, Funktionen, Rechte', ['none', 'edit']],
 ];
 const MD_PERM_LEVELS = ['none' => 'keine', 'view' => 'ansehen', 'edit' => 'bearbeiten'];
 const MD_PERM_RANK = ['none' => 0, 'view' => 1, 'edit' => 2];

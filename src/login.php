@@ -126,7 +126,7 @@ function md_login_send_link(int $member, string $kind, ?int $by = null): string
     $m = md_one('SELECT * FROM svmembers WHERE member_id = ?', [$member]);
     $to = md_mail_address_of($member);
     if (!$m || !$to) return 'Keine gültige E-Mail-Adresse beim Mitglied.';
-    $club = md_club();
+    $club = md_org();
     $name = $club['name'] ?: MD_CLUB_NAME;
     $hours = $kind === 'invite' ? 168 : 2;
     $token = md_token_create($member, $kind, $hours);

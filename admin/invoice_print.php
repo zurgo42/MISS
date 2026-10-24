@@ -3,7 +3,7 @@ require_once __DIR__ . '/../src/bootstrap.php';
 $me = md_require_login();
 $mid = (int)$me['member_id'];
 $canView = md_consent_ok($mid) && md_can($me, 'fees', 'view');
-$club = md_club();
+$club = md_org();
 $conf = md_fee_conf();
 
 if (!empty($_GET['run'])) {

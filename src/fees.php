@@ -30,6 +30,8 @@ function md_fee_conf(): array
     $c = [];
     foreach (MD_FEE_FIELDS as $k => [, $def]) $c[$k] = md_setting('fees.' . $k, $def);
     $c['due_days'] = max(0, (int)$c['due_days']);
+    $c['holder'] = '';
+    if ($acc = md_bank_account('invoice')) { $c['iban'] = $acc['iban']; $c['bic'] = (string)$acc['bic']; $c['bank'] = (string)$acc['bank']; $c['holder'] = (string)$acc['holder']; }
     return $c;
 }
 

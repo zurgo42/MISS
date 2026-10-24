@@ -31,8 +31,8 @@ $lists = md_lists();
 $sel = md_list_get((int)($_GET['list'] ?? 0));
 $draft = $_SESSION['md_list_draft'] ?? null;
 unset($_SESSION['md_list_draft']);
-$groups = md_q('SELECT * FROM md_groups ORDER BY name');
-$funcs = md_q('SELECT * FROM md_functions ORDER BY code');
+$groups = md_q('SELECT * FROM md_groups WHERE active = 1 ORDER BY name');
+$funcs = md_q('SELECT * FROM md_functions WHERE active = 1 ORDER BY code');
 $form = function (?array $l) use ($groups, $funcs, $edit): string {
     $kind = $l['source_kind'] ?? 'group';
     $o = '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="save">' . ($l ? '<input type="hidden" name="list_id" value="' . (int)$l['list_id'] . '">' : '')

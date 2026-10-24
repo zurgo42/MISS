@@ -188,9 +188,9 @@ $rm = md_one("SELECT * FROM md_mail_outbox WHERE to_email = 'abgelehnt@example.o
 $check('Absage per E-Mail mit Begründung', [$rm['status'], str_contains($rm['body'], 'keine freien Plätze')], ['sent', true]);
 
 echo "-- Aufbewahrung\n";
-md_exec("UPDATE md_applications SET created_at = ? WHERE email = 'bernd.wartend@example.org'", [date('Y-m-d H:i:s', strtotime('-5 days'))]);
+md_exec("UPDATE md_applications SET created_at = ? WHERE email = 'bernd.wartend@example.org'", [date('Y-m-d H:i:s', strtotime('-50 days'))]);
 $cOld = md_apply_purge();
-$check('Unbestätigte nach 3 Tagen gelöscht', [$cOld >= 1, (int)md_one("SELECT COUNT(*) c FROM md_applications WHERE email = 'bernd.wartend@example.org'")['c']], [true, 0]);
+$check('Unbestätigte nach 6 Wochen gelöscht', [$cOld >= 1, (int)md_one("SELECT COUNT(*) c FROM md_applications WHERE email = 'bernd.wartend@example.org'")['c']], [true, 0]);
 $check('Entschiedene bleiben zunächst', (int)md_one("SELECT COUNT(*) c FROM md_applications WHERE app_id = ?", [$appId])['c'], 1);
 md_exec("UPDATE md_applications SET decided_at = ? WHERE app_id = ?", [date('Y-m-d H:i:s', strtotime('-100 days')), $appId]);
 md_apply_purge();

@@ -123,7 +123,7 @@ function md_test_setup(bool $reset, bool $syncSv = false): array
         }
         $pdo->commit();
         demo_photos($pdo, $data['svmembers'], $idmap);
-        demo_seed_sepa($idmap); demo_seed_mail($idmap); demo_seed_events($idmap); demo_seed_lists_apply($idmap); demo_seed_datev($idmap);
+        demo_seed_sepa($idmap); demo_seed_mail($idmap); demo_seed_events($idmap); demo_seed_lists_apply($idmap); demo_seed_datev($idmap); demo_seed_org();
         demo_issue_receipts($idmap);
         if ($syncSv && $shared) demo_sync_sv($data['svmembers'], $idmap);
         md_seed_permissions();

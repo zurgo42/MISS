@@ -200,7 +200,7 @@ function md_privacy_export_data(int $member, int $by): array
     foreach (md_visibility_map($member) as $k => $lvl) $vis[$labels[$k] ?? $k] = MD_LEVELS[$lvl] ?? $lvl;
     $who = function (?int $id): ?string { if (!$id) return null; $m = md_one('SELECT first_name, last_name FROM svmembers WHERE member_id = ?', [$id]); return $m ? $m['first_name'] . ' ' . $m['last_name'] : null; };
     $c = md_privacy_conf();
-    $club = md_club();
+    $club = md_org();
     return [
         'meta' => ['erstellt_am' => md_now(), 'erstellt_von' => $by === $member ? 'Mitglied selbst' : ($who($by) ?? 'Verwaltung'), 'verein' => $club['name'] ?: (defined('MD_CLUB_NAME') ? MD_CLUB_NAME : ''), 'mitglied_id' => $member],
         'stammdaten_sitzungsverwaltung' => $sv,

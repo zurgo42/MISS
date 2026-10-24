@@ -64,7 +64,7 @@ md_header('Beiträge', $me, 'fees');
 md_show_flash();
 echo '<h1>Beiträge</h1><p class="muted">Beitragsgruppen, Beitragslauf und Rechnungen. <a href="admin/dunning.php">Mahnwesen</a> · <a href="admin/payments.php">Zahlungen zuordnen</a> · <a href="admin/finance.php">Buchungen</a></p>';
 
-if ($conf['iban'] === '') echo '<div class="flash warn">Es ist keine IBAN hinterlegt: Rechnungen und Mahnungen enthalten dann keine Zahlungsangaben. Bitte unten unter „Angaben für Rechnungen und Mahnungen“ ergänzen.</div>';
+if ($conf['iban'] === '') echo '<div class="flash warn">Es ist keine IBAN hinterlegt: Rechnungen und Mahnungen enthalten dann keine Zahlungsangaben. Bitte unter Administration → Vereinskonten ein Beitragskonto eintragen (oder unten bei den Angaben für Rechnungen).</div>';
 
 // ---- Beitragsgruppen
 echo '<section class="card" id="groups"><h2>Beitragsgruppen</h2><table><thead><tr><th>Name</th><th class="r">Betrag</th><th>Rhythmus</th><th>Eintritt/Austritt</th><th>Mitglieder</th><th>Aktiv</th><th></th></tr></thead><tbody>';
@@ -153,6 +153,6 @@ echo '</tbody></table></section>';
 if ($edit) {
     echo '<section class="card" id="conf"><h2>Angaben für Rechnungen und Mahnungen</h2><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="conf"><div class="addr">';
     foreach (MD_FEE_FIELDS as $k => [$label, $def, $hint]) echo '<label>' . h($label) . '<input name="fees[' . $k . ']" value="' . h($conf[$k]) . '" placeholder="' . h($hint) . '"></label>';
-    echo '</div><p class="muted">Name, Anschrift und Unterzeichner des Vereins stammen aus Einstellungen → Verein.</p><button>Speichern</button></form></section>';
+    echo '</div><p class="muted">Name, Anschrift und Unterzeichner des Vereins stammen aus Administration → Verein.</p><button>Speichern</button></form></section>';
 }
 md_footer();

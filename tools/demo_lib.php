@@ -205,3 +205,12 @@ function demo_sync_sv(array $svmembers, array $idmap = []): int
     echo "Rollen und Admin-Kennzeichen von $n Demo-Konten in svmembers angeglichen.\n";
     return $n;
 }
+
+/** Demo: zwei Vereinskonten – Beitragskonto des Vereins und ein Spendenkonto des gemeinnützigen Fördervereins (anderer Zahlungsempfänger). */
+function demo_seed_org(): void
+{
+    if (md_one('SELECT 1 FROM md_bank_accounts')) return;
+    md_bank_account_save(null, ['label' => 'Girokonto', 'holder' => 'Musterverein e. V.', 'iban' => 'DE02120300000000202051', 'bic' => 'BYLADEM1001', 'bank' => 'Deutsche Kreditbank', 'use_invoice' => 1]);
+    md_bank_account_save(null, ['label' => 'Spendenkonto', 'holder' => 'Förderverein Musterverein e. V.', 'iban' => 'DE89370400440532013000', 'bic' => 'COBADEFFXXX', 'bank' => 'Commerzbank', 'use_donation' => 1]);
+    echo "Demo-Vereinskonten angelegt.\n";
+}
