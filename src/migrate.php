@@ -46,9 +46,21 @@ const MD_MIGRATIONS = [
 ];
 
 /** Ergänzt fehlende Spalten. Gibt die Liste der ergänzten "tabelle.spalte" zurück. */
+/** MySQL: md_settings.setting_value war früher VARCHAR(255) und ist zu kurz für lange Texte. */
+function md_settings_needs_widening(): bool
+{
+    if (MD_DB_DRIVER === 'sqlite' || !md_table_exists('md_settings')) return false;
+    $r = md_one("SHOW COLUMNS FROM md_settings LIKE 'setting_value'");
+    return $r && stripos((string)$r['Type'], 'varchar') === 0;
+}
+
 function md_migrate_schema(): array
 {
     $done = [];
+    if (md_settings_needs_widening()) {
+        md_db()->exec('ALTER TABLE md_settings MODIFY setting_value TEXT NOT NULL');
+        $done[] = 'md_settings.setting_value (TEXT)';
+    }
     foreach (MD_MIGRATIONS as [$table, $col, $ddl]) {
         if (!md_table_exists($table)) continue;
         if (!in_array($col, md_table_columns($table), true)) {
@@ -66,6 +78,7 @@ function md_require_schema(): void
     if ($checked) return;
     $checked = true;
     $ok = md_table_exists('md_permissions') && md_table_exists('md_receipts') && md_table_exists('md_privacy_log') && md_table_exists('md_fee_groups') && md_table_exists('md_dunning_letters') && md_table_exists('md_sepa_batches') && md_table_exists('md_mail_outbox') && md_table_exists('md_login_tokens') && md_table_exists('md_events') && md_table_exists('md_mail_lists') && md_table_exists('md_applications') && md_table_exists('md_datev_rows') && md_table_exists('md_user_prefs') && md_table_exists('md_bank_accounts');
+    if ($ok && md_settings_needs_widening()) $ok = false;
     if ($ok) foreach (MD_MIGRATIONS as [$t, $c]) if (md_table_exists($t) && !in_array($c, md_table_columns($t), true)) { $ok = false; break; }
     if (!$ok) {
         http_response_code(503);

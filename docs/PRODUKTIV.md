@@ -76,6 +76,8 @@ Hinweis: Die vorhandene `.htaccess` im Zielverzeichnis enthält bereits Sperren;
 
 Das Einrichten bricht ab, wenn die Datenbank Mitglieder enthält, die keine Demo-Figuren sind. Dadurch lässt sich eine Datenbank mit echten Daten nicht versehentlich überschreiben.
 
+Im Browser-Einrichter stehen bei „Einrichten“ zwei Optionen: *Rollen und Admin-Kennzeichen der Demo-Figuren in svmembers angleichen* (bringt die Rollen der Sitzungsverwaltungs-Demo auf den Stand dieser Demo) und *andere Konten in svmembers unberührt lassen* (für eigene Testkonten wie das eines Entwicklers; sie bleiben unverändert, haben aber kein Profil). Auf der Kommandozeile entsprechen dem `--sync-sv` und `--ignore-others`.
+
 Bei Weg A bekommen nur Figuren ohne Passwort ein neues; vorhandene Passwörter aus der Demo der Sitzungsverwaltung bleiben und gelten auch hier. Bei Weg B erhalten alle zwölf neue Passwörter.
 
 ### 3.6 Prüfen

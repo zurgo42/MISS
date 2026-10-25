@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS md_import_runs (
 -- 12. Einstellungen
 CREATE TABLE IF NOT EXISTS md_settings (
     setting_key VARCHAR(60) PRIMARY KEY,
-    setting_value VARCHAR(255) NOT NULL,
+    setting_value TEXT NOT NULL,                   -- auch lange Texte (Datenschutzerklärung, Impressum)
     description VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

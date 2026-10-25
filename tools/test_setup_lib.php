@@ -8,7 +8,7 @@ require_once __DIR__ . '/demo_build.php';
 require_once __DIR__ . '/demo_lib.php';
 
 /** Prüft die Voraussetzungen. Gibt null oder die Fehlermeldung zurück. */
-function md_ts_guard(bool $reset): ?string
+function md_ts_guard(bool $reset, bool $ignoreOthers = false): ?string
 {
     if (!md_is_test_instance()) return "MD_TEST_INSTANCE ist nicht true. Dieses Skript richtet ein Testsystem für externe Tester auf einem Server ein (MD_TEST_INSTANCE=true und MD_DEMO_MODE=false in config.php). Für die lokale Demo (MD_DEMO_MODE=true): php tools/demo_load.php --reset bzw. php tools/demo_setup.php.";
     if (MD_DEMO_MODE) return 'MD_DEMO_MODE muss false sein: Testsysteme arbeiten mit echter Anmeldung (Passwörter).';
@@ -17,7 +17,7 @@ function md_ts_guard(bool $reset): ?string
     try { md_db(); } catch (Throwable $e) { return 'Keine Datenbankverbindung: ' . $e->getMessage(); }
     if (md_table_exists('svmembers')) {
         $others = md_q("SELECT membership_number FROM svmembers WHERE membership_number NOT LIKE 'DEMO%' OR membership_number IS NULL LIMIT 3");
-        if ($others) return 'Abbruch: svmembers enthält Mitglieder, die keine Demo-Figuren sind (z. B. ' . implode(', ', array_column($others, 'membership_number')) . '). Das sieht nach echten Daten aus – das Testsystem läuft nur in einer Datenbank, die ausschließlich Demo-Daten enthält.';
+        if ($others && !$ignoreOthers) return 'Abbruch: svmembers enthält Mitglieder, die keine Demo-Figuren sind (z. B. ' . implode(', ', array_filter(array_column($others, 'membership_number')) ?: ['ohne Mitgliedsnummer']) . '). Das sieht nach echten Daten aus – das Testsystem läuft nur in einer Datenbank, die ausschließlich Demo-Daten enthält. Sind es eigene Testkonten, die stehen bleiben sollen, die Option „andere Konten unberührt lassen“ wählen (sie werden nicht verändert).';
         if (md_ts_mode() === 'shared' && count(md_ts_idmap()) < 12) return 'Abbruch: In svmembers fehlen Demo-Mitglieder (' . count(md_ts_idmap()) . ' von 12 gefunden). Zuerst die Demo der Sitzungsverwaltung laden.';
         if (md_table_exists('md_profiles') && (int)md_one('SELECT COUNT(*) c FROM md_profiles')['c'] > 0 && !$reset) return 'Das Testsystem ist schon eingerichtet. Zum Neuaufbau (löscht alle Testdaten der Mitgliederverwaltung) mit Zurücksetzen starten, nach einem Update „Datenbank aktualisieren“ wählen.';
     }
@@ -82,9 +82,9 @@ function md_test_update(): array
 }
 
 /** Baut das Testsystem komplett neu auf. Gibt [Meldungen, Zugangsdaten] zurück (Zugangsdaten: Name, Nummer, E-Mail, Rolle, Passwort). */
-function md_test_setup(bool $reset, bool $syncSv = false): array
+function md_test_setup(bool $reset, bool $syncSv = false, bool $ignoreOthers = false): array
 {
-    if ($err = md_ts_guard($reset)) return [[$err], []];
+    if ($err = md_ts_guard($reset, $ignoreOthers)) return [[$err], []];
     $pdo = md_db();
     $log = [];
     $mode = md_ts_mode();

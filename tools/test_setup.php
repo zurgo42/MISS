@@ -5,6 +5,7 @@
  *   php tools/test_setup.php            einrichten (nur in einer leeren Testdatenbank)
  *   php tools/test_setup.php --reset    alle Testdaten löschen und neu aufbauen
  *   --sync-sv   (nur bei gemeinsamer Datenbank) Rollen/Admin der DEMO-Konten in svmembers an die Demo-Daten angleichen
+ *   --ignore-others   auch einrichten, wenn svmembers eigene Testkonten enthält (bleiben unverändert)
  *   php tools/test_setup.php --update   nach einem Software-Update: Tabellen ergänzen, nichts löschen
  */
 if (PHP_SAPI !== 'cli') exit('nur per Kommandozeile');
@@ -12,7 +13,7 @@ $root = dirname(__DIR__);
 require_once "$root/src/bootstrap.php";
 require_once __DIR__ . '/test_setup_lib.php';
 if (in_array('--update', $argv, true)) { echo implode("\n", md_test_update()) . "\n"; exit; }
-[$log, $creds] = md_test_setup(in_array('--reset', $argv, true), in_array('--sync-sv', $argv, true));
+[$log, $creds] = md_test_setup(in_array('--reset', $argv, true), in_array('--sync-sv', $argv, true), in_array('--ignore-others', $argv, true));
 echo implode("\n", $log) . "\n";
 if ($creds) {
     echo "\nZugangsdaten der Testfiguren (Anmeldung mit E-Mail oder Mitgliedsnummer):\n";
