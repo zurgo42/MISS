@@ -64,13 +64,15 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
     echo '<!DOCTYPE html><html lang="de"' . ($dark ? ' class="dark-mode"' : '') . '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><base href="' . h(md_url()) . '">';
     echo '<script>(function(){if(document.cookie.indexOf("darkMode=")<0){try{if(localStorage.getItem("darkMode")==="enabled"){document.documentElement.className="dark-mode";document.cookie="darkMode=enabled;path=/;max-age=31536000";}}catch(e){}}})();</script>';
     echo '<title>' . h($title) . ' – ' . MD_APP_NAME . ' ' . h($orgName) . '</title><link rel="stylesheet" href="assets/md.css"></head><body' . ($dark ? ' class="dark-mode"' : '') . '>';
-    echo '<div class="header"><div class="header-inner"><h1><a href="index.php">' . md_logo_html() . '<span class="brand"><span class="orgname">' . h($orgName) . '</span><span class="appname"><b>' . MD_APP_NAME . '</b> · ' . MD_APP_TAG . '</span></span></a></h1><div class="user-info">';
+    $area = $nav[$active][1] ?? $title;
+    echo '<div class="header"><div class="header-inner header-dreiteilig"><a class="header-brand" href="index.php" title="Zur Startseite">' . md_logo_html() . '<span class="brand"><span class="orgname">' . h($orgName) . '</span><span class="appname"><b>' . MD_APP_NAME . '</b> · ' . MD_APP_TAG . '</span></span></a>';
+    echo '<div class="header-mitte"><h1>' . h($area) . '</h1></div><div class="user-info"><div class="user-name">';
     if ($me) {
         $role = (int)($me['is_admin'] ?? 0) ? 'Admin' : ucfirst((string)($me['role'] ?? 'Mitglied'));
-        echo '<span>' . h($me['first_name'] . ' ' . $me['last_name']) . '</span><span class="role-badge">' . h($role) . '</span>';
+        echo '<span class="user-id"><span>' . h($me['first_name'] . ' ' . $me['last_name']) . '</span><span class="role-badge">' . h($role) . '</span></span>';
     } elseif (MD_DEMO_MODE) echo '<span>Demo-Modus</span>';
-    echo '<button type="button" class="dark-mode-toggle" id="darkModeToggle" title="Dunkelmodus umschalten"><span class="icon">' . ($dark ? '☀️' : '🌙') . '</span></button>';
-    if ($me) echo '<a class="logout-btn" href="account.php">Mein Zugang</a><a class="logout-btn" href="logout.php">Abmelden</a>';
+    if ($me) echo '<span class="user-links"><a class="logout-btn" href="account.php">Mein Zugang</a><a class="logout-btn" href="logout.php">Abmelden</a></span>';
+    echo '</div><button type="button" class="dark-mode-toggle" id="darkModeToggle" title="Dunkelmodus umschalten"><span class="icon">' . ($dark ? '☀️' : '🌙') . '</span></button>';
     echo '</div></div></div>';
     if ($nav) {
         echo '<nav class="tabs">';
