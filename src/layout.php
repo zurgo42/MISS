@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 function md_is_test_instance(): bool
 {
-    return defined('MD_TEST_INSTANCE') && MD_TEST_INSTANCE === true;
+    return defined('MD_TEST_INSTANCE') && filter_var(MD_TEST_INSTANCE, FILTER_VALIDATE_BOOLEAN);   // true, 1 oder "true" in config.php
 }
 
 /** Sonderfunktionen nach Rechten, gruppiert: Gruppe => [Schlüssel => [Adresse, Beschriftung]]. Leere Gruppen entfallen. */

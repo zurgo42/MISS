@@ -8,7 +8,18 @@ require_once __DIR__ . '/tools/test_setup_lib.php';
 header('X-Robots-Tag: noindex');
 $tok = defined('MD_SETUP_TOKEN') ? (string)MD_SETUP_TOKEN : '';
 $given = (string)($_POST['token'] ?? $_GET['token'] ?? '');
-if (!md_is_test_instance() || strlen($tok) < 20 || !hash_equals($tok, $given)) { http_response_code(404); exit('Nicht gefunden.'); }
+if (strlen($tok) < 20 || !hash_equals($tok, $given)) { http_response_code(404); exit('Nicht gefunden.'); }
+// Wer das Token kennt, bekommt eine Erklärung statt einer leeren Seite
+$problems = [];
+if (!md_is_test_instance()) $problems[] = 'MD_TEST_INSTANCE ist in config.php nicht true. Hinweis: Steht die Konstante dort zweimal (z. B. am Ende von config.example.php und noch einmal weiter unten), gilt die erste; die zweite wird ignoriert.';
+if (MD_DEMO_MODE) $problems[] = 'MD_DEMO_MODE ist true; für das Testsystem muss es false sein (Anmeldung mit Passwort).';
+if (MD_DB_DRIVER !== 'mysql') $problems[] = "MD_DB_DRIVER muss 'mysql' sein.";
+if (!preg_match('/^[0-9a-fA-F]{64}$/', defined('MD_ENCRYPTION_KEY') ? (string)MD_ENCRYPTION_KEY : '')) $problems[] = 'MD_ENCRYPTION_KEY fehlt oder hat nicht genau 64 Hex-Zeichen.';
+if ($problems && ($_SERVER['REQUEST_METHOD'] !== 'POST' || !md_is_test_instance())) {
+    echo '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Testsystem einrichten</title></head><body style="font:15px system-ui,sans-serif;max-width:50rem;margin:2rem auto;padding:0 1rem"><h1>Testsystem einrichten</h1><p>Das Token stimmt, aber die Einrichtung ist noch nicht möglich:</p><ul>';
+    foreach ($problems as $p) echo '<li>' . h($p) . '</li>';
+    exit('</ul><p>Bitte config.php anpassen und diese Seite neu laden.</p></body></html>');
+}
 $out = '';
 $creds = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
