@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ok = 'Abgebrochen.';
     } elseif ($act === 'test') {
         $to = trim((string)$me['email']);
-        $err = md_mail_now($aid, $to, 'Testnachricht – ' . MD_CLUB_NAME, "Das ist eine Testnachricht der Mitgliederverwaltung.\nWenn du sie liest, funktioniert der Versand." . md_mail_footer(), 'other', null, $aid);
+        $err = md_mail_now($aid, $to, 'Testnachricht – ' . MD_CLUB_NAME, "Das ist eine Testnachricht von elMISS.\nWenn du sie liest, funktioniert der Versand." . md_mail_footer(), 'other', null, $aid);
         $ok = "Testnachricht an $to versendet.";
     } elseif ($act === 'invite_all') {
         $n = $bad = 0;

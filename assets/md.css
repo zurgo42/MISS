@@ -208,3 +208,6 @@ tr.more[hidden] { display: none; }
 .moreph { margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
 button.more { background: none; color: var(--link); padding: 0; font-size: 13px; text-decoration: underline; }
 .colpick { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+
+.app-lead { margin: 0 0 16px; color: var(--text-secondary, var(--text-primary)); line-height: 1.5; }
+.features-box h3 { margin: 0 0 12px; font-size: 1.05em; }

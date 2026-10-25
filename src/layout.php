@@ -63,8 +63,8 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
     $orgName = md_org_name();
     echo '<!DOCTYPE html><html lang="de"' . ($dark ? ' class="dark-mode"' : '') . '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><base href="' . h(md_url()) . '">';
     echo '<script>(function(){if(document.cookie.indexOf("darkMode=")<0){try{if(localStorage.getItem("darkMode")==="enabled"){document.documentElement.className="dark-mode";document.cookie="darkMode=enabled;path=/;max-age=31536000";}}catch(e){}}})();</script>';
-    echo '<title>' . h($title) . ' – ' . h($orgName) . '</title><link rel="stylesheet" href="assets/md.css"></head><body' . ($dark ? ' class="dark-mode"' : '') . '>';
-    echo '<div class="header"><div class="header-inner"><h1><a href="index.php">' . md_logo_html() . 'Mitgliederverwaltung<span class="clubname">' . h($orgName) . '</span></a></h1><div class="user-info">';
+    echo '<title>' . h($title) . ' – ' . MD_APP_NAME . ' ' . h($orgName) . '</title><link rel="stylesheet" href="assets/md.css"></head><body' . ($dark ? ' class="dark-mode"' : '') . '>';
+    echo '<div class="header"><div class="header-inner"><h1><a href="index.php">' . md_logo_html() . MD_APP_NAME . '<span class="clubname">' . h($orgName) . '</span></a></h1><div class="user-info">';
     if ($me) {
         $role = (int)($me['is_admin'] ?? 0) ? 'Admin' : ucfirst((string)($me['role'] ?? 'Mitglied'));
         echo '<span>' . h($me['first_name'] . ' ' . $me['last_name']) . '</span><span class="role-badge">' . h($role) . '</span>';

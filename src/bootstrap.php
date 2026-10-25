@@ -24,6 +24,10 @@ function md_url(string $path = ''): string
     return MD_BASE_URL . '/' . ltrim($path, '/');
 }
 
+// Name der Anwendung (Familie elMISS / elKONA / elVERA …); Tabellen- und Einstellungsnamen bleiben md_*
+const MD_APP_NAME = 'elMISS';
+const MD_APP_LONG = 'Elektronisches Mitglieder-Informations- und Service-System';
+
 date_default_timezone_set('Europe/Berlin');
 mb_internal_encoding('UTF-8');
 
