@@ -28,7 +28,10 @@ html.dark-mode .header { background: var(--bg-primary); border-bottom: 1px solid
 .header-inner { max-width: 1024px; margin: 0 auto; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
 .header h1 { font-size: 22px; margin: 0; color: #fff; }
 .header h1 a { color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
-.header h1 .clubname { font-size: 14px; font-weight: 400; opacity: .85; margin-left: 4px; }
+.header h1 .brand { display: flex; flex-direction: column; line-height: 1.2; }
+.header h1 .orgname { font-size: 20px; }
+.header h1 .appname { font-size: 12px; font-weight: 400; opacity: .85; }
+.header h1 .appname b { font-weight: 700; letter-spacing: .05em; }
 .logo { width: 36px; height: 36px; object-fit: contain; border-radius: 6px; background: transparent; }
 .header .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .header .user-info span { font-size: 14px; }
