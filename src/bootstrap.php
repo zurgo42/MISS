@@ -24,7 +24,7 @@ function md_url(string $path = ''): string
     return MD_BASE_URL . '/' . ltrim($path, '/');
 }
 
-// Name der Anwendung (Familie elMISS / elKONA / elVERA …); Tabellen- und Einstellungsnamen bleiben md_*
+// Name der Anwendung (Familie MISS / KONA / VERA); Tabellen- und Einstellungsnamen bleiben md_*
 const MD_APP_NAME = 'MISS';
 const MD_APP_TAG = 'Mitglieder-Informationssystem';
 const MD_APP_LONG = 'Mitglieder-Informations- und Service-System';
