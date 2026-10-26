@@ -7,7 +7,7 @@ declare(strict_types=1);
  *  - Mitglieder werden über ihr Personenkonto (Debitor/Kreditor) erkannt; Tabelle md_datev_accounts, einmal gepflegt und beim Zuordnen merkbar.
  *  - Zahlungseingang (Haben auf dem Debitor): bezahlt die passende offene Forderung (Rechnungsnummer im Belegfeld/Buchungstext oder gleicher Betrag),
  *    sonst entsteht eine bezahlte Buchung. Die Art kommt aus dem Gegenkonto (Tabelle md_datev_kinds) oder der Voreinstellung.
- *  - Forderung (Soll auf dem Debitor): nur auf Wunsch als offene Forderung übernommen (Rechnungen entstehen normalerweise in der Mitgliederverwaltung).
+ *  - Forderung (Soll auf dem Debitor): nur auf Wunsch als offene Forderung übernommen (Rechnungen entstehen normalerweise in MISS).
  *  - Zahlung an ein Mitglied (Soll auf dem Kreditor): bezahlte Auszahlung (Erstattung, Übungsleiterpauschale, ...).
  *  - Jede Buchungszeile hat eine Prüfsumme; was schon übernommen wurde, wird nie ein zweites Mal gebucht.
  * Bei Unsicherheit wird nichts vorangekreuzt: Der Anwender bestätigt die Vorschau.
@@ -232,7 +232,7 @@ function md_datev_plan(array $parsed, array $opts, array $assign = []): array
             if (!empty($opts['claims'])) {
                 if ($r['beleg'] !== '' && md_one('SELECT 1 FROM md_ledger WHERE member_id = ? AND reference = ?', [$member, $r['beleg']])) { $p['note'] = 'Forderung ' . $r['beleg'] . ' ist schon im Kassenbuch'; }
                 else { $p['action'] = 'new_open'; $p['level'] = 'sure'; $p['kind'] = md_datev_kind_for($other, $inKind); $p['note'] = 'Forderung übernehmen'; }
-            } else $p['note'] = 'Forderung (Rechnungen kommen aus der Mitgliederverwaltung)';
+            } else $p['note'] = 'Forderung (Rechnungen kommen aus MISS)';
         } elseif ($p['type'] === 'kreditor' && $side === 'S') {
             $p['action'] = 'new_out'; $p['level'] = 'suggest'; $p['kind'] = md_datev_kind_for($other, $outKind); $p['note'] = 'Zahlung an das Mitglied';
         } else {

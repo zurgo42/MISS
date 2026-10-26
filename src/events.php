@@ -197,7 +197,7 @@ function md_event_promote(int $eventId, int $actor): int
         md_exec("UPDATE md_event_regs SET status = 'registered', entry_id = ?, status_at = ? WHERE reg_id = ?", [$eid, md_now(), $r['reg_id']]);
         md_log_change((int)$r['member_id'], 'event', $ev['title'], 'von der Warteliste nachgerückt', $actor, 'admin');
         if ($to = md_mail_address_of((int)$r['member_id'])) {
-            md_mail_now((int)$r['member_id'], $to, 'Platz frei: ' . $ev['title'], "Gute Nachricht: Für „{$ev['title']}“ am " . md_event_dt($ev['starts_at']) . " ist ein Platz frei geworden, du bist von der Warteliste nachgerückt." . ((int)$ev['price_cents'] > 0 ? "\nDie Teilnahmegebühr von " . md_money((int)$ev['price_cents']) . ' findest du in deinem Dashboard unter Finanzen.' : '') . "\nWenn du nicht teilnehmen kannst, melde dich bitte in der Mitgliederverwaltung ab.\n" . md_mail_footer(), 'other', 'EV' . $eventId, $actor);
+            md_mail_now((int)$r['member_id'], $to, 'Platz frei: ' . $ev['title'], "Gute Nachricht: Für „{$ev['title']}“ am " . md_event_dt($ev['starts_at']) . " ist ein Platz frei geworden, du bist von der Warteliste nachgerückt." . ((int)$ev['price_cents'] > 0 ? "\nDie Teilnahmegebühr von " . md_money((int)$ev['price_cents']) . ' findest du in deinem Dashboard unter Finanzen.' : '') . "\nWenn du nicht teilnehmen kannst, melde dich bitte in MISS ab.\n" . md_mail_footer(), 'other', 'EV' . $eventId, $actor);
         }
         $n++;
     }

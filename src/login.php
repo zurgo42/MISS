@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Eigene Anmeldung der Mitgliederverwaltung. Das Passwort steht (wie in der Sitzungsverwaltung) in svmembers.password_hash,
+ * Eigene Anmeldung von MISS. Das Passwort steht (wie in der Sitzungsverwaltung) in svmembers.password_hash,
  * die Anmeldung gilt also für beide Anwendungen (gleiche Domain, gleiche Sitzung). Anmeldung mit E-Mail-Adresse oder Mitgliedsnummer.
  * Passwort setzen und vergessen laufen über Einmal-Links per E-Mail (nur der Hash des Links wird gespeichert).
  */

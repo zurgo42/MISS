@@ -1,6 +1,6 @@
 # Anmeldung
 
-Die Mitgliederverwaltung hat eine **eigene Anmeldung** (`login.php`). Das Passwort liegt als Hash in `svmembers.password_hash` – derselben Spalte wie in der Sitzungsverwaltung. Die Sitzung gilt für beide Anwendungen (gleiche Domain), Funktionäre melden sich also nur einmal an.
+MISS hat eine **eigene Anmeldung** (`login.php`). Das Passwort liegt als Hash in `svmembers.password_hash` – derselben Spalte wie in der Sitzungsverwaltung. Die Sitzung gilt für beide Anwendungen (gleiche Domain), Funktionäre melden sich also nur einmal an.
 
 > Voraussetzung: Die Sitzungsverwaltung prüft Passwörter ebenfalls mit `password_verify()` gegen `password_hash` und liest die Sitzungsvariable `member_id` (`MD_SESSION_KEY`). Das bitte beim ersten Test mit der echten Sitzungsverwaltung bestätigen.
 

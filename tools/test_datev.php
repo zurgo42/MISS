@@ -86,7 +86,7 @@ $p9 = md_datev_parse($write([$head(), $cols, '120,00;"H";"EUR";;;;19998;1200;;18
 $a = md_datev_plan($p9, $opts)[0];
 $check('Rechnungsnummer ohne Personenkonto, Betrag passt: Vorschlag mit Mitglied', [$a['action'], $a['level'], $a['member_id']], ['pay', 'suggest', $lukas]);
 $check('Fehlerzeilen nicht übernommen', array_values(array_unique(array_map(fn($x) => $x['level'], array_filter($plan, fn($x) => in_array($x['row'], [10, 11, 12, 13], true))))), ['skip']);
-$check('Forderung aus DATEV: ohne Option nicht übernommen', [$by_(14)['action'], str_contains($by_(14)['note'], 'Rechnungen kommen aus der Mitgliederverwaltung')], ['skip', true]);
+$check('Forderung aus DATEV: ohne Option nicht übernommen', [$by_(14)['action'], str_contains($by_(14)['note'], 'Rechnungen kommen aus MISS')], ['skip', true]);
 $check('… mit Option als offene Forderung', (function () use ($p, $opts, $by_) { $pl = md_datev_plan($p, array_merge($opts, ['claims' => true])); $x = array_values(array_filter($pl, fn($y) => $y['row'] === 14))[0]; return [$x['action'], $x['kind'], $x['member_id'] ?? null]; })(), ['new_open', 'beitrag', $max]);
 $check('manuelle Zuordnung (Zeile 7 → Hans) wird zur Buchung', (function () use ($p, $opts, $hans) { $pl = md_datev_plan($p, $opts, [7 => $hans]); $x = array_values(array_filter($pl, fn($y) => $y['row'] === 7))[0]; return [$x['action'], $x['member_id']]; })(), ['new_paid', $hans]);
 

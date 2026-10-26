@@ -20,10 +20,10 @@ define('MD_DEMO_MODE', true);
 define('MD_SESSION_KEY', 'member_id');
 define('MD_LOGIN_URL',   '');   // leer = eigene Anmeldung (login.php); sonst Adresse einer anderen Anmeldeseite
 
-// Basis-Pfad der Anwendung, z. B. '/Mitgliederverwaltung'. Wird automatisch erkannt; nur bei Problemen von Hand setzen:
-// define('MD_BASE_URL', '/Mitgliederverwaltung');
+// Basis-Pfad der Anwendung, z. B. '/MISS'. Wird automatisch erkannt; nur bei Problemen von Hand setzen:
+// define('MD_BASE_URL', '/MISS');
 
-// Betriebsart der Sitzungsverwaltung. Die Mitgliederverwaltung ist nur im Standalone-Betrieb aktiv
+// Betriebsart der Sitzungsverwaltung. MISS ist nur im Standalone-Betrieb aktiv
 // ('standalone': svmembers ist führend). Im Adapterbetrieb ('adapter', Tabelle "berechtigte" führend) bleibt sie gesperrt.
 define('MD_SV_MODE', 'standalone');
 
@@ -42,7 +42,7 @@ define('MD_MAIL_TRANSPORT', 'log');
 // define('MD_SMTP_HOST', 'smtp.example.org'); define('MD_SMTP_PORT', 587); define('MD_SMTP_SECURE', 'tls'); // tls | ssl | none
 // define('MD_SMTP_USER', ''); define('MD_SMTP_PASS', '');
 // Öffentliche Adresse dieser Anwendung für Links in E-Mails (empfohlen, sonst wird der Host der Anfrage verwendet):
-// define('MD_PUBLIC_URL', 'https://verein.example.org/Mitgliederverwaltung');
+// define('MD_PUBLIC_URL', 'https://verein.example.org/MISS');
 
 // Testsystem für externe Tester (nur auf einer eigenen Testdatenbank mit erfundenen Daten!). Siehe docs/PRODUKTIV.md.
 define('MD_TEST_INSTANCE', false);

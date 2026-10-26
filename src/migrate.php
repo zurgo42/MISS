@@ -82,6 +82,6 @@ function md_require_schema(): void
     if ($ok) foreach (MD_MIGRATIONS as [$t, $c]) if (md_table_exists($t) && !in_array($c, md_table_columns($t), true)) { $ok = false; break; }
     if (!$ok) {
         http_response_code(503);
-        exit('Die Datenbank der Mitgliederverwaltung ist nicht auf dem neuesten Stand. Bitte "php tools/install.php" erneut ausführen (ergänzt nur Neues, löscht nichts).');
+        exit('Die Datenbank von MISS ist nicht auf dem neuesten Stand. Bitte "php tools/install.php" erneut ausführen (ergänzt nur Neues, löscht nichts).');
     }
 }

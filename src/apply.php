@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Online-Anmeldung neuer Mitglieder (läuft über die Mitgliederverwaltung, nicht über die Sitzungsverwaltung).
+ * Online-Anmeldung neuer Mitglieder (läuft über MISS, nicht über die Sitzungsverwaltung).
  * Ablauf: Antrag ausfüllen → E-Mail-Adresse bestätigen (Link, 48 Stunden) → Vorstand prüft → Aufnahme (legt das Mitglied an und lädt es ein) oder Ablehnung.
  * Die Seite verrät nicht, ob eine Adresse schon bekannt ist. Unbestätigte Anträge werden nach 6 Wochen gelöscht, entschiedene nach "apply.keep_days" (Standard 90).
  */

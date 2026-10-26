@@ -1,4 +1,4 @@
-/* Mitgliederverwaltung – Farbschema und Grundformen wie die Sitzungsverwaltung */
+/* MISS – Farbschema und Grundformen wie die Sitzungsverwaltung */
 /* Farbschema und Hell/Dunkel wie in der Sitzungsverwaltung (gleiche Variablen, gleiche Umschaltung über html.dark-mode und Cookie "darkMode") */
 :root {
     --hellblau: #8ECAF6; --dunkelblau: #005596; --gelb: #FAAA00; --hellgelb: #FAC828; --grau: #EBEBEB; --anthrazit: #505050; --heller: #CEE3F6;

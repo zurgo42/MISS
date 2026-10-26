@@ -1,8 +1,8 @@
 # Testsystem auf dem Server für externe Tester
 
-Diese Anleitung bringt die Mitgliederverwaltung als **Testsystem** auf deinen Webserver, damit externe Tester über das Internet damit arbeiten können – mit **erfundenen Daten**, einer **eigenen Datenbank** und Zugriffsschutz. Der spätere Echtbetrieb steht am Ende (Checkliste).
+Diese Anleitung bringt MISS als **Testsystem** auf deinen Webserver, damit externe Tester über das Internet damit arbeiten können – mit **erfundenen Daten**, einer **eigenen Datenbank** und Zugriffsschutz. Der spätere Echtbetrieb steht am Ende (Checkliste).
 
-> **Wichtig:** Das Testsystem darf nie mit echten Mitgliedern in derselben Datenbank laufen, denn Tester könnten sie sehen. Läuft auf dem Server ohnehin nur eine Testinstanz der Sitzungsverwaltung mit Demo-Daten, kann die Mitgliederverwaltung deren Datenbank mitbenutzen (Weg A); der Einrichter prüft, dass dort nur Demo-Figuren stehen. Die Mitgliederverwaltung läuft nur im Standalone-Betrieb der Sitzungsverwaltung; im Adapterbetrieb wird sie nicht gebraucht.
+> **Wichtig:** Das Testsystem darf nie mit echten Mitgliedern in derselben Datenbank laufen, denn Tester könnten sie sehen. Läuft auf dem Server ohnehin nur eine Testinstanz der Sitzungsverwaltung mit Demo-Daten, kann MISS deren Datenbank mitbenutzen (Weg A); der Einrichter prüft, dass dort nur Demo-Figuren stehen. MISS läuft nur im Standalone-Betrieb der Sitzungsverwaltung; im Adapterbetrieb wird sie nicht gebraucht.
 
 ## 1. Voraussetzungen
 
@@ -18,16 +18,16 @@ Ob die PHP-Erweiterungen vorhanden sind, zeigt im Hosting-Panel meist „PHP-Inf
 
 ## 2. Aufbau
 
-- Eigenes Verzeichnis oder eine Subdomain, z. B. `https://dein-verein.de/Mitgliederverwaltung-Test/`.
+- Eigenes Verzeichnis oder eine Subdomain, z. B. `https://dein-verein.de/MISS-Test/`.
 - **Datenbank:** Es zählt nur, dass sie **ausschließlich Demo-Daten** enthält – das prüft der Einrichter und bricht sonst ab. Zwei Wege:
-  - **A – gemeinsam mit der Sitzungsverwaltung (Testinstanz mit deren Demo):** Die Mitgliederverwaltung nutzt dieselbe Datenbank und legt nur ihre `md_`-Tabellen an. `svmembers`, `svressorts` und alles der Sitzungsverwaltung bleiben **unverändert** (auch beim Zurücksetzen); die Demo-Figuren DEMO0001–DEMO0012 sind dieselben, und die Anmeldung gilt für beide Anwendungen. Voraussetzung: die Demo der Sitzungsverwaltung ist geladen und `svmembers` hat die Spalte `password_hash`.
+  - **A – gemeinsam mit der Sitzungsverwaltung (Testinstanz mit deren Demo):** MISS nutzt dieselbe Datenbank und legt nur ihre `md_`-Tabellen an. `svmembers`, `svressorts` und alles der Sitzungsverwaltung bleiben **unverändert** (auch beim Zurücksetzen); die Demo-Figuren DEMO0001–DEMO0012 sind dieselben, und die Anmeldung gilt für beide Anwendungen. Voraussetzung: die Demo der Sitzungsverwaltung ist geladen und `svmembers` hat die Spalte `password_hash`.
   - **B – eigene Datenbank:** Wenn es keine Testinstanz der Sitzungsverwaltung gibt. Der Einrichter legt dann eine einfache Mitgliedertabelle selbst an.
 - **Zugriffsschutz** (Benutzername/Passwort des Webservers) vor dem gesamten Verzeichnis. Das verhindert, dass Suchmaschinen oder Unbefugte das Testsystem sehen.
 
 ## 3. Schritt für Schritt
 
 ### 3.1 Code holen und hochladen
-1. Auf GitHub (Repository `zurgo42/Mitgliederverwaltung`, Zweig `main`): **Code → Download ZIP** und entpacken. (Mit SSH alternativ: `git clone https://github.com/zurgo42/Mitgliederverwaltung.git Mitgliederverwaltung-Test`.)
+1. Auf GitHub (Repository `zurgo42/Mitgliederverwaltung`, Zweig `main`): **Code → Download ZIP** und entpacken. (Mit SSH alternativ: `git clone https://github.com/zurgo42/Mitgliederverwaltung.git MISS-Test`.)
 2. Den **Inhalt** des entpackten Ordners per FTP in das Zielverzeichnis hochladen (so, dass `index.php` direkt im Zielverzeichnis liegt).
 3. Prüfen, dass die Sperren greifen – diese Adressen müssen **„Forbidden“/403** liefern:
    `…/config.example.php` · `…/src/db.php` · `…/sql/schema.sql` · `…/storage/` · `…/tools/install.php`
@@ -53,7 +53,7 @@ define('MD_ENCRYPTION_KEY', '…');           // 64 Hex-Zeichen
 define('MD_SV_MODE', 'standalone');
 define('MD_LOGIN_URL', '');                 // leer = eigene Anmeldung
 define('MD_CLUB_NAME', 'Testverein');
-define('MD_PUBLIC_URL', 'https://dein-verein.de/Mitgliederverwaltung-Test');
+define('MD_PUBLIC_URL', 'https://dein-verein.de/MISS-Test');
 ```
 
 Den Schlüssel und das Token erzeugst du z. B. auf deinem PC mit `php tools/make_key.php` (liefert 64 Hex-Zeichen; für das Token reichen 24 Zeichen davon) oder mit `openssl rand -hex 32`. `config.php` wird nie ins Repository übernommen.
@@ -72,7 +72,7 @@ Hinweis: Die vorhandene `.htaccess` im Zielverzeichnis enthält bereits Sperren;
 
 ### 3.5 Einrichten
 - **Mit SSH:** `php tools/test_setup.php` im Zielverzeichnis. Es legt die Tabellen an, lädt die 12 Testfiguren samt Beispieldaten und gibt die Zugangsdaten **einmalig** aus.
-- **Ohne SSH:** `https://…/Mitgliederverwaltung-Test/setup_test.php?token=<MD_SETUP_TOKEN>` aufrufen → „Einrichten“. Die Zugangsdaten erscheinen **einmalig** auf der Seite (notieren!). Danach „Diese Datei jetzt löschen“ (oder per FTP entfernen).
+- **Ohne SSH:** `https://…/MISS-Test/setup_test.php?token=<MD_SETUP_TOKEN>` aufrufen → „Einrichten“. Die Zugangsdaten erscheinen **einmalig** auf der Seite (notieren!). Danach „Diese Datei jetzt löschen“ (oder per FTP entfernen).
 
 Das Einrichten bricht ab, wenn die Datenbank Mitglieder enthält, die keine Demo-Figuren sind. Dadurch lässt sich eine Datenbank mit echten Daten nicht versehentlich überschreiben.
 
@@ -96,7 +96,7 @@ Bei Weg A bekommen nur Figuren ohne Passwort ein neues; vorhandene Passwörter a
 | Aufgabe | So geht’s |
 |---|---|
 | **Neue Version einspielen** | Neue Dateien per FTP drüberkopieren, **`config.php` und `storage/` behalten**; danach `php tools/test_setup.php --update` bzw. im Browser `setup_test.php` → „Datenbank aktualisieren“ (legt nur Neues an, löscht nichts). Wenn `setup_test.php` gelöscht wurde, neu hochladen. Eine Meldung „Datenbank nicht auf dem neuesten Stand“ (503) bedeutet, dass dieser Schritt fehlt. |
-| **Testdaten zurücksetzen** | `php tools/test_setup.php --reset` bzw. im Browser „Alles löschen und neu aufbauen“. Löscht alle Testdaten der Mitgliederverwaltung. Weg A: Die Tabellen der Sitzungsverwaltung bleiben unangetastet. Weg B: neue Passwörter. |
+| **Testdaten zurücksetzen** | `php tools/test_setup.php --reset` bzw. im Browser „Alles löschen und neu aufbauen“. Löscht alle Testdaten von MISS. Weg A: Die Tabellen der Sitzungsverwaltung bleiben unangetastet. Weg B: neue Passwörter. |
 | **E-Mails** | Das Testsystem versendet keine Mails (`MD_TEST_INSTANCE`). Alle Nachrichten stehen unter *E-Mail* im Ausgang (nur für Admin-Figuren sichtbar). Einladungs- und Passwort-Links sind dort ebenfalls lesbar. |
 | **Fehlermeldungen** | Leere Seite/500: PHP-Fehlerprotokoll des Hosters prüfen. Häufige Ursachen: fehlende PHP-Erweiterung, falsche Zugangsdaten in `config.php`. |
 | **Rückmeldungen sammeln** | Tester melden: Adresse der Seite, Testfigur, Schritte, erwartet/erlebt, Screenshot (siehe `docs/TESTER.md`). |
@@ -122,3 +122,13 @@ Das ist ein eigener Schritt mit anderen Voraussetzungen; die Testinstanz wird da
 7. **Sicherung** einrichten: Datenbank täglich, `storage/` (Fotos) und `config.php` regelmäßig.
 8. Jeden Schritt vorher am Testsystem proben.
 9. **Aufräumen nach der Testphase:** `tools/set_password.php` (setzt Passwörter ohne E-Mail, nur für Demo-/Testsysteme gedacht) auf dem Server **löschen**, ebenso `setup_test.php`, falls noch vorhanden, und `MD_TEST_INSTANCE` nicht in die Echt-Konfiguration übernehmen.
+
+## Verzeichnis umbenennen (z. B. von `Mitgliederverwaltung-Test` nach `MISS`)
+
+1. **Zuerst** in der `config.php` prüfen: Steht dort `MD_BASE_URL` oder `MD_PUBLIC_URL` (oder `MD_SV_URL`) mit dem alten Verzeichnisnamen, auf den neuen ändern. Ohne `MD_BASE_URL` erkennt MISS den Pfad selbst.
+2. Verzeichnis auf dem Server umbenennen (FTP, Dateimanager oder `mv Mitgliederverwaltung-Test MISS`). `config.php`, Fotos und Logo (liegen in der Datenbank) und alle Daten bleiben unverändert, es muss nichts neu eingerichtet werden.
+3. Einen vorhandenen **Verzeichnisschutz** (Passwortschutz im Hosting-Panel oder `.htaccess` mit `AuthUserFile`) für den neuen Namen neu setzen: Das Panel koppelt ihn oft an den Verzeichnisnamen.
+4. Cronjobs (z. B. `tools/sync_rights.php`) auf den neuen Pfad ändern.
+5. Neue Adresse an die Tester geben: `https://…/MISS/login.php`. Alte Lesezeichen und Mails mit Links auf den alten Namen laufen ins Leere. Wer will, legt am alten Ort eine `.htaccess` mit `Redirect 301 /Mitgliederverwaltung-Test /MISS` an.
+6. Falls der Link zu MISS in der Sitzungsverwaltung oder auf der Vereinsseite steht, dort anpassen.
+

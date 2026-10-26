@@ -19,7 +19,7 @@ function md_ts_guard(bool $reset, bool $ignoreOthers = false): ?string
         $others = md_q("SELECT membership_number FROM svmembers WHERE membership_number NOT LIKE 'DEMO%' OR membership_number IS NULL LIMIT 3");
         if ($others && !$ignoreOthers) return 'Abbruch: svmembers enthält Mitglieder, die keine Demo-Figuren sind (z. B. ' . implode(', ', array_filter(array_column($others, 'membership_number')) ?: ['ohne Mitgliedsnummer']) . '). Das sieht nach echten Daten aus – das Testsystem läuft nur in einer Datenbank, die ausschließlich Demo-Daten enthält. Sind es eigene Testkonten, die stehen bleiben sollen, die Option „andere Konten unberührt lassen“ wählen (sie werden nicht verändert).';
         if (md_ts_mode() === 'shared' && count(md_ts_idmap()) < 12) return 'Abbruch: In svmembers fehlen Demo-Mitglieder (' . count(md_ts_idmap()) . ' von 12 gefunden). Zuerst die Demo der Sitzungsverwaltung laden.';
-        if (md_table_exists('md_profiles') && (int)md_one('SELECT COUNT(*) c FROM md_profiles')['c'] > 0 && !$reset) return 'Das Testsystem ist schon eingerichtet. Zum Neuaufbau (löscht alle Testdaten der Mitgliederverwaltung) mit Zurücksetzen starten, nach einem Update „Datenbank aktualisieren“ wählen.';
+        if (md_table_exists('md_profiles') && (int)md_one('SELECT COUNT(*) c FROM md_profiles')['c'] > 0 && !$reset) return 'Das Testsystem ist schon eingerichtet. Zum Neuaufbau (löscht alle Testdaten von MISS) mit Zurücksetzen starten, nach einem Update „Datenbank aktualisieren“ wählen.';
     }
     return null;
 }
@@ -96,7 +96,7 @@ function md_test_setup(bool $reset, bool $syncSv = false, bool $ignoreOthers = f
             if ($mode === 'own') foreach (['svmembers', 'svressorts'] as $t) if (md_table_exists($t)) $pdo->exec("DROP TABLE `$t`");
             $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
             foreach (glob(MD_STORAGE_DIR . '/photos/*') ?: [] as $f) @unlink($f);
-            $log[] = $mode === 'own' ? 'Alte Testdaten gelöscht.' : 'Alte Testdaten der Mitgliederverwaltung gelöscht (die Tabellen der Sitzungsverwaltung bleiben unverändert).';
+            $log[] = $mode === 'own' ? 'Alte Testdaten gelöscht.' : 'Alte Testdaten von MISS gelöscht (die Tabellen der Sitzungsverwaltung bleiben unverändert).';
             $mode = md_ts_mode();
         }
         $log = array_merge($log, md_ts_schema());

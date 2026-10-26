@@ -10,7 +10,7 @@ In `config.php`:
 define('MD_MAIL_TRANSPORT', 'smtp');       // 'log' (Demo) | 'mail' (PHP mail()) | 'smtp'
 define('MD_SMTP_HOST', 'smtp.example.org'); define('MD_SMTP_PORT', 587); define('MD_SMTP_SECURE', 'tls'); // tls | ssl | none
 define('MD_SMTP_USER', '…');               define('MD_SMTP_PASS', '…');
-define('MD_PUBLIC_URL', 'https://verein.example.org/Mitgliederverwaltung');   // für Links in Mails
+define('MD_PUBLIC_URL', 'https://verein.example.org/MISS');   // für Links in Mails
 ```
 
 - **Demo/lokal:** `log` schreibt die Nachrichten als `.eml`-Dateien nach `storage/mail/` (es wird nichts verschickt; zum Ansehen mit einem Mailprogramm öffnen).

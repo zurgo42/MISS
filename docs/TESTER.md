@@ -1,6 +1,6 @@
 # Anleitung für Tester
 
-Vielen Dank für deine Hilfe! Du testest die **Mitgliederverwaltung** eines Vereins. Alles in diesem System ist **erfunden**: Namen, Adressen, Beträge. Bitte gib **keine echten personenbezogenen Daten** ein und behandle das System vertraulich.
+Vielen Dank für deine Hilfe! Du testest die **MISS** (Mitglieder-Informationssystem) eines Vereins. Alles in diesem System ist **erfunden**: Namen, Adressen, Beträge. Bitte gib **keine echten personenbezogenen Daten** ein und behandle das System vertraulich.
 
 ## Anmelden
 1. Adresse und Zugangsdaten des Verzeichnisschutzes bekommst du vom Projektleiter.

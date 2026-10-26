@@ -1,6 +1,6 @@
 <?php
 /**
- * install.php – richtet die Mitgliederverwaltung in einer bestehenden MySQL-Datenbank ein (gemeinsam mit der Sitzungsverwaltung).
+ * install.php – richtet MISS in einer bestehenden MySQL-Datenbank ein (gemeinsam mit der Sitzungsverwaltung).
  *
  *   php tools/install.php --check     nur prüfen, nichts schreiben
  *   php tools/install.php             md_*-Tabellen anlegen, Standard-Funktionen und Einstellungen eintragen

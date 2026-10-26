@@ -10,10 +10,10 @@ require_once $md_config;
 
 if (!defined('MD_SV_MODE') || MD_SV_MODE !== 'standalone') {
     http_response_code(503);
-    exit('Die Mitgliederverwaltung läuft nur, wenn die Sitzungsverwaltung im Standalone-Betrieb arbeitet (MD_SV_MODE). Im Adapterbetrieb führt die Tabelle "berechtigte".');
+    exit('MISS läuft nur, wenn die Sitzungsverwaltung im Standalone-Betrieb arbeitet (MD_SV_MODE). Im Adapterbetrieb führt die Tabelle "berechtigte".');
 }
 
-// Basis-Pfad der Anwendung (z. B. "/Mitgliederverwaltung" unter XAMPP). Kann in config.php mit MD_BASE_URL festgelegt werden.
+// Basis-Pfad der Anwendung (z. B. "/MISS" unter XAMPP). Kann in config.php mit MD_BASE_URL festgelegt werden.
 if (!defined('MD_BASE_URL')) {
     $root = str_replace('\\', '/', (string)realpath(__DIR__ . '/..'));
     $doc = str_replace('\\', '/', (string)realpath($_SERVER['DOCUMENT_ROOT'] ?? ''));

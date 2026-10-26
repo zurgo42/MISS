@@ -1,6 +1,6 @@
 # SEPA-Lastschrift
 
-Der Verein zieht Beiträge per Basislastschrift (SEPA Core) ein. Die Mitgliederverwaltung führt die Mandate, bildet daraus Einzugsläufe und erzeugt die **pain.008-Datei** für das Online-Banking. Sie bucht nichts selbst bei der Bank: Die Datei wird im Banking hochgeladen.
+Der Verein zieht Beiträge per Basislastschrift (SEPA Core) ein. MISS führt die Mandate, bildet daraus Einzugsläufe und erzeugt die **pain.008-Datei** für das Online-Banking. Sie bucht nichts selbst bei der Bank: Die Datei wird im Banking hochgeladen.
 
 ## Einrichtung (einmalig)
 

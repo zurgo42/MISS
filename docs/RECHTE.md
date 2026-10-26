@@ -1,12 +1,12 @@
 # Funktionen und Rechte im Sitzungstool
 
-Die Mitgliederverwaltung führt die **Funktionen mit Zeitraum** (`md_member_functions`) und gleicht daraus die Rechte der
+MISS führt die **Funktionen mit Zeitraum** (`md_member_functions`) und gleicht daraus die Rechte der
 Sitzungsverwaltung ab (`svmembers.aktiv`, `svmembers.funktion`, `svmembers.role`).
 
 ## Betriebsart
 
 Nur im **Standalone-Betrieb** der Sitzungsverwaltung (`svmembers` ist führend). Im Adapterbetrieb (`MEMBER_SOURCE = 'berechtigte'`,
-Tabelle `berechtigte` führend) bleibt die Mitgliederverwaltung gesperrt: `MD_SV_MODE` muss `'standalone'` sein, sonst antwortet jede Seite mit 503.
+Tabelle `berechtigte` führend) bleibt MISS gesperrt: `MD_SV_MODE` muss `'standalone'` sein, sonst antwortet jede Seite mit 503.
 
 **Folge für die Sitzungsverwaltung:** Im Adminbereich der Sitzungsverwaltung (`process_admin.php`) sollten `aktiv` und `funktion` dann nicht mehr
 von Hand geändert werden. Der nächste Abgleich würde sie wieder überschreiben (nur bei Mitgliedern mit Funktionszuordnung).
@@ -32,7 +32,7 @@ von Hand geändert werden. Der nächste Abgleich würde sie wieder überschreibe
 2. Täglich per Cronjob, damit Beginn und Ende von Ämtern von selbst wirken:
 
 ```
-10 0 * * *  php /pfad/zur/mitgliederverwaltung/tools/sync_rights.php
+10 0 * * *  php /pfad/zu/miss/tools/sync_rights.php
 ```
 
 `php tools/sync_rights.php --dry-run` zeigt nur, was sich ändern würde.
@@ -44,14 +44,14 @@ und dass der Demo-Stand mit den Werten der Sitzungsverwaltung übereinstimmt. De
 
 ## Offen
 
-- Die Sitzungsverwaltung kann `aktiv`/`funktion` im Admin schreibgeschützt anzeigen, wenn die Mitgliederverwaltung aktiv ist.
+- Die Sitzungsverwaltung kann `aktiv`/`funktion` im Admin schreibgeschützt anzeigen, wenn MISS aktiv ist.
 - Ob `default_aktiv` = 0 für Mitglieder ohne Funktion passt, bitte anhand des Ist-Zustands in der Sitzungsverwaltung prüfen.
 
 ---
 
-# Rechte in der Mitgliederverwaltung selbst
+# Rechte in MISS selbst
 
-Unabhängig vom Abgleich nach `svmembers` (oben) regelt eine **einstellbare Tabelle** (`md_permissions`, Seite *Einstellungen*), wer in der Mitgliederverwaltung was darf.
+Unabhängig vom Abgleich nach `svmembers` (oben) regelt eine **einstellbare Tabelle** (`md_permissions`, Seite *Einstellungen*), wer in MISS was darf.
 
 | Bereich | Stufen | Bedeutung |
 |---|---|---|

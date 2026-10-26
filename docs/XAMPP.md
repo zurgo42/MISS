@@ -1,25 +1,25 @@
 # Lokale Einrichtung unter Windows mit XAMPP
 
 Voraussetzung: XAMPP mit Apache und MySQL läuft, die Sitzungsverwaltung liegt in `C:\xampp\htdocs\Sitzungsverwaltung`, Git ist installiert.
-Die Mitgliederverwaltung kommt **daneben** und nutzt **dieselbe Datenbank**:
+MISS kommt **daneben** und nutzt **dieselbe Datenbank**:
 
 ```
 C:\xampp\htdocs\Sitzungsverwaltung
-C:\xampp\htdocs\Mitgliederverwaltung      <- neu
+C:\xampp\htdocs\MISS      <- neu
 ```
 
 ## 1. Code holen
 
 ```
 cd C:\xampp\htdocs
-git clone https://github.com/zurgo42/Mitgliederverwaltung.git Mitgliederverwaltung
+git clone https://github.com/zurgo42/Mitgliederverwaltung.git MISS
 ```
 (Wenn der Ordner schon Dateien enthält: den Ordner umbenennen und neu klonen, die eigenen Dateien danach prüfen.)
 
 ## 2. Konfiguration
 
 ```
-cd Mitgliederverwaltung
+cd MISS
 copy config.example.php config.php
 ```
 In `config.php` eintragen:
@@ -61,13 +61,13 @@ Das Skript bricht ab, sobald `svmembers` auch andere Mitglieder enthält, und ve
 
 ## 5. Öffnen
 
-`http://localhost/Mitgliederverwaltung/login.php` – Figur wählen. Das Dashboard liegt unter `index.php`.
+`http://localhost/MISS/login.php` – Figur wählen. Das Dashboard liegt unter `index.php`.
 
 ## Anmeldung ohne Demo-Modus
 
-Mit `MD_DEMO_MODE=false` liest die Mitgliederverwaltung `$_SESSION['member_id']` aus der Sitzung der Sitzungsverwaltung. Beide Anwendungen
+Mit `MD_DEMO_MODE=false` liest MISS `$_SESSION['member_id']` aus der Sitzung der Sitzungsverwaltung. Beide Anwendungen
 müssen dafür auf derselben Domain laufen und denselben Session-Cookie teilen (`session.cookie_path = '/'`, siehe `docs/session-cookie-configuration.md`
-der Sitzungsverwaltung). Erst in der Sitzungsverwaltung anmelden, dann `http://localhost/Mitgliederverwaltung/` öffnen.
+der Sitzungsverwaltung). Erst in der Sitzungsverwaltung anmelden, dann `http://localhost/MISS/` öffnen.
 
 ## Nach einem Update
 

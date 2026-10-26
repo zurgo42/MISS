@@ -1,4 +1,4 @@
-# Mitgliederverwaltung: keine Verzeichnislisten, Konfiguration nicht ausliefern
+# MISS – Mitglieder-Informationssystem: keine Verzeichnislisten, Konfiguration nicht ausliefern
 Options -Indexes
 <FilesMatch "^(config(\.example)?\.php|.*\.(sql|md|json|sqlite|csv))$">
     Require all denied

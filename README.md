@@ -1,6 +1,6 @@
-# Mitgliederverwaltung
+# MISS – Mitglieder-Informationssystem
 
-Mitgliederdaten aus Sicht des Mitglieds. Ergänzt die [Sitzungsverwaltung](https://github.com/zurgo42/Sitzungsverwaltung):
+MISS ist das **Mitglieder-Informations- und Service-System** und gehört zu einer Familie: **MISS** (Mitglieder), **KONA** (Sitzungsverwaltung: Konferenz- und Antragstool) und **VERA** (Versammlungsorganisation). Mitgliederdaten aus Sicht des Mitglieds. Ergänzt die [Sitzungsverwaltung](https://github.com/zurgo42/Sitzungsverwaltung):
 gleiche Datenbank, gleiche Mitgliedertabelle (`svmembers`), gleiche Figuren in den Demo-Daten, gleiche Farben.
 
 ## Was schon da ist
@@ -37,14 +37,14 @@ Schritt für Schritt in [docs/XAMPP.md](docs/XAMPP.md). Kurzfassung:
 
 ```
 cd C:\xampp\htdocs
-git clone https://github.com/zurgo42/Mitgliederverwaltung.git Mitgliederverwaltung
-cd Mitgliederverwaltung
+git clone https://github.com/zurgo42/Mitgliederverwaltung.git MISS
+cd MISS
 copy config.example.php config.php        (Datenbankzugang eintragen)
 C:\xampp\php\php.exe tools\install.php --check
 C:\xampp\php\php.exe tools\install.php
 C:\xampp\php\php.exe tools\demo_load.php      (nur wenn die Demo-Mitglieder der Sitzungsverwaltung in der Datenbank sind)
 ```
-Dann `http://localhost/Mitgliederverwaltung/login.php`.
+Dann `http://localhost/MISS/login.php`.
 
 ## Demo starten (ohne MySQL, nur SQLite)
 

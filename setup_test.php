@@ -42,7 +42,7 @@ if ($creds) {
 }
 $f = fn(string $act, string $label, string $extra = '') => '<form method="post" style="margin:12px 0">' . md_csrf_field() . '<input type="hidden" name="token" value="' . h($given) . '"><input type="hidden" name="action" value="' . $act . '">' . $extra . '<button>' . $label . '</button></form>';
 $opts = '<p><label><input type="checkbox" name="sync_sv" value="1"> Rollen und Admin-Kennzeichen der Demo-Figuren in <code>svmembers</code> angleichen (nur bei gemeinsamer Datenbank)</label><br><label><input type="checkbox" name="ignore_others" value="1"> andere Konten in <code>svmembers</code> unberührt lassen (eigene Testkonten)</label></p>';
-echo '<h2>Neue Einrichtung</h2><p>Legt die Tabellen der Mitgliederverwaltung an und füllt sie mit den Demo-Figuren. Ist <code>svmembers</code> schon vorhanden (Demo der Sitzungsverwaltung), bleibt sie unverändert; es werden nur die fehlenden Demo-Mitglieder DEMO0013 ff. ergänzt.</p>'
+echo '<h2>Neue Einrichtung</h2><p>Legt die Tabellen von MISS an und füllt sie mit den Demo-Figuren. Ist <code>svmembers</code> schon vorhanden (Demo der Sitzungsverwaltung), bleibt sie unverändert; es werden nur die fehlenden Demo-Mitglieder DEMO0013 ff. ergänzt.</p>'
     . $f('setup', 'Einrichten', $opts)
     . '<h2>Nach einem Software-Update</h2>' . $f('update', 'Datenbank aktualisieren')
     . '<h2>Von vorn beginnen</h2>' . $f('reset', 'Alles löschen und neu aufbauen', '<input name="confirm" placeholder="ZURÜCKSETZEN eintippen"> ' . $opts)

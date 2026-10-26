@@ -315,7 +315,7 @@ foreach ($subjects as [$code, $label]) {
     echo '</tr>';
 }
 echo '</tbody></table></div><p><button>Rechtetabelle speichern</button></p></form>';
-echo $acc('perm', 'Rechte in der Mitgliederverwaltung', ob_get_clean());
+echo $acc('perm', 'Rechte in MISS', ob_get_clean());
 
 // ---- Standard-Sichtbarkeit
 $defaults = [];

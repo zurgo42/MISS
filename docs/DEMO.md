@@ -1,6 +1,6 @@
 # Demo mit den 12 Figuren (Windows/XAMPP)
 
-Es gibt zwei Wege. Beide laden die Demo der Sitzungsverwaltung (12 Figuren `DEMO0001`–`DEMO0012`, Passwort `test123`) und danach die Demo-Daten der Mitgliederverwaltung.
+Es gibt zwei Wege. Beide laden die Demo der Sitzungsverwaltung (12 Figuren `DEMO0001`–`DEMO0012`, Passwort `test123`) und danach die Demo-Daten von MISS.
 
 | | Weg A: vorhandene Datenbank | Weg B: eigene Demo-Datenbank |
 |---|---|---|
@@ -27,13 +27,13 @@ In der vorhandenen Sitzungsverwaltung (z. B. `D:\xampp\htdocs\Sitzungsverwaltung
 
 Danach stehen die 12 Figuren in `svmembers` (z. B. `max@example.com` / `test123`). Einzelne Testkonten außerhalb der Demo (z. B. ein Super-Admin) können stehen bleiben.
 
-## A2. Mitgliederverwaltung einrichten (im Ordner `D:\xampp\htdocs\Mitgliederverwaltung`)
+## A2. MISS einrichten (im Ordner `D:\xampp\htdocs\MISS`)
 
 `config.php`: `MD_DB_DRIVER` `'mysql'`, `MD_DB_HOST` `'localhost'`, `MD_DB_USER` `'root'`, `MD_DB_PASS` `''`, `MD_DB_NAME` wie in der Sitzungsverwaltung,
 `MD_DEMO_MODE` `true`, `MD_SV_MODE` `'standalone'`, `MD_LOGIN_URL` `'/Sitzungsverwaltung/login.php'`.
 
 ```
-cd /d D:\xampp\htdocs\Mitgliederverwaltung
+cd /d D:\xampp\htdocs\MISS
 D:\xampp\php\php.exe tools\install.php --check
 D:\xampp\php\php.exe tools\install.php
 D:\xampp\php\php.exe tools\demo_load.php
@@ -58,7 +58,7 @@ D:\xampp\php\php.exe tools\sync_rights.php --dry-run
 muss `0 Mitglied(er) würden angepasst` melden: Die Demo-Funktionen passen zu den Rechten (`aktiv`, `funktion`, `role`) der Sitzungsverwaltung.
 Vor `demo_load.php` ist dieser Test noch nicht aussagekräftig, weil es noch keine Funktionszuordnungen gibt.
 
-Dann `http://localhost/Mitgliederverwaltung/login.php` und eine Figur wählen. Zurücksetzen: `tools\demo_load.php --reset` (mit `--ignore-others`, falls nötig) leert nur die `md_`-Tabellen und lädt sie neu.
+Dann `http://localhost/MISS/login.php` und eine Figur wählen. Zurücksetzen: `tools\demo_load.php --reset` (mit `--ignore-others`, falls nötig) leert nur die `md_`-Tabellen und lädt sie neu.
 
 ---
 
@@ -99,19 +99,19 @@ D:\xampp\php\php.exe tools\demo_build.php
 Dann im Browser `http://localhost/Sitzungsverwaltung_demo/tools/demo_import.php`, System-Admin-Passwort eingeben und bestätigen.
 Ergebnis: 12 Mitglieder `DEMO0001` bis `DEMO0012` (E-Mail `max@example.com` usw., Passwort `test123`). Test: `http://localhost/Sitzungsverwaltung_demo/` mit `max@example.com` anmelden.
 
-## 5. Zweite Kopie der Mitgliederverwaltung
+## 5. Zweite Kopie von MISS
 
 ```
 cd /d D:\xampp\htdocs
-git clone https://github.com/zurgo42/Mitgliederverwaltung.git Mitgliederverwaltung_demo
-copy Mitgliederverwaltung\config.php Mitgliederverwaltung_demo\config.php
+git clone https://github.com/zurgo42/Mitgliederverwaltung.git MISS_demo
+copy MISS\config.php MISS_demo\config.php
 ```
-In `Mitgliederverwaltung_demo\config.php` ändern: `MD_DB_NAME` = `'md_demo'`, `MD_LOGIN_URL` = `'/Sitzungsverwaltung_demo/login.php'`, `MD_DEMO_MODE` = `true`, `MD_SV_MODE` = `'standalone'`.
+In `MISS_demo\config.php` ändern: `MD_DB_NAME` = `'md_demo'`, `MD_LOGIN_URL` = `'/Sitzungsverwaltung_demo/login.php'`, `MD_DEMO_MODE` = `true`, `MD_SV_MODE` = `'standalone'`.
 
-## 6. Mitgliederverwaltung einrichten und Demo-Daten laden
+## 6. MISS einrichten und Demo-Daten laden
 
 ```
-cd /d D:\xampp\htdocs\Mitgliederverwaltung_demo
+cd /d D:\xampp\htdocs\MISS_demo
 D:\xampp\php\php.exe tools\install.php --check
 D:\xampp\php\php.exe tools\install.php
 D:\xampp\php\php.exe tools\demo_load.php
@@ -121,7 +121,7 @@ Die letzte Zeile muss `0 Mitglied(er) würden angepasst` melden: Die Demo-Funkti
 
 ## 7. Ansehen
 
-`http://localhost/Mitgliederverwaltung_demo/login.php` → Figur wählen (Max Mustermann, Hans Lehmann, Mia Technik …).
+`http://localhost/MISS_demo/login.php` → Figur wählen (Max Mustermann, Hans Lehmann, Mia Technik …).
 Admins sind Max, Julia, Thomas, Sabine und Mia; sie sehen im Dashboard den Bearbeitungsmodus für andere Mitglieder.
 
 Zurücksetzen: `D:\xampp\php\php.exe tools\demo_load.php --reset` leert nur die `md_`-Tabellen und lädt sie neu.

@@ -26,7 +26,7 @@ Was geschieht je Buchungszeile:
 | Haben auf dem Debitor (Zahlungseingang) mit passender Rechnungsnummer im Belegfeld/Text und gleichem Betrag | offene Forderung wird als bezahlt vermerkt (**sicher**, vorangekreuzt) |
 | … ohne Rechnungsnummer, aber genau eine offene Forderung mit gleichem Betrag | dieselbe Forderung als **Vorschlag** |
 | … sonst | neue **bezahlte Buchung** (Art aus Kontenregel, sonst Voreinstellung) |
-| Soll auf dem Debitor (Rechnung) | nur wenn „Forderungen übernehmen“ gewählt: neue offene Forderung (Rechnungen entstehen sonst in der Mitgliederverwaltung) |
+| Soll auf dem Debitor (Rechnung) | nur wenn „Forderungen übernehmen“ gewählt: neue offene Forderung (Rechnungen entstehen sonst in MISS) |
 | Soll auf dem Kreditor | bezahlte Zahlung an das Mitglied (Art aus Kontenregel, sonst Voreinstellung) |
 | Haben auf dem Kreditor | nicht übernommen (Verbindlichkeit, wird mit der Zahlung gebucht) |
 | kein Personenkonto bekannt | Mitgliedsnummer eintragen oder – wenn eine Rechnungsnummer im Text steht – Vorschlag |
@@ -42,4 +42,4 @@ Die Seite des Personenkontos ergibt sich aus Soll/Haben und der Stellung als Kon
 
 ## Nicht enthalten
 
-Export aus der Mitgliederverwaltung nach DATEV (Buchungsstapel für den Steuerberater), Teilzahlungen, Übernahme von Stammdaten (Debitoren-/Kreditorenstamm). Das Format und die Kontenrahmen unterscheiden sich je nach Steuerberater: Bitte mit einem echten Export testen und die Spalten-/Kontenregeln anpassen.
+Export aus MISS nach DATEV (Buchungsstapel für den Steuerberater), Teilzahlungen, Übernahme von Stammdaten (Debitoren-/Kreditorenstamm). Das Format und die Kontenrahmen unterscheiden sich je nach Steuerberater: Bitte mit einem echten Export testen und die Spalten-/Kontenregeln anpassen.

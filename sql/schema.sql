@@ -1,4 +1,4 @@
--- Mitgliederverwaltung: Tabellen mit Präfix md_ (Mitgliederdaten)
+-- MISS: Tabellen mit Präfix md_ (Mitgliederdaten)
 -- Anker ist svmembers (Sitzungsverwaltung): md_*.member_id verweist auf svmembers.member_id.
 -- Bewusst portables SQL (MySQL/MariaDB produktiv, SQLite für lokale Demo):
 -- keine ENUMs, keine Inline-INDEX-Klauseln. Wertelisten stehen im Kommentar.
@@ -224,7 +224,7 @@ CREATE TABLE IF NOT EXISTS md_settings (
     description VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 13. Rechte in der Mitgliederverwaltung: je Funktion (oder '*' = alle Mitglieder) und Bereich eine Stufe.
+-- 13. Rechte in MISS: je Funktion (oder '*' = alle Mitglieder) und Bereich eine Stufe.
 -- Wirksam ist die höchste Stufe über alle aktuell gültigen Funktionen des Mitglieds; svmembers.is_admin darf immer alles.
 CREATE TABLE IF NOT EXISTS md_permissions (
     subject VARCHAR(10) NOT NULL,                  -- Funktionscode (Vo, FVo, GF, MB, Ka, FP, ...) oder '*'

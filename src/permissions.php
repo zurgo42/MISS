@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Rechte in der Mitgliederverwaltung (einstellbare Tabelle md_permissions).
+ * Rechte in MISS (einstellbare Tabelle md_permissions).
  *
  *  - Je Funktion (oder '*' für alle Mitglieder) und Bereich eine Stufe: none < view < edit.
  *  - Wirksam ist die höchste Stufe über alle aktuell gültigen Funktionen (nicht nur über die mit dem höchsten Sitzungstool-Level).
