@@ -6,12 +6,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     md_csrf_check();
     $act = $_POST['action'] ?? '';
     $err = '';
+    $stay = false;   // bei einer fehlgeschlagenen Passwortänderung bleiben die Eingaben stehen
     if ($act === 'password') {
         $new = (string)($_POST['password'] ?? '');
         if (!empty($me['password_hash']) && !password_verify((string)($_POST['current'] ?? ''), $me['password_hash'])) $err = 'Das aktuelle Passwort stimmt nicht.';
         elseif ($new !== (string)($_POST['password2'] ?? '')) $err = 'Die beiden neuen Eingaben stimmen nicht überein.';
         else $err = md_password_set($mid, $new);
         md_flash($err ?: 'Passwort geändert.', $err ? 'err' : 'ok');
+        $stay = $err !== '';
     } elseif ($act === 'lists') {
         $mine = md_lists_of_member($mid);
         $want = array_map('intval', (array)($_POST['subscribed'] ?? []));
@@ -31,18 +33,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             md_flash('Gespeichert.');
         }
     }
-    header('Location: ' . md_url('account.php'));
-    exit;
+    if (!$stay) {
+        header('Location: ' . md_url('account.php'));
+        exit;
+    }
 }
+$keep = !empty($stay);
 $ch = md_one('SELECT letter_channel FROM md_profiles WHERE member_id = ?', [$mid])['letter_channel'] ?? 'post';
+header('Cache-Control: no-store');
 md_header('Mein Zugang', $me);
 md_show_flash();
 echo '<h1>Mein Zugang</h1><section class="card"><h2>Passwort ändern</h2>';
 if (empty($me['password_hash'])) echo '<p class="muted">Du hast noch kein eigenes Passwort. Du kannst jetzt eins festlegen.</p>';
 echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="password">'
-    . (empty($me['password_hash']) ? '' : md_password_field('current', 'Aktuelles Passwort', 'current-password'))
-    . md_password_field('password', 'Neues Passwort (mindestens ' . MD_PASSWORD_MIN . ' Zeichen)', 'new-password')
-    . md_password_field('password2', 'Wiederholen', 'new-password') . '<button>Passwort speichern</button></form></section>';
+    . (empty($me['password_hash']) ? '' : md_password_field('current', 'Aktuelles Passwort', 'current-password', false, $keep ? (string)($_POST['current'] ?? '') : ''))
+    . md_password_field('password', 'Neues Passwort', 'new-password', false, $keep ? (string)($_POST['password'] ?? '') : '') . md_password_rules_html()
+    . md_password_field('password2', 'Wiederholen', 'new-password', false, $keep ? (string)($_POST['password2'] ?? '') : '') . '<button>Passwort speichern</button></form></section>';
 echo '<section class="card"><h2>Rechnungen und Mahnungen</h2><p class="muted">Wie sollen wir dir Rechnungen und Zahlungserinnerungen zustellen? Die E-Mail geht an ' . h($me['email']) . '. Die Unterlagen siehst du auch jederzeit im Dashboard.</p>'
     . '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="channel"><label class="block"><input type="radio" name="letter_channel" value="post"' . ($ch === 'post' ? ' checked' : '') . '> per Post</label>'
     . '<label class="block"><input type="radio" name="letter_channel" value="mail"' . ($ch === 'mail' ? ' checked' : '') . '> per E-Mail</label><button>Speichern</button></form></section>';

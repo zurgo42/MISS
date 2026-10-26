@@ -9,7 +9,8 @@ declare(strict_types=1);
 
 const MD_LOGIN_MAX_FAILS = 5;        // Fehlversuche je Kennung ...
 const MD_LOGIN_WINDOW_MIN = 15;      // ... innerhalb dieser Minuten
-const MD_PASSWORD_MIN = 10;
+const MD_PASSWORD_MIN = 8;
+const MD_MAGIC_MINUTES = 15;        // Gültigkeit des Anmeldelinks (ohne Passwort)
 
 function md_login_ident_hash(string $ident): string
 {
@@ -68,6 +69,16 @@ function md_logout(): void
     if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
 }
 
+/** Was die Prüfung von einem neuen Passwort verlangt (Anzeige im Formular; die Prüfung selbst steht in md_password_error). */
+function md_password_rules(): array
+{
+    return [
+        'len' => 'mindestens ' . MD_PASSWORD_MIN . ' Zeichen',
+        'mix' => 'nicht nur ein wiederholtes Zeichen und kein gängiges einfaches Passwort (z. B. „passwort123“)',
+        'who' => 'nicht gleich E-Mail-Adresse, Mitgliedsnummer oder Name',
+    ];
+}
+
 function md_password_error(string $pw, array $m): string
 {
     if (mb_strlen($pw) < MD_PASSWORD_MIN) return 'Das Passwort muss mindestens ' . MD_PASSWORD_MIN . ' Zeichen lang sein.';
@@ -94,21 +105,22 @@ function md_password_set(int $member, string $pw, ?int $by = null): string
 // ---------------------------------------------------------------- Einmal-Links
 
 /** Erzeugt einen Link-Token (Klartext nur hier; gespeichert wird der Hash). Frühere offene Token des Mitglieds werden ungültig. */
-function md_token_create(int $member, string $kind, int $hours): string
+function md_token_create(int $member, string $kind, int $minutes): string
 {
-    md_exec('UPDATE md_login_tokens SET used_at = ? WHERE member_id = ? AND used_at IS NULL', [md_now(), $member]);
+    // frühere offene Links derselben Art werden ungültig (Anmeldelinks und Passwort-Links stören sich nicht)
+    md_exec('UPDATE md_login_tokens SET used_at = ? WHERE member_id = ? AND used_at IS NULL AND ' . ($kind === 'magic' ? "kind = 'magic'" : "kind <> 'magic'"), [md_now(), $member]);
     $t = bin2hex(random_bytes(24));
     md_exec('INSERT INTO md_login_tokens (member_id, token_hash, kind, created_at, expires_at) VALUES (?,?,?,?,?)',
-        [$member, hash('sha256', $t), $kind, md_now(), date('Y-m-d H:i:s', time() + $hours * 3600)]);
+        [$member, hash('sha256', $t), $kind, md_now(), date('Y-m-d H:i:s', time() + $minutes * 60)]);
     return $t;
 }
 
 /** Gültiger, unbenutzter Token oder null. */
-function md_token_find(string $token): ?array
+function md_token_find(string $token, array $kinds = ['invite', 'reset']): ?array
 {
     if (!preg_match('/^[0-9a-f]{48}$/', $token)) return null;
     $r = md_one('SELECT * FROM md_login_tokens WHERE token_hash = ? AND used_at IS NULL AND expires_at >= ?', [hash('sha256', $token), md_now()]);
-    return $r ?: null;
+    return $r && in_array($r['kind'], $kinds, true) ? $r : null;   // ein Anmeldelink darf nie ein Passwort setzen und umgekehrt
 }
 
 function md_public_url(string $path): string
@@ -128,10 +140,14 @@ function md_login_send_link(int $member, string $kind, ?int $by = null): string
     if (!$m || !$to) return 'Keine gültige E-Mail-Adresse beim Mitglied.';
     $club = md_org();
     $name = $club['name'] ?: MD_CLUB_NAME;
-    $hours = $kind === 'invite' ? 168 : 2;
-    $token = md_token_create($member, $kind, $hours);
-    $link = md_public_url('reset.php?token=' . $token);
-    if ($kind === 'invite') {
+    $minutes = $kind === 'invite' ? 168 * 60 : ($kind === 'magic' ? MD_MAGIC_MINUTES : 120);
+    $token = md_token_create($member, $kind, $minutes);
+    $link = md_public_url(($kind === 'magic' ? 'magic.php' : 'reset.php') . '?token=' . $token);
+    if ($kind === 'magic') {
+        [$factor] = md_magic_factor($member);
+        $subj = "Dein Anmeldelink – $name";
+        $body = "Hallo {$m['first_name']},\n\nmit diesem Link meldest du dich ohne Passwort an (" . MD_MAGIC_MINUTES . " Minuten gültig, nur einmal verwendbar):\n\n$link\n\nZur Sicherheit fragen wir dort noch nach " . ($factor === 'birthdate' ? 'deinem Geburtsdatum' : 'deinem Spitznamen') . ".\n\nWenn du den Link nicht angefordert hast, kannst du diese Nachricht ignorieren; ohne die zusätzliche Angabe kommt niemand hinein.";
+    } elseif ($kind === 'invite') {
         $subj = "Dein Zugang zu den Mitgliederdaten – $name";
         $body = "Hallo {$m['first_name']},\n\nfür dich wurde ein Zugang zu den Mitgliederdaten von $name eingerichtet. Mit diesem Link legst du dein Passwort fest (7 Tage gültig, nur einmal verwendbar):\n\n$link\n\nDanach meldest du dich mit deiner E-Mail-Adresse oder Mitgliedsnummer ({$m['membership_number']}) an.\n";
     } else {
@@ -154,6 +170,65 @@ function md_login_request_reset(string $ident): void
     $recent = (int)md_one('SELECT COUNT(*) c FROM md_login_tokens WHERE member_id = ? AND created_at >= ?', [$m['member_id'], date('Y-m-d H:i:s', time() - 3600)])['c'];
     if ($recent >= 3) return;
     md_login_send_link((int)$m['member_id'], 'reset');
+}
+
+// ---------------------------------------------------------------- Anmeldelink (ohne Passwort)
+
+/** Zweiter Faktor des Anmeldelinks: der Spitzname, wenn vorhanden, sonst das Geburtsdatum. Ergebnis [Art, Wert] oder [null, null]. */
+function md_magic_factor(int $member): array
+{
+    $p = md_one('SELECT nickname, birthdate FROM md_profiles WHERE member_id = ?', [$member]);
+    $n = trim((string)($p['nickname'] ?? ''));
+    if ($n !== '') return ['nickname', $n];
+    $b = md_parse_date((string)($p['birthdate'] ?? ''));
+    return $b ? ['birthdate', $b] : [null, null];
+}
+
+/**
+ * Anmeldelink anfordern. Die Antwort an die Person ist immer gleich (verrät nichts über Konten); ein Mitglied ohne Spitznamen und
+ * Geburtsdatum bekommt stattdessen eine Mail mit dem Hinweis, dass diese Anmeldeart nicht angeboten werden kann. Höchstens 3 je Stunde.
+ */
+function md_magic_request(string $ident): void
+{
+    $m = md_login_find($ident);
+    if (!$m || !md_mail_address_of((int)$m['member_id'])) return;
+    $id = (int)$m['member_id'];
+    $recent = (int)md_one("SELECT COUNT(*) c FROM md_login_tokens WHERE member_id = ? AND kind = 'magic' AND created_at >= ?", [$id, date('Y-m-d H:i:s', time() - 3600)])['c']
+        + (int)md_one('SELECT COUNT(*) c FROM md_login_attempts WHERE ident_hash = ? AND attempt_at >= ?', [md_login_ident_hash('magichint|' . $id), date('Y-m-d H:i:s', time() - 3600)])['c'];
+    if ($recent >= 3) return;
+    if (md_magic_factor($id)[0] === null) {
+        md_exec('INSERT INTO md_login_attempts (ident_hash, attempt_at) VALUES (?,?)', [md_login_ident_hash('magichint|' . $id), md_now()]);
+        md_mail_now($id, (string)md_mail_address_of($id), 'Anmeldelink nicht möglich – ' . (md_org()['name'] ?: MD_CLUB_NAME),
+            "Hallo {$m['first_name']},\n\nDu hast einen Anmeldelink (Anmeldung ohne Passwort) angefordert. Das geht nur, wenn in deinem Profil ein Spitzname oder ein Geburtsdatum hinterlegt ist, weil wir danach zur Sicherheit fragen. Beides fehlt bei dir.\n\nBitte melde dich mit deinem Passwort an (Link „Passwort vergessen“, falls du keins hast) und trage unter Persönliche Daten einen Spitznamen oder dein Geburtsdatum ein." . md_mail_footer(), 'magic');
+        return;
+    }
+    md_login_send_link($id, 'magic');
+}
+
+/** Prüft den Anmeldelink samt zweitem Faktor. Gibt [member|null, Fehlertext] zurück; nach 5 falschen Angaben wird der Link ungültig. */
+function md_magic_verify(string $token, string $answer): array
+{
+    $t = md_token_find($token, ['magic']);
+    if (!$t) return [null, 'Der Link ist ungültig, abgelaufen oder schon verwendet. Bitte einen neuen anfordern.'];
+    $id = (int)$t['member_id'];
+    $key = 'magic|' . $id;
+    $m = md_one('SELECT * FROM svmembers WHERE member_id = ?', [$id]);
+    if (!$m || (int)($m['is_active'] ?? 1) === 0 || str_starts_with((string)$m['membership_number'], 'DEL-')) return [null, 'Der Link ist ungültig, abgelaufen oder schon verwendet. Bitte einen neuen anfordern.'];
+    if (md_login_throttled($key)) {
+        md_exec('UPDATE md_login_tokens SET used_at = ? WHERE token_id = ?', [md_now(), $t['token_id']]);
+        return [null, 'Zu viele falsche Angaben. Der Link ist ungültig geworden. Bitte einen neuen anfordern.'];
+    }
+    [$kind, $val] = md_magic_factor($id);
+    if ($kind === null) return [null, 'Für dieses Konto ist die Anmeldung ohne Passwort nicht möglich. Bitte mit Passwort anmelden.'];
+    $ok = $kind === 'nickname' ? mb_strtolower(trim($answer)) === mb_strtolower($val) : md_parse_date($answer) === $val;
+    if (!$ok) {
+        md_login_fail($key);
+        return [null, $kind === 'nickname' ? 'Der Spitzname stimmt nicht.' : 'Das Geburtsdatum stimmt nicht.'];
+    }
+    md_exec('UPDATE md_login_tokens SET used_at = ? WHERE member_id = ? AND kind = ? AND used_at IS NULL', [md_now(), $id, 'magic']);
+    md_exec('DELETE FROM md_login_attempts WHERE ident_hash = ?', [md_login_ident_hash($key)]);
+    md_log_change($id, 'account', 'Anmeldung', 'per Anmeldelink', $id, 'self');
+    return [$m, ''];
 }
 
 /** Passwort mit Einmal-Link setzen. Gibt [member|null, Fehlertext] zurück. */

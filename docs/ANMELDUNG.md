@@ -10,14 +10,22 @@ MISS hat eine **eigene Anmeldung** (`login.php`). Das Passwort liegt als Hash in
 2. **Anmelden** mit E-Mail-Adresse oder Mitgliedsnummer.
 3. **Passwort vergessen:** `forgot.php` sendet einen Link (2 Stunden gültig). Die Seite antwortet immer gleich, damit keine Adressen ausprobiert werden können; höchstens 3 Links je Stunde.
 4. **Passwort ändern** und Zustellweg für Rechnungen: *Mein Zugang*.
+5. **Anmeldelink (ohne Passwort):** Auf der Anmeldeseite unter „oder ohne Passwort“ Kennung eingeben und „Anmeldelink per E-Mail senden“. Der Link ist **15 Minuten** gültig und nur einmal verwendbar. Nach dem Klick fragt `magic.php` zur Sicherheit nach dem **Spitznamen**, ist keiner eingetragen, nach dem **Geburtsdatum** (TT.MM.JJJJ). Fünf falsche Angaben machen den Link ungültig.
+   - Voraussetzung ist, dass Spitzname oder Geburtsdatum im Profil stehen. Fehlen beide, kommt statt des Links eine Mail mit dem Hinweis, wie man das nachträgt; die Seite antwortet immer gleich, damit man keine Konten ausprobieren kann.
+   - Der Anmeldelink kann kein Passwort setzen und ein Passwort-Link keine Anmeldung auslösen (getrennte Arten); höchstens 3 Anforderungen je Stunde.
 
 ## Schutz
 
-- Passwörter mindestens 10 Zeichen, nicht gleich Mailadresse, Mitgliedsnummer oder Namen, keine Wiederholungen.
+- Passwörter mindestens 8 Zeichen, nicht gleich Mailadresse, Mitgliedsnummer oder Namen, keine Wiederholungen oder gängigen einfachen Muster. Die Anforderungen stehen im Formular (*Passwort festlegen*, *Mein Zugang*) und werden beim Tippen abgehakt.
+- Nach einer fehlerhaften Eingabe bleiben E-Mail-Adresse und Passwort im Formular stehen (mit dem Auge prüfbar); die Seiten werden nicht zwischengespeichert.
 - 5 Fehlversuche je Kennung in 15 Minuten sperren die Anmeldung vorübergehend (gespeichert wird nur ein Hash der Kennung).
 - Links werden nur als Hash gespeichert; ein neuer Link macht den vorherigen ungültig.
 - Gesperrte Zugänge (`is_active = 0`), anonymisierte Datensätze und mehrdeutige Adressen können sich nicht anmelden. Beim Austritt (Stufe 1) werden Passwort und Links gelöscht.
 - Zugriffe auf die Konten (Passwort gesetzt/geändert, Einladung) stehen im Änderungsprotokoll, nie das Passwort selbst.
+
+## Links in E-Mails und Verzeichnisname
+
+Die Adresse in Einladungs-, Passwort- und Anmeldelinks richtet sich nach der Adresse, unter der MISS aufgerufen wird (auch nach dem Umbenennen des Verzeichnisses). **Steht in der `config.php` `MD_PUBLIC_URL` (oder `MD_BASE_URL`), gilt dieser Wert und muss nach einem Umbenennen des Verzeichnisses angepasst werden** – sonst zeigen die Links auf den alten Namen. Ohne diese Einträge muss nichts geändert werden.
 
 ## Einstellung
 

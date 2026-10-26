@@ -16,8 +16,22 @@ if (!defined('MD_SV_MODE') || MD_SV_MODE !== 'standalone') {
 // Basis-Pfad der Anwendung (z. B. "/MISS" unter XAMPP). Kann in config.php mit MD_BASE_URL festgelegt werden.
 if (!defined('MD_BASE_URL')) {
     $root = str_replace('\\', '/', (string)realpath(__DIR__ . '/..'));
-    $doc = str_replace('\\', '/', (string)realpath($_SERVER['DOCUMENT_ROOT'] ?? ''));
-    define('MD_BASE_URL', ($doc !== '' && stripos($root, $doc) === 0) ? rtrim(substr($root, strlen($doc)), '/') : '');
+    $base = null;
+    // Zuerst aus der aufgerufenen Adresse: endet SCRIPT_NAME mit dem Pfad des Skripts unterhalb von MISS (z. B. /MISS/admin/index.php),
+    // ist der Rest der Basispfad. Das stimmt auch bei umbenannten Verzeichnissen, Aliasen und Verknüpfungen auf dem Server.
+    if (PHP_SAPI !== 'cli') {
+        $sf = str_replace('\\', '/', (string)realpath((string)($_SERVER['SCRIPT_FILENAME'] ?? '')));
+        $sn = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+        if ($sf !== '' && $sn !== '' && strpos($sf, $root . '/') === 0) {
+            $rel = substr($sf, strlen($root) + 1);
+            if ($rel !== '' && substr($sn, -strlen($rel) - 1) === '/' . $rel) $base = rtrim(substr($sn, 0, -strlen($rel) - 1), '/');
+        }
+    }
+    if ($base === null) {
+        $doc = str_replace('\\', '/', (string)realpath($_SERVER['DOCUMENT_ROOT'] ?? ''));
+        $base = ($doc !== '' && stripos($root, $doc) === 0) ? rtrim(substr($root, strlen($doc)), '/') : '';
+    }
+    define('MD_BASE_URL', $base);
 }
 function md_url(string $path = ''): string
 {

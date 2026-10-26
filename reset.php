@@ -18,6 +18,7 @@ if ($t && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+header('Cache-Control: no-store');
 md_header('Passwort festlegen');
 echo '<section class="card" style="max-width:26rem;margin:2rem auto"><h1>Passwort festlegen</h1>';
 if (!$t) {
@@ -25,8 +26,8 @@ if (!$t) {
 } else {
     if ($err) echo '<div class="flash err">' . h($err) . '</div>';
     echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="token" value="' . h($token) . '">'
-        . md_password_field('password', 'Neues Passwort (mindestens ' . MD_PASSWORD_MIN . ' Zeichen)', 'new-password', true)
-        . md_password_field('password2', 'Wiederholen', 'new-password') . '<p><button>Passwort speichern</button></p></form>';
+        . md_password_field('password', 'Neues Passwort', 'new-password', true, (string)($_POST['password'] ?? '')) . md_password_rules_html()
+        . md_password_field('password2', 'Wiederholen', 'new-password', false, (string)($_POST['password2'] ?? '')) . '<p><button>Passwort speichern</button></p></form>';
 }
 echo '</section>';
 md_footer();

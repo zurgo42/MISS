@@ -42,6 +42,7 @@ define('MD_MAIL_TRANSPORT', 'log');
 // define('MD_SMTP_HOST', 'smtp.example.org'); define('MD_SMTP_PORT', 587); define('MD_SMTP_SECURE', 'tls'); // tls | ssl | none
 // define('MD_SMTP_USER', ''); define('MD_SMTP_PASS', '');
 // Öffentliche Adresse dieser Anwendung für Links in E-Mails (empfohlen, sonst wird der Host der Anfrage verwendet):
+// Hinweis: Ist dieser Wert gesetzt, gilt er für alle Links in E-Mails. Beim Umbenennen des Verzeichnisses muss er angepasst werden; ohne ihn richten sich die Links nach der aufgerufenen Adresse.
 // define('MD_PUBLIC_URL', 'https://verein.example.org/MISS');
 
 // Testsystem für externe Tester (nur auf einer eigenen Testdatenbank mit erfundenen Daten!). Siehe docs/PRODUKTIV.md.

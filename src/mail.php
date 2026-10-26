@@ -7,7 +7,7 @@ declare(strict_types=1);
  * Absender und Antwortadresse stehen in den Einstellungen (mail.from_email, mail.from_name, mail.reply_to).
  */
 
-const MD_MAIL_KINDS = ['dunning' => 'Mahnung', 'invoice' => 'Rechnung', 'invite' => 'Einladung', 'reset' => 'Passwort', 'receipt' => 'Zuwendungsbestätigung', 'list' => 'Verteiler', 'apply' => 'Anmeldung', 'other' => 'Sonstiges'];
+const MD_MAIL_KINDS = ['dunning' => 'Mahnung', 'invoice' => 'Rechnung', 'invite' => 'Einladung', 'reset' => 'Passwort', 'magic' => 'Anmeldelink', 'receipt' => 'Zuwendungsbestätigung', 'list' => 'Verteiler', 'apply' => 'Anmeldung', 'other' => 'Sonstiges'];
 const MD_MAIL_STATUS = ['queued' => 'wartet', 'sent' => 'versendet', 'failed' => 'fehlgeschlagen', 'cancelled' => 'abgebrochen'];
 
 function md_mail_transport(): string

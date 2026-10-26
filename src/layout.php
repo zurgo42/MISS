@@ -110,6 +110,9 @@ function md_page_js(): string
 (function(){
   function openHash(){var h=location.hash.slice(1);if(!h)return;var e=document.getElementById(h);while(e){if(e.tagName==='DETAILS')e.open=true;e=e.parentElement;}var t=document.getElementById(h);if(t)t.scrollIntoView();}
   openHash();window.addEventListener('hashchange',openHash);
+  document.querySelectorAll('ul.pwrules').forEach(function(ul){var f=ul.closest('form');var i=f&&f.querySelector('input[name=password]');if(!i)return;var min=parseInt(ul.dataset.min,10)||8;var weak=['passwort123','password123','1234567890','qwertzuiop','abcdefghij'];
+    function chk(){var v=i.value,l=ul.querySelector('[data-rule=len]'),m=ul.querySelector('[data-rule=mix]');if(l)l.className=v===''?'':(v.length>=min?'ok':'bad');if(m)m.className=v===''?'':((/^(.)\1+$/.test(v)||weak.indexOf(v.toLowerCase())>=0)?'bad':'ok');}
+    i.addEventListener('input',chk);chk();});
   document.querySelectorAll('main.content table').forEach(function(t){var r=t.rows[0];if(r&&r.cells.length>=4)t.classList.add('wide');var w=document.createElement('div');w.className='tscroll';t.parentNode.insertBefore(w,t);w.appendChild(t);});
   document.querySelectorAll('.pw-eye').forEach(function(b){b.addEventListener('click',function(){var i=b.parentElement.querySelector('input');var show=i.type==='password';i.type=show?'text':'password';b.setAttribute('aria-pressed',show);b.title=show?'Passwort verbergen':'Passwort anzeigen';b.classList.toggle('on',show);});});
   var dm=document.getElementById('darkModeToggle');if(dm){var ic=dm.querySelector('.icon');dm.addEventListener('click',function(){var on=document.documentElement.classList.toggle('dark-mode');document.body.classList.toggle('dark-mode',on);ic.textContent=on?'☀️':'🌙';var v=on?'enabled':'disabled';document.cookie='darkMode='+v+';path=/;max-age=31536000';try{localStorage.setItem('darkMode',v);}catch(e){}});}
@@ -145,10 +148,19 @@ function md_vis_toggle(string $key, array $vmap, string $label = 'im Verzeichnis
 }
 
 /** Passwortfeld mit Auge-Symbol zum Anzeigen. */
-function md_password_field(string $name, string $label, string $autocomplete, bool $autofocus = false): string
+/** Passwortfeld mit Auge. $value füllt das Feld nach einer fehlgeschlagenen Eingabe wieder aus (nur in der Antwort an dieselbe Person). */
+function md_password_field(string $name, string $label, string $autocomplete, bool $autofocus = false, string $value = ''): string
 {
-    return '<label class="block">' . h($label) . '<span class="pwwrap"><input type="password" name="' . h($name) . '" autocomplete="' . h($autocomplete) . '" required' . ($autofocus ? ' autofocus' : '') . '>'
+    return '<label class="block">' . h($label) . '<span class="pwwrap"><input type="password" name="' . h($name) . '" autocomplete="' . h($autocomplete) . '" required' . ($autofocus ? ' autofocus' : '') . ($value !== '' ? ' value="' . h($value) . '"' : '') . '>'
         . '<button type="button" class="pw-eye" title="Passwort anzeigen" aria-label="Passwort anzeigen" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M3 3l18 18"/></svg></button></span></label>';
+}
+
+/** Liste der Anforderungen an ein neues Passwort; die Punkte werden beim Tippen abgehakt (Länge und Einfachheit), der Rest wird beim Speichern geprüft. */
+function md_password_rules_html(): string
+{
+    $o = '<ul class="pwrules" data-min="' . MD_PASSWORD_MIN . '">';
+    foreach (md_password_rules() as $k => $text) $o .= '<li data-rule="' . $k . '">' . h($text) . '</li>';
+    return $o . '</ul>';
 }
 
 /** Alte Auswahl (nur noch für die Einstellungen der Standard-Sichtbarkeit). */

@@ -235,6 +235,13 @@ button.more { background: none; color: var(--link); padding: 0; font-size: 13px;
 .app-lead { margin: 0 0 16px; color: var(--text-secondary, var(--text-primary)); line-height: 1.5; }
 .features-box h3 { margin: 0 0 12px; font-size: 1.05em; }
 
+ul.pwrules { list-style: none; margin: -4px 0 12px; padding: 0; font-size: 13px; color: var(--muted); }
+ul.pwrules li { padding-left: 20px; position: relative; margin: 2px 0; }
+ul.pwrules li::before { content: '•'; position: absolute; left: 6px; }
+ul.pwrules li.ok { color: var(--ok); } ul.pwrules li.ok::before { content: '✓'; left: 3px; }
+ul.pwrules li.bad { color: var(--bad); } ul.pwrules li.bad::before { content: '✗'; left: 3px; }
+.or { text-align: center; color: var(--muted); font-size: 13px; margin: 18px 0 10px; }
+
 /* ==== Smartphone: steht am Ende, damit es die Regeln darüber überstimmt ==== */
 @media (max-width: 700px) {
   /* Eingabefelder: Bezeichnung, Feld und Sichtbarkeit untereinander, Felder über die volle Breite */

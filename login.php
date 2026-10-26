@@ -11,14 +11,26 @@ if (MD_DEMO_MODE && isset($_GET['as'])) {
 }
 $err = '';
 $ident = '';
+$pwKeep = '';
+$magicDone = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     md_csrf_check();
     $ident = trim((string)($_POST['ident'] ?? ''));
-    [$m, $err] = md_login_check($ident, (string)($_POST['password'] ?? ''));
-    if ($m) {
-        md_login_start((int)$m['member_id']);
-        header('Location: ' . md_url('index.php'));
-        exit;
+    if (($_POST['action'] ?? '') === 'magic') {
+        // Anmeldelink per E-Mail; die Antwort ist immer dieselbe, damit niemand Adressen ausprobieren kann
+        if ($ident !== '' && !md_login_throttled('magicreq|' . $ident)) {
+            md_login_fail('magicreq|' . $ident);
+            md_magic_request($ident);
+        }
+        $magicDone = true;
+    } else {
+        [$m, $err] = md_login_check($ident, (string)($_POST['password'] ?? ''));
+        if ($m) {
+            md_login_start((int)$m['member_id']);
+            header('Location: ' . md_url('index.php'));
+            exit;
+        }
+        $pwKeep = (string)($_POST['password'] ?? '');   // die Eingabe bleibt stehen, damit man sie über das Auge prüfen kann
     }
 }
 if (MD_DEMO_MODE && !isset($_GET['echt']) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -60,13 +72,20 @@ if (MD_DEMO_MODE && !isset($_GET['echt']) && $_SERVER['REQUEST_METHOD'] !== 'POS
     md_footer();
     exit;
 }
+header('Cache-Control: no-store');
 md_header('Anmeldung');
 echo '<section class="card" style="max-width:26rem;margin:2rem auto"><h1>Anmeldung</h1>';
 if ($err) echo '<div class="flash err">' . h($err) . '</div>';
+if ($magicDone) echo '<div class="flash ok">Wenn zu dieser Angabe ein Zugang mit E-Mail-Adresse existiert, ist ein Anmeldelink unterwegs (' . MD_MAGIC_MINUTES . ' Minuten gültig). Bitte auch den Spam-Ordner prüfen. Ist im Profil weder ein Spitzname noch ein Geburtsdatum hinterlegt, geht diese Anmeldeart nicht; dann kommt stattdessen eine Mail mit einem Hinweis.</div>';
 md_show_flash();
 echo '<form method="post" action="login.php' . (isset($_GET['echt']) ? '?echt=1' : '') . '" autocomplete="on">' . md_csrf_field()
     . '<label class="block">E-Mail-Adresse oder Mitgliedsnummer<input name="ident" value="' . h($ident) . '" autocomplete="username" required autofocus style="width:100%"></label>'
-    . md_password_field('password', 'Passwort', 'current-password')
+    . md_password_field('password', 'Passwort', 'current-password', false, $pwKeep)
     . '<p><button>Anmelden</button></p></form>'
+    . '<p class="or">oder ohne Passwort</p>'
+    . '<form method="post" action="login.php' . (isset($_GET['echt']) ? '?echt=1' : '') . '">' . md_csrf_field() . '<input type="hidden" name="action" value="magic">'
+    . '<label class="block">E-Mail-Adresse oder Mitgliedsnummer<input name="ident" value="' . h($ident) . '" autocomplete="username" required style="width:100%"></label>'
+    . '<p><button class="secondary">Anmeldelink per E-Mail senden</button></p>'
+    . '<p class="muted">Du bekommst einen Link (' . MD_MAGIC_MINUTES . ' Minuten gültig). Zur Sicherheit gibst du danach deinen Spitznamen ein, oder, wenn keiner eingetragen ist, dein Geburtsdatum. Das geht nur, wenn eins von beiden in deinem Profil steht.</p></form>'
     . '<p class="muted"><a href="forgot.php">Passwort vergessen oder noch keins?</a></p></section>';
 md_footer();
