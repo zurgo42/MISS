@@ -66,7 +66,7 @@ foreach ($reqs as $r) {
     if ($r['note']) echo '<span class="muted" title="' . h($r['note']) . '">Hinweis: ' . h(mb_strimwidth($r['note'], 0, 40, '…')) . '</span><br>';
     if ($r['status'] === 'open') {
         echo '<a href="privacy_export.php?member=' . (int)$r['member_id'] . '&amp;format=html" target="_blank">Auskunft ansehen</a> · <a href="privacy_export.php?member=' . (int)$r['member_id'] . '&amp;format=zip">ZIP</a>';
-        if ($edit) echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="request_id" value="' . (int)$r['request_id'] . '"><input name="note" placeholder="Antwort / Begründung"><button name="action" value="request_done">erledigt</button> <button class="link" name="action" value="request_refuse">ablehnen</button></form>';
+        if ($edit) echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="request_id" value="' . (int)$r['request_id'] . '"><input name="note" placeholder="Antwort / Begründung (geht per Mail ans Mitglied)"><button name="action" value="request_done">erledigt</button> <button class="link" name="action" value="request_refuse">ablehnen</button></form>';
     }
     echo '</td></tr>';
 }

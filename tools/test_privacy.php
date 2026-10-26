@@ -13,7 +13,7 @@ $check = function (string $name, $got, $want) use (&$fail) {
     printf("%s %s%s\n", $ok ? 'ok  ' : 'FAIL', $name, $ok ? '' : ' – erwartet ' . json_encode($want, JSON_UNESCAPED_UNICODE) . ', war ' . json_encode($got, JSON_UNESCAPED_UNICODE));
 };
 $by = fn(string $nr) => (int)md_one('SELECT member_id FROM svmembers WHERE membership_number = ?', [$nr])['member_id'];
-$max = $by('DEMO0001'); $hans = $by('DEMO0007'); $rolf = $by('DEMO0012'); $mia = $by('DEMO0011');
+$max = $by('DEMO0001'); $hans = $by('DEMO0007'); $rolf = $by('DEMO0012'); $mia = $by('DEMO0011'); $sabine = $by('DEMO0006');
 md_db()->beginTransaction();
 $setSetting = function (string $k, string $v) { if (md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$k])) md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', [$v, $k]); else md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$k, $v, 'test']); };
 $cnt = fn(string $t, int $m) => (int)md_one("SELECT COUNT(*) c FROM $t WHERE member_id = ?", [$m])['c'];
@@ -66,6 +66,24 @@ $sv = md_one('SELECT email, is_active FROM svmembers WHERE member_id = ?', [$rol
 $check('Zugang gesperrt, E-Mail entfernt', [$sv['email'], (int)$sv['is_active']], ['geloescht-' . $rolf . '@example.invalid', 0]);
 $check('zweite Löschung verhindert', md_privacy_purge($rolf, $max), 'Profildaten sind schon gelöscht.');
 $check('Vorgang protokolliert (ohne Klarnamen)', md_one("SELECT event, note FROM md_privacy_log WHERE member_id = ? AND event = 'purged'", [$rolf])['event'], 'purged');
+
+echo "-- Meldungen per E-Mail\n";
+$sagt = fn(string $ref) => md_q("SELECT to_email, subject, body, member_id FROM md_mail_outbox WHERE ref = ? ORDER BY mail_id", [$ref]);
+$gfIds = array_column(md_q("SELECT DISTINCT mf.member_id FROM md_member_functions mf JOIN md_functions f ON f.function_id = mf.function_id WHERE f.code = 'GF' AND (mf.valid_to IS NULL OR mf.valid_to >= ?)", [date('Y-m-d')]), 'member_id');
+$check('Empfänger: Geschäftsführung (nur GF, kein Vorstand)', array_map('intval', array_keys(md_privacy_recipients())) == array_map('intval', $gfIds) && $gfIds !== [], true);
+[$rid2, $err2] = md_privacy_request_add($sabine, 'erasure', 'self', $sabine, 'Bitte löschen');
+$mails = $sagt('PR' . $rid2);
+$check('Antrag per Selbstbedienung: Mail an die GF mit Frist und Link', [count($mails) === count($gfIds), str_contains($mails[0]['subject'] ?? '', 'Löschantrag'), str_contains($mails[0]['body'] ?? '', 'Antwortfrist'), str_contains($mails[0]['body'] ?? '', 'admin/privacy.php#requests'), str_contains($mails[0]['body'] ?? '', 'Bitte löschen')], [true, true, true, true, true]);
+[$rid3] = md_privacy_request_add($hans, 'access', 'phone', $max, null);
+$check('von der Verwaltung erfasste Anfrage: keine Meldung', count($sagt('PR' . $rid3)), 0);
+// ohne GF fällt die Meldung an den Vorstand
+md_exec("UPDATE md_member_functions SET valid_to = '2000-01-01' WHERE function_id = (SELECT function_id FROM md_functions WHERE code = 'GF')");
+$rec = md_privacy_recipients();
+$vo = array_column(md_q("SELECT DISTINCT mf.member_id FROM md_member_functions mf JOIN md_functions f ON f.function_id = mf.function_id WHERE f.code IN ('Vo','FVo','FVv') AND (mf.valid_to IS NULL OR mf.valid_to >= ?)", [date('Y-m-d')]), 'member_id');
+$check('ohne Geschäftsführung: Vorstand', [$rec !== [], array_map('intval', array_keys($rec)) == array_map('intval', $vo)], [true, true]);
+$check('Bearbeiten: Mail ans Mitglied mit Vermerk', [md_privacy_request_handle($rid2, 'refused', 'Mitgliedschaft besteht', $max), count($sagt('PR' . $rid2)) > count($gfIds)], ['', true]);
+$last = array_values(array_filter($sagt('PR' . $rid2), fn($m) => (int)$m['member_id'] === $sabine));
+$check('Mail ans Mitglied: Begründung und Hinweis auf die Aufsichtsbehörde', [count($last), str_contains($last[0]['body'] ?? '', 'Mitgliedschaft besteht'), str_contains($last[0]['body'] ?? '', 'Datenschutzaufsichtsbehörde')], [1, true, true]);
 
 echo "-- Stufe 2 (Anonymisierung)\n";
 $st = md_privacy_state($rolf);

@@ -167,7 +167,66 @@ function md_privacy_request_add(int $member, string $kind, string $via, ?int $by
     $id = (int)md_db()->lastInsertId();
     md_privacy_log($member, 'request', $by, ($kind === 'access' ? 'Auskunft' : 'Löschung') . ' über ' . $via);
     md_log_change($member, 'privacy', null, ($kind === 'access' ? 'Auskunftsanfrage' : 'Löschantrag') . ' eingegangen', $by ?? $member, $via === 'self' ? 'self' : 'admin');
+    if ($via === 'self') md_privacy_notify_staff($id);   // eine von der Verwaltung selbst erfasste Anfrage braucht keine Meldung
     return [$id, ''];
+}
+
+/**
+ * Empfänger der Datenschutz-Meldungen: die aktuell eingetragene Geschäftsführung (Funktion GF); ist dort keine Person mit
+ * gültiger E-Mail-Adresse vorhanden, der Vorstand (Vo, FVo, FVv). Ergebnis: [member_id => Adresse].
+ */
+function md_privacy_recipients(): array
+{
+    $today = date('Y-m-d');
+    foreach ([['GF'], ['Vo', 'FVo', 'FVv']] as $codes) {
+        $in = implode(',', array_fill(0, count($codes), '?'));
+        $out = [];
+        foreach (md_q("SELECT DISTINCT mf.member_id FROM md_member_functions mf JOIN md_functions f ON f.function_id = mf.function_id
+                       JOIN svmembers s ON s.member_id = mf.member_id
+                       WHERE f.code IN ($in) AND (mf.valid_from IS NULL OR mf.valid_from <= ?) AND (mf.valid_to IS NULL OR mf.valid_to >= ?) ORDER BY mf.member_id",
+            array_merge($codes, [$today, $today])) as $r) {
+            $a = md_mail_address_of((int)$r['member_id']);
+            if ($a) $out[(int)$r['member_id']] = $a;
+        }
+        if ($out) return $out;
+    }
+    return [];
+}
+
+/** Meldet einen neuen Antrag der Verwaltung (GF, sonst Vorstand) per E-Mail mit Frist und Link. Fehler stören das Stellen des Antrags nicht. */
+function md_privacy_notify_staff(int $requestId): void
+{
+    try {
+        $r = md_one('SELECT r.*, s.first_name, s.last_name, s.membership_number FROM md_privacy_requests r JOIN svmembers s ON s.member_id = r.member_id WHERE r.request_id = ?', [$requestId]);
+        if (!$r) return;
+        $art = $r['kind'] === 'access' ? 'Auskunftsanfrage' : 'Löschantrag';
+        $name = trim($r['first_name'] . ' ' . $r['last_name']) . ' (Mitgliedsnr. ' . $r['membership_number'] . ')';
+        $text = "Es ist ein neuer Datenschutz-Antrag eingegangen:\n\nArt: $art\nVon: $name\nEingegangen: " . md_date(substr($r['received_at'], 0, 10))
+            . "\nAntwortfrist: " . md_date(md_privacy_request_deadline($r)) . ' (ein Monat, Art. 12 Abs. 3 DSGVO)'
+            . ($r['note'] ? "\nAnmerkung: " . $r['note'] : '')
+            . "\n\nBearbeiten unter: " . md_public_url('admin/privacy.php#requests')
+            . "\n\nHinweis: Eine Löschung ist nur bei ausgetretenen Mitgliedern möglich; sonst bitte mit Begründung ablehnen oder zuerst den Austritt erfassen." . md_mail_footer();
+        foreach (md_privacy_recipients() as $to) md_mail_now(null, $to, 'Datenschutz: ' . $art . ' von ' . trim($r['first_name'] . ' ' . $r['last_name']), $text, 'other', 'PR' . $requestId);
+    } catch (Throwable $e) {
+        // Der Antrag ist gespeichert; die Meldung ist nur eine Zusatzfunktion
+    }
+}
+
+/** Bestätigt dem Mitglied die Bearbeitung seiner Anfrage per E-Mail (mit Vermerk der Verwaltung), sofern eine Adresse vorliegt. */
+function md_privacy_notify_member(array $r, string $status, string $note): void
+{
+    try {
+        $to = md_mail_address_of((int)$r['member_id']);
+        if (!$to) return;
+        $art = $r['kind'] === 'access' ? 'Auskunftsanfrage' : 'Löschantrag';
+        $text = "Dein $art vom " . md_date(substr($r['received_at'], 0, 10)) . ' wurde bearbeitet: ' . ($status === 'done' ? 'erledigt' : 'abgelehnt') . ".\n"
+            . (trim($note) !== '' ? "\n" . ($status === 'refused' ? 'Begründung' : 'Vermerk der Verwaltung') . ': ' . trim($note) . "\n" : '')
+            . ($status === 'refused' ? "\nDu kannst dich bei Fragen an die Verwaltung wenden. Du hast außerdem das Recht, dich bei der zuständigen Datenschutzaufsichtsbehörde zu beschweren und gerichtlichen Rechtsschutz zu suchen.\n" : '')
+            . md_mail_footer();
+        md_mail_now((int)$r['member_id'], $to, $art . ': ' . ($status === 'done' ? 'erledigt' : 'abgelehnt'), $text, 'other', 'PR' . $r['request_id']);
+    } catch (Throwable $e) {
+        // Status und Vermerk sind im Dashboard sichtbar; die Mail ist nur eine Zusatzfunktion
+    }
 }
 
 function md_privacy_request_deadline(array $r): string
@@ -183,6 +242,7 @@ function md_privacy_request_handle(int $id, string $status, string $note, int $a
     if ($status === 'refused' && trim($note) === '') return 'Bei einer Ablehnung bitte die Begründung angeben.';
     md_exec('UPDATE md_privacy_requests SET status = ?, handled_at = ?, handled_by = ?, response_note = ? WHERE request_id = ?', [$status, md_now(), $actor, mb_substr(trim($note), 0, 500) ?: null, $id]);
     md_privacy_log((int)$r['member_id'], 'handled', $actor, ($r['kind'] === 'access' ? 'Auskunft ' : 'Löschung ') . ($status === 'done' ? 'erledigt' : 'abgelehnt'));
+    md_privacy_notify_member($r, $status, $note);
     return '';
 }
 
