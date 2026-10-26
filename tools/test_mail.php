@@ -143,7 +143,8 @@ md_exec('UPDATE md_login_tokens SET expires_at = ? WHERE member_id = ?', [date('
 $check('abgelaufen', md_token_find($t2), null);
 $t3 = md_token_create($erika, 'reset', 2);
 $check('schwaches Passwort abgelehnt, Token bleibt gültig', [md_login_use_token($t3, 'kurz')[1] !== '', (bool)md_token_find($t3)], [true, true]);
-[$who, $e3] = md_login_use_token($t3, 'Neues-Passwort-77');
+$check('Zurücksetzen verlangt die Sicherheitsangabe (Spitzname vorhanden)', [md_login_use_token($t3, 'Neues-Passwort-77')[1], md_login_use_token($t3, 'Neues-Passwort-77', 'falsch')[1], (bool)md_token_find($t3)], ['Bitte die Sicherheitsangabe machen.', 'Der Spitzname stimmt nicht.', true]);
+[$who, $e3] = md_login_use_token($t3, 'Neues-Passwort-77', ' ' . strtoupper((string)md_magic_factor($erika)[1]) . ' ');
 $check('Passwort mit Token gesetzt', [$who, $e3], [$erika, '']);
 $check('Token verbraucht', md_token_find($t3), null);
 $check('neues Passwort gilt', md_login_check($em, 'Neues-Passwort-77')[0]['member_id'] ?? null, $erika);
@@ -193,6 +194,24 @@ $mk = md_token_create($erika, 'magic', 15);
 md_exec('UPDATE md_login_tokens SET expires_at = ? WHERE member_id = ? AND kind = ?', [date('Y-m-d H:i:s', time() - 5), $erika, 'magic']);
 $check('abgelaufener Anmeldelink', md_magic_verify($mk, '05.03.1980')[0], null);
 $check('Gültigkeit des Anmeldelinks', MD_MAGIC_MINUTES, 15);
+// Zurücksetzen und Einladung
+md_exec('DELETE FROM md_login_attempts');
+md_exec('UPDATE md_profiles SET nickname = NULL, birthdate = ? WHERE member_id = ?', ['1980-03-05', $erika]);
+$rt = md_token_create($erika, 'reset', 120);
+$check('Zurücksetzen mit Geburtsdatum als Sicherheitsangabe', [md_login_use_token($rt, 'Reset-Passwort-55', '06.03.1980')[1], md_login_use_token($rt, 'Reset-Passwort-55', '05.03.1980')[1]], ['Das Geburtsdatum stimmt nicht.', '']);
+md_exec('DELETE FROM md_login_attempts');
+$rt = md_token_create($erika, 'reset', 120);
+foreach (range(1, 5) as $i) md_login_use_token($rt, 'Reset-Passwort-56', 'x' . $i);
+$check('nach 5 falschen Angaben ist auch der Passwort-Link ungültig', [md_login_use_token($rt, 'Reset-Passwort-56', '05.03.1980')[0], md_token_find($rt)], [null, null]);
+md_exec('DELETE FROM md_login_attempts');
+md_exec('UPDATE md_profiles SET birthdate = NULL WHERE member_id = ?', [$erika]);
+$rt = md_token_create($erika, 'reset', 120);
+$check('ohne hinterlegte Angabe geht das Zurücksetzen wie bisher', md_login_use_token($rt, 'Reset-Passwort-57')[1], '');
+md_exec('UPDATE md_profiles SET nickname = ? WHERE member_id = ?', ['Erikchen', $erika]);
+$it = md_token_create($erika, 'invite', 60);
+$check('die erste Einladung braucht keine Sicherheitsangabe', md_login_use_token($it, 'Einladung-Passwort-58')[1], '');
+md_exec('UPDATE md_profiles SET nickname = ?, birthdate = ? WHERE member_id = ?', ['Erikchen', '1980-03-05', $erika]);
+
 // Anforderung per Formular
 md_exec("DELETE FROM md_login_tokens WHERE kind = 'magic'");
 md_exec('UPDATE md_login_tokens SET used_at = ? WHERE used_at IS NULL', [md_now()]);

@@ -9,7 +9,7 @@ if ($t && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $pw = (string)($_POST['password'] ?? '');
     if ($pw !== (string)($_POST['password2'] ?? '')) $err = 'Die beiden Eingaben stimmen nicht überein.';
     else {
-        [$mid, $err] = md_login_use_token($token, $pw);
+        [$mid, $err] = md_login_use_token($token, $pw, (string)($_POST['answer'] ?? ''));
         if ($mid) {
             md_login_start($mid);
             md_flash('Das Passwort ist gespeichert. Du bist angemeldet.');
@@ -25,8 +25,11 @@ if (!$t) {
     echo '<div class="flash err">Der Link ist ungültig, abgelaufen oder schon verwendet.</div><p><a href="forgot.php">Neuen Link anfordern</a></p>';
 } else {
     if ($err) echo '<div class="flash err">' . h($err) . '</div>';
-    echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="token" value="' . h($token) . '">'
-        . md_password_field('password', 'Neues Passwort', 'new-password', true, (string)($_POST['password'] ?? '')) . md_password_rules_html()
+    [$fkind] = $t['kind'] === 'reset' ? md_magic_factor((int)$t['member_id']) : [null];
+    $factor = $fkind === null ? ''
+        : '<label class="block">' . ($fkind === 'nickname' ? 'Zur Sicherheit: dein Spitzname' : 'Zur Sicherheit: dein Geburtsdatum (TT.MM.JJJJ)') . '<input name="answer" value="' . h((string)($_POST['answer'] ?? '')) . '" required autofocus autocomplete="off" style="width:100%"></label>';
+    echo '<form method="post">' . md_csrf_field() . '<input type="hidden" name="token" value="' . h($token) . '">' . $factor
+        . md_password_field('password', 'Neues Passwort', 'new-password', $factor === '', (string)($_POST['password'] ?? '')) . md_password_rules_html()
         . md_password_field('password2', 'Wiederholen', 'new-password', false, (string)($_POST['password2'] ?? '')) . '<p><button>Passwort speichern</button></p></form>';
 }
 echo '</section>';

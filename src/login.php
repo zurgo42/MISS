@@ -205,6 +205,29 @@ function md_magic_request(string $ident): void
     md_login_send_link($id, 'magic');
 }
 
+/**
+ * Prüft die Sicherheitsangabe (zweiter Faktor) zu einem Link. Fünf falsche Angaben innerhalb von 15 Minuten machen den Link ungültig.
+ * Gibt '' zurück, wenn die Angabe stimmt; sonst den Fehlertext. Ohne hinterlegten Faktor: 'none' (der Aufrufer entscheidet).
+ */
+function md_factor_check(array $t, string $answer): string
+{
+    $id = (int)$t['member_id'];
+    $key = 'magic|' . $id;
+    if (md_login_throttled($key)) {
+        md_exec('UPDATE md_login_tokens SET used_at = ? WHERE token_id = ?', [md_now(), $t['token_id']]);
+        return 'Zu viele falsche Angaben. Der Link ist ungültig geworden. Bitte einen neuen anfordern.';
+    }
+    [$kind, $val] = md_magic_factor($id);
+    if ($kind === null) return 'none';
+    $ok = $kind === 'nickname' ? mb_strtolower(trim($answer)) === mb_strtolower($val) : md_parse_date($answer) === $val;
+    if (!$ok) {
+        md_login_fail($key);
+        return trim($answer) === '' ? 'Bitte die Sicherheitsangabe machen.' : ($kind === 'nickname' ? 'Der Spitzname stimmt nicht.' : 'Das Geburtsdatum stimmt nicht.');
+    }
+    md_exec('DELETE FROM md_login_attempts WHERE ident_hash = ?', [md_login_ident_hash($key)]);
+    return '';
+}
+
 /** Prüft den Anmeldelink samt zweitem Faktor. Gibt [member|null, Fehlertext] zurück; nach 5 falschen Angaben wird der Link ungültig. */
 function md_magic_verify(string $token, string $answer): array
 {
@@ -214,28 +237,24 @@ function md_magic_verify(string $token, string $answer): array
     $key = 'magic|' . $id;
     $m = md_one('SELECT * FROM svmembers WHERE member_id = ?', [$id]);
     if (!$m || (int)($m['is_active'] ?? 1) === 0 || str_starts_with((string)$m['membership_number'], 'DEL-')) return [null, 'Der Link ist ungültig, abgelaufen oder schon verwendet. Bitte einen neuen anfordern.'];
-    if (md_login_throttled($key)) {
-        md_exec('UPDATE md_login_tokens SET used_at = ? WHERE token_id = ?', [md_now(), $t['token_id']]);
-        return [null, 'Zu viele falsche Angaben. Der Link ist ungültig geworden. Bitte einen neuen anfordern.'];
-    }
-    [$kind, $val] = md_magic_factor($id);
-    if ($kind === null) return [null, 'Für dieses Konto ist die Anmeldung ohne Passwort nicht möglich. Bitte mit Passwort anmelden.'];
-    $ok = $kind === 'nickname' ? mb_strtolower(trim($answer)) === mb_strtolower($val) : md_parse_date($answer) === $val;
-    if (!$ok) {
-        md_login_fail($key);
-        return [null, $kind === 'nickname' ? 'Der Spitzname stimmt nicht.' : 'Das Geburtsdatum stimmt nicht.'];
-    }
+    $fe = md_factor_check($t, $answer);
+    if ($fe === 'none') return [null, 'Für dieses Konto ist die Anmeldung ohne Passwort nicht möglich. Bitte mit Passwort anmelden.'];
+    if ($fe !== '') return [null, $fe];
     md_exec('UPDATE md_login_tokens SET used_at = ? WHERE member_id = ? AND kind = ? AND used_at IS NULL', [md_now(), $id, 'magic']);
-    md_exec('DELETE FROM md_login_attempts WHERE ident_hash = ?', [md_login_ident_hash($key)]);
     md_log_change($id, 'account', 'Anmeldung', 'per Anmeldelink', $id, 'self');
     return [$m, ''];
 }
 
 /** Passwort mit Einmal-Link setzen. Gibt [member|null, Fehlertext] zurück. */
-function md_login_use_token(string $token, string $pw): array
+function md_login_use_token(string $token, string $pw, ?string $answer = null): array
 {
     $t = md_token_find($token);
     if (!$t) return [null, 'Der Link ist ungültig oder abgelaufen. Bitte einen neuen anfordern.'];
+    // Zurücksetzen verlangt zusätzlich Spitzname oder Geburtsdatum, sofern eins davon hinterlegt ist; die erste Einladung braucht das nicht
+    if ($t['kind'] === 'reset' && md_magic_factor((int)$t['member_id'])[0] !== null) {
+        $fe = md_factor_check($t, (string)$answer);
+        if ($fe !== '') return [null, $fe];
+    }
     if ($err = md_password_set((int)$t['member_id'], $pw)) return [null, $err];
     md_exec('UPDATE md_login_tokens SET used_at = ? WHERE member_id = ? AND used_at IS NULL', [md_now(), $t['member_id']]);
     md_exec('DELETE FROM md_login_attempts WHERE ident_hash IN (?, ?)', [md_login_ident_hash((string)md_one('SELECT email FROM svmembers WHERE member_id = ?', [$t['member_id']])['email']), md_login_ident_hash((string)md_one('SELECT membership_number FROM svmembers WHERE member_id = ?', [$t['member_id']])['membership_number'])]);
