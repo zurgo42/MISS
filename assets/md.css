@@ -234,3 +234,31 @@ button.more { background: none; color: var(--link); padding: 0; font-size: 13px;
 
 .app-lead { margin: 0 0 16px; color: var(--text-secondary, var(--text-primary)); line-height: 1.5; }
 .features-box h3 { margin: 0 0 12px; font-size: 1.05em; }
+
+/* ==== Smartphone: steht am Ende, damit es die Regeln darüber überstimmt ==== */
+@media (max-width: 700px) {
+  /* Eingabefelder: Bezeichnung, Feld und Sichtbarkeit untereinander, Felder über die volle Breite */
+  .field { grid-template-columns: 1fr; gap: 4px; margin-bottom: 14px; }
+  .field > label { padding-top: 0; }
+  .field .inp { min-width: 0; }
+  .field .inp input, .field .inp select, .field .inp textarea { width: 100%; box-sizing: border-box; }
+  label.vis { white-space: normal; }
+  .rowfields { grid-template-columns: 1fr; }
+  input, select, textarea { font-size: 16px; }   /* verhindert das automatische Hineinzoomen auf dem iPhone */
+  /* Tabellen scrollen im eigenen Kasten, statt die Seite zu verbreitern */
+  .tscroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  main.content table.wide { min-width: 34rem; }   /* Tabellen mit vielen Spalten behalten ihre Breite und scrollen seitlich */
+  main.content table.wide td, main.content table.wide th { overflow-wrap: normal; word-break: normal; }
+  td.act form { flex-wrap: wrap; }
+  .tabs, .tabs.sub { flex-wrap: wrap; }
+  .card, details.acc > .accbody, .accbody { min-width: 0; }
+  .acc > .accbody { overflow-wrap: anywhere; }
+  .features-grid, .demo-grid { grid-template-columns: 1fr; }
+  /* Zeilen aus Feldern und Knöpfen (Filter, Suche, Einzelaktionen) umbrechen statt die Seite zu verbreitern */
+  form.search, form.inline, td.act form, .row { flex-wrap: wrap; }
+  form.search > *, form.inline > * { max-width: 100%; }
+  fieldset { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .addr { grid-template-columns: 1fr; }
+  .addr label, label.block { min-width: 0; }
+  .addr input, .addr select, .addr textarea, label.block input, label.block select, label.block textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+}
