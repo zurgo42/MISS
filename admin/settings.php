@@ -208,9 +208,11 @@ echo '<p class="muted">Name und Anschrift erscheinen in der Titelzeile, auf Rech
 foreach (MD_ORG_FIELDS as $k => [$label, $req, $hint]) echo '<label>' . h($label) . ($req ? ' *' : '') . '<input name="org[' . $k . ']" value="' . h($org[$k]) . '" placeholder="' . h($hint) . '"></label>';
 echo '</div><label class="block">Weitere Angaben im Impressum (z. B. Umsatzsteuer-ID, Aufsichtsbehörde)<textarea name="org[impressum_extra]" rows="3">' . h(md_setting('org.impressum_extra', '')) . '</textarea></label>'
     . '<label class="block">Datenschutzerklärung (Text; Absätze durch Leerzeilen trennen). Wird auf der öffentlichen Seite <a href="datenschutz.php" target="_blank">datenschutz.php</a> gezeigt.<textarea name="org[privacy_text]" rows="12">' . h(md_setting('org.privacy_text', '')) . '</textarea></label>'
-    . '<h3>Fußzeile</h3><div class="addr"><label>Copyright-Zeile<input name="org[copyright]" value="' . h(md_setting('footer.copyright', '')) . '" placeholder="© ' . h($org['name']) . '"></label>'
-    . '<label>Impressum: eigene Adresse statt der Seite oben (optional)<input name="org[impressum_url]" value="' . h(md_setting('footer.impressum_url', '')) . '" placeholder="https://…"></label>'
-    . '<label>Datenschutz: eigene Adresse statt der Seite oben (optional)<input name="org[privacy_url]" value="' . h(md_setting('footer.privacy_url', '')) . '" placeholder="https://…"></label></div><button>Speichern</button>';
+    . '<h3>Fußzeile</h3><div class="addr"><label>Copyright-Zeile<input name="org[copyright]" value="' . h(md_footer_setting('footer.copyright')) . '" placeholder="© ' . h($org['name']) . '"></label>'
+    . '<label>Impressum: eigene Adresse statt der Seite oben (optional)<input name="org[impressum_url]" value="' . h(md_footer_setting('footer.impressum_url')) . '" placeholder="https://…"></label>'
+    . '<label>Datenschutz: eigene Adresse statt der Seite oben (optional)<input name="org[privacy_url]" value="' . h(md_footer_setting('footer.privacy_url')) . '" placeholder="https://…"></label></div>'
+    . (defined('MD_FOOTER_COPYRIGHT') || defined('MD_FOOTER_IMPRESSUM_URL') || defined('MD_FOOTER_PRIVACY_URL') ? '<p class="muted">Die Felder sind aus der Voreinstellung der config.php vorbelegt. Leeres Feld = Voreinstellung.</p>' : '')
+    . '<button>Speichern</button>';
 $body = $form('org', ob_get_clean());
 $body .= '<h3>Logo</h3><p class="muted">Erscheint links in der Titelzeile und auf der Anmeldeseite (PNG, JPEG, GIF oder WebP bis 2 MB, wird auf höchstens 400 px verkleinert).</p><p>' . md_logo_html() . ' ' . (md_setting('club.logo_file', '') !== '' ? 'eigenes Logo' : 'Standardzeichen (noch kein Logo hochgeladen)') . '</p>'
     . '<form method="post" enctype="multipart/form-data">' . md_csrf_field() . '<input type="hidden" name="action" value="logo"><input type="file" name="logo" accept="image/png,image/jpeg,image/gif,image/webp" required> <button class="small">Hochladen</button></form>'

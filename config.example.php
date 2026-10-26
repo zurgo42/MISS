@@ -45,6 +45,11 @@ define('MD_MAIL_TRANSPORT', 'log');
 // Hinweis: Ist dieser Wert gesetzt, gilt er für alle Links in E-Mails. Beim Umbenennen des Verzeichnisses muss er angepasst werden; ohne ihn richten sich die Links nach der aufgerufenen Adresse.
 // define('MD_PUBLIC_URL', 'https://verein.example.org/MISS');
 
+// Voreinstellung der Fußzeile (in der Administration unter Verein → Fußzeile änderbar; ohne Angabe: © Vereinsname und die eigenen Seiten Impressum/Datenschutz)
+// define('MD_FOOTER_COPYRIGHT', '&copy; Verein e. V., Straße 1, 12345 Ort, Tel. 01234 56789, eMail info@example.org');
+// define('MD_FOOTER_IMPRESSUM_URL', 'https://verein.example.org/impressum');
+// define('MD_FOOTER_PRIVACY_URL', 'https://verein.example.org/datenschutz');
+
 // Testsystem für externe Tester (nur auf einer eigenen Testdatenbank mit erfundenen Daten!). Siehe docs/PRODUKTIV.md.
 define('MD_TEST_INSTANCE', false);
 // Nur für den Web-Einrichter setup_test.php (zufälliger Wert, mindestens 20 Zeichen; Datei nach dem Einrichten löschen):

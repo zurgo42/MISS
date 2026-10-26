@@ -92,11 +92,11 @@ function md_header(string $title, ?array $me = null, string $active = ''): void
 function md_footer(): void
 {
     $o = md_org();
-    $copy = md_setting('footer.copyright', '') ?: '&copy; ' . h($o['name']);
+    $copy = md_footer_setting('footer.copyright') ?: '&copy; ' . h($o['name']);
     $links = '';
     $own = ['footer.impressum_url' => ['Impressum', 'impressum.php', md_impressum_text() !== ''], 'footer.privacy_url' => ['Datenschutz', 'datenschutz.php', trim(md_setting('org.privacy_text', '')) !== '']];
     foreach ($own as $k => [$label, $page, $has]) {
-        $u = trim(md_setting($k, ''));
+        $u = md_footer_setting($k);
         if ($u !== '' && preg_match('~^(https?://|/)~i', $u)) $links .= ' | <a href="' . h($u) . '" target="_blank" rel="noopener">' . $label . '</a>';
         elseif ($has) $links .= ' | <a href="' . $page . '" target="_blank" rel="noopener">' . $label . '</a>';
     }

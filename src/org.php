@@ -34,6 +34,18 @@ function md_org(): array
     return $o;
 }
 
+/**
+ * Fußzeilen-Einstellung (footer.copyright, footer.impressum_url, footer.privacy_url): der in der Administration gespeicherte Wert,
+ * sonst die Voreinstellung aus der config.php (MD_FOOTER_COPYRIGHT, MD_FOOTER_IMPRESSUM_URL, MD_FOOTER_PRIVACY_URL), sonst leer.
+ */
+function md_footer_setting(string $key): string
+{
+    $v = trim(md_setting($key, ''));
+    if ($v !== '') return $v;
+    $const = ['footer.copyright' => 'MD_FOOTER_COPYRIGHT', 'footer.impressum_url' => 'MD_FOOTER_IMPRESSUM_URL', 'footer.privacy_url' => 'MD_FOOTER_PRIVACY_URL'][$key] ?? '';
+    return $const !== '' && defined($const) ? trim((string)constant($const)) : '';
+}
+
 function md_org_name(): string
 {
     return md_org()['name'];

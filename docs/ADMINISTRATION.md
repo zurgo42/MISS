@@ -17,3 +17,7 @@ Seite **Administration** (`admin/settings.php`, früher „Einstellungen“; err
 Hinweise
 - Ohne eigene Angaben fällt das System für Name und Anschrift auf die früheren Angaben für Spendenbescheinigungen zurück; ein Beitragskonto in der Administration hat Vorrang vor den älteren Feldern unter *Beiträge → Angaben für Rechnungen*.
 - Die Datenschutzerklärung der Demo ist nur ein Beispieltext und muss vom Datenschutzbeauftragten des Vereins geprüft werden.
+
+## Voreinstellung der Fußzeile
+
+Copyright-Zeile und die Adressen für Impressum und Datenschutz lassen sich in der `config.php` vorbelegen (`MD_FOOTER_COPYRIGHT`, `MD_FOOTER_IMPRESSUM_URL`, `MD_FOOTER_PRIVACY_URL`, siehe `config.example.php`). Die Felder unter *Verein → Fußzeile* zeigen dann diese Werte; was dort gespeichert wird, hat Vorrang, ein leeres Feld bedeutet wieder die Voreinstellung. Ohne alles steht dort „© Vereinsname“ mit den eigenen Seiten Impressum und Datenschutz.
