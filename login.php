@@ -45,7 +45,7 @@ if (MD_DEMO_MODE && !isset($_GET['echt']) && $_SERVER['REQUEST_METHOD'] !== 'POS
     $byNr = [];
     foreach (md_q("SELECT * FROM svmembers WHERE membership_number LIKE 'DEMO%'") as $m) $byNr[$m['membership_number']] = $m;
     md_header('Demo', null);
-    echo '<div class="welcome-content"><div class="features-box"><h2>' . MD_APP_NAME . ' – ' . MD_APP_LONG . '</h2><p class="app-lead">Die Anwendung für Mitglieder und Verwaltung eines Vereins: Mitglieder pflegen ihre Daten selbst, die Verwaltung führt Beiträge, Veranstaltungen und Verteiler an einer Stelle. Sie arbeitet mit der Sitzungsverwaltung zusammen und teilt Mitglieder, Anmeldung und Aussehen mit ihr.</p><h3>Was ' . MD_APP_NAME . ' leistet:</h3><div class="features-grid">';
+    echo '<div class="welcome-content"><div class="features-box"><h2>' . MD_APP_NAME . ' – ' . MD_APP_TAG . '</h2><p class="app-lead">Die Anwendung für Vereinsmitglieder und für die Verwaltung eines Vereins: Mitglieder pflegen ihre Daten selbst, es gibt ein Mitgliederverzeichnis und eine Veranstaltungsfunktion; die Verwaltung organisiert die Mitgliedsbeiträge und weitere Funktionen.</p><h3>Was ' . MD_APP_NAME . ' leistet:</h3><div class="features-grid">';
     foreach ($features as [$icon, $name, $text]) echo '<div class="feature-item"><span class="icon">' . $icon . '</span><span class="text"><strong>' . h($name) . ':</strong> ' . h($text) . '</span></div>';
     echo '</div></div><div class="demo-box"><h2>🎭 Demo-Zugang – Testbenutzer auswählen:</h2><div class="demo-grid">';
     foreach ($roles as $nr => $label) {
