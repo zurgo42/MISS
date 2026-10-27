@@ -57,3 +57,6 @@ define('MD_TEST_INSTANCE', false);
 
 // Adresse der Sitzungsverwaltung (für den Link auf der Demo-Startseite, optional)
 // define('MD_SV_URL', '/Sitzungsverwaltung/');
+
+// Laufzeit der Anmeldung in Tagen (gemeinsam mit KONA, VERA und KAND; Standard 15). Cookie und Sitzung gelten für die ganze Domain.
+// define('MD_SESSION_DAYS', 15);

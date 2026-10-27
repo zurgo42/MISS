@@ -55,6 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 md_flash('Einstellungen gespeichert.');
             } else md_flash('Bitte gültige Werte eingeben (Freibetrag in €, Level 0–19).', 'err');
+        } elseif ($act === 'portal') {
+            $notes = md_portal_save((array)($_POST['app'] ?? []), $aid);
+            foreach ($notes as $n) md_flash($n, 'err');
+            if (!$notes) md_flash('Weitere Anwendungen gespeichert.');
         } elseif ($act === 'logo' || $act === 'logo_remove') {
             $oldFile = md_setting('club.logo_file', '');
             $new = '';
@@ -328,6 +332,19 @@ echo '<p class="muted">Ob eine Angabe im Mitgliederverzeichnis sichtbar ist, sol
 foreach (md_visibility_keys() as $k => [$label]) echo '<div>' . md_vis_toggle($k, $defaults, $label) . '</div>';
 echo '</div><p><button>Standardwerte speichern</button></p></form>';
 echo $acc('vis', 'Standard-Sichtbarkeit im Mitgliederverzeichnis', ob_get_clean());
+
+// ---- Weitere Anwendungen (Einstiegsportal)
+ob_start();
+echo '<p class="muted">MISS dient als Einstieg: Hier eingetragene Anwendungen erscheinen über dem Dashboard als Knöpfe. Ohne Eintrag oder mit ausgeschaltetem Haken sieht niemand etwas. Die Anwendungen müssen unter derselben Domain laufen, damit die Anmeldung mitgenommen wird. Adresse z. B. <code>/KAND/</code> oder <code>https://verein.example.org/KAND/</code>.</p><form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="portal"><table><thead><tr><th>an</th><th>Name</th><th>Beschreibung</th><th>Adresse</th><th>Sichtbar für</th></tr></thead><tbody>';
+foreach (md_portal_apps() as $a) {
+    $k = $a['key'];
+    echo '<tr><td><input type="checkbox" name="app[' . $k . '][on]" value="1"' . ($a['on'] ? ' checked' : '') . '></td><td><input name="app[' . $k . '][name]" value="' . h($a['name']) . '" maxlength="40" size="10"></td><td><input name="app[' . $k . '][desc]" value="' . h($a['desc']) . '" maxlength="120"></td>'
+        . '<td><input name="app[' . $k . '][url]" value="' . h($a['url']) . '" placeholder="/' . h(strtoupper($k)) . '/"></td><td><select name="app[' . $k . '][who]">';
+    foreach (MD_PORTAL_WHO as $w => $wl) echo '<option value="' . $w . '"' . ($a['who'] === $w ? ' selected' : '') . '>' . h($wl) . '</option>';
+    echo '</select></td></tr>';
+}
+echo '</tbody></table><p class="muted">„Funktionsträger“: Mitglieder mit einer aktuell gültigen Funktion (außer ehemaligen); die Verwaltung sieht auch diese Einträge. „Nur Verwaltung“: Admins, Vorstand und Geschäftsführung sowie alle mit dem Recht „Mitglieder ansehen“.</p><button>Speichern</button></form>';
+echo $acc('portal', 'Weitere Anwendungen (KONA, VERA, KAND …)', ob_get_clean());
 
 // ---- Allgemein
 ob_start();

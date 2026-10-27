@@ -68,6 +68,7 @@ require_once __DIR__ . '/lists.php';
 require_once __DIR__ . '/apply.php';
 require_once __DIR__ . '/datev.php';
 require_once __DIR__ . '/org.php';
+require_once __DIR__ . '/portal.php';
 require_once __DIR__ . '/migrate.php';
 require_once __DIR__ . '/import.php';
 require_once __DIR__ . '/finance.php';
@@ -75,6 +76,11 @@ require_once __DIR__ . '/terms.php';
 require_once __DIR__ . '/layout.php';
 
 if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
+    // Sitzung wie in der Sitzungsverwaltung (KONA) und KAND: Cookie für die ganze Domain, gleiche Laufzeit (MD_SESSION_DAYS, Standard 15 Tage).
+    // So bleibt die Anmeldung beim Wechsel zwischen den Anwendungen erhalten und keine räumt die Sitzungen der anderen früher ab.
+    $md_days = defined('MD_SESSION_DAYS') ? max(1, (int)MD_SESSION_DAYS) : 15;
+    ini_set('session.gc_maxlifetime', (string)($md_days * 86400));
+    session_set_cookie_params(['lifetime' => $md_days * 86400, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax',
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')]);
     session_start();
 }

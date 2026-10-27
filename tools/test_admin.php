@@ -49,6 +49,22 @@ $g = md_one('SELECT * FROM md_groups ORDER BY group_id LIMIT 1');
 md_exec('UPDATE md_groups SET active = 0, name = ? WHERE group_id = ?', ['Umbenannt', $g['group_id']]);
 $check('Teilgruppe abgewählt und umbenannt, Mitglieder bleiben', [in_array((int)$g['group_id'], array_map('intval', array_column(md_q('SELECT group_id FROM md_groups WHERE active = 1'), 'group_id')), true), (int)md_one('SELECT COUNT(*) c FROM md_member_groups WHERE group_id = ?', [$g['group_id']])['c'] > 0, md_load_groups(4)[0]['name'] ?? ''], [false, true, 'Umbenannt']);
 
+echo "-- Weitere Anwendungen (Einstiegsportal)\n";
+$by = fn(string $nr) => md_one('SELECT * FROM svmembers WHERE membership_number = ?', [$nr]);
+$mia = $by('DEMO0011'); $sabine = $by('DEMO0006'); $max = $by('DEMO0001'); $hans = $by('DEMO0007'); $rolf = $by('DEMO0012');
+$check('ohne Eintrag erscheint nichts', [md_portal_visible($sabine), md_portal_html($sabine)], [[], '']);
+$notes = md_portal_save(['kona' => ['name' => 'KONA', 'url' => '/KONA/', 'on' => 1, 'who' => 'all'], 'vera' => ['name' => 'VERA', 'url' => 'https://verein.example.org/VERA/', 'on' => 1, 'who' => 'func'],
+    'kand' => ['name' => 'KAND', 'url' => 'javascript:alert(1)', 'on' => 1, 'who' => 'staff'], 'x1' => ['name' => 'Wiki', 'url' => '../Wiki/', 'on' => 1, 'who' => 'unbekannt']], (int)$mia['member_id']);
+$check('Einschalten ohne gültige Adresse wird abgelehnt (javascript: nicht erlaubt)', [count($notes), str_contains($notes[0] ?? '', 'KAND')], [1, true]);
+$names = fn(array $m) => array_column(md_portal_visible($m), 'name');
+$check('alle Mitglieder: nur der Eintrag für alle (und der mit unbekannter Zielgruppe wird zu „alle“)', $names($sabine), ['KONA', 'Wiki']);
+$check('Funktionsträger sehen auch VERA', in_array('VERA', $names($hans), true) || in_array('VERA', $names($max), true), true);
+$check('ehemalige Funktion zählt nicht', in_array('VERA', $names($rolf), true), false);
+$check('Verwaltung sieht alles Eingeschaltete', $names($mia), ['KONA', 'VERA', 'Wiki']);
+$html = md_portal_html($sabine);
+$check('Zeile mit Knöpfen, Adresse und Name maskiert', [str_contains($html, 'href="/KONA/"'), str_contains($html, 'Weitere Anwendungen'), str_contains($html, 'javascript')], [true, true, false]);
+$check('Adressprüfung', [md_portal_clean_url('/KAND/'), md_portal_clean_url('../KAND/'), md_portal_clean_url('https://a.example.org/x'), md_portal_clean_url('ftp://a'), md_portal_clean_url('KAND'), md_portal_clean_url('/a b')], ['/KAND/', '../KAND/', 'https://a.example.org/x', '', '', '']);
+
 md_db()->rollBack();
 echo $fail ? "\n$fail Fehler\n" : "\nalles ok\n";
 exit($fail ? 1 : 0);

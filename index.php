@@ -366,6 +366,7 @@ if (!$staff) {
 // ======================================================================= Ausgabe
 md_header('Dashboard', $actor, 'dashboard');
 md_show_flash();
+if (!$staff) echo md_portal_html($actor);
 if ($staff) {
     echo '<div class="flash warn">Verwaltungsmodus: ' . ($canEdit ? 'Du bearbeitest' : 'Du siehst (nur lesend)') . ' die Daten von <strong>' . h($m['first_name'] . ' ' . $m['last_name'])
         . '</strong>.' . ($canEdit ? ' Änderungen werden als „Admin“ protokolliert.' : '') . ($masked ? " $masked Angabe(n), die nicht im Verzeichnis freigegeben sind, sind für dich ausgeblendet." : '') . ' <a href="admin/index.php">zur Liste</a></div>';

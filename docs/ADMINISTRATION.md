@@ -21,3 +21,9 @@ Hinweise
 ## Voreinstellung der Fußzeile
 
 Copyright-Zeile und die Adressen für Impressum und Datenschutz lassen sich in der `config.php` vorbelegen (`MD_FOOTER_COPYRIGHT`, `MD_FOOTER_IMPRESSUM_URL`, `MD_FOOTER_PRIVACY_URL`, siehe `config.example.php`). Die Felder unter *Verein → Fußzeile* zeigen dann diese Werte; was dort gespeichert wird, hat Vorrang, ein leeres Feld bedeutet wieder die Voreinstellung. Ohne alles steht dort „© Vereinsname“ mit den eigenen Seiten Impressum und Datenschutz.
+
+## Weitere Anwendungen (MISS als Einstieg)
+
+Unter *Administration → Weitere Anwendungen* trägt das Adminteam die anderen Anwendungen des Vereins ein (KONA, VERA, KAND oder eigene Links): Name, Beschreibung, Adresse (`/KAND/`, `../KAND/` oder `https://…`), ein Haken „an“ und für wen der Knopf erscheint (alle Mitglieder, Funktionsträger mit gültiger Funktion, nur Verwaltung). Die Knöpfe stehen über dem Dashboard. Ohne Eintrag erscheint nichts; MISS läuft ohne die anderen Anwendungen.
+
+Damit die Anmeldung mitgenommen wird, müssen die Anwendungen unter derselben Domain laufen. Alle teilen die Sitzung: Cookie für die ganze Domain, Laufzeit 15 Tage (`MD_SESSION_DAYS` in der `config.php`; KONA und KAND nutzen denselben Wert, damit keine Anwendung die Sitzungen der anderen früher abräumt).
