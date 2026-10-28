@@ -10,6 +10,26 @@ $meId = (int)$me['member_id'];
 // Spalten, die der Benutzer für sich gewählt hat (Name und Foto sind immer da)
 const DIR_COLUMNS = ['groups' => 'Teilgruppen', 'zipcity' => 'PLZ / Ort', 'phone' => 'Telefon', 'email' => 'E-Mail', 'interests' => 'Interessen', 'occupation' => 'Beruf', 'funcs' => 'Funktionen', 'join' => 'Eintritt', 'status' => 'Status'];
 const DIR_DEFAULT = ['groups', 'zipcity', 'phone', 'email'];
+// Felder der gezielten Suche (nur Angaben, die die Person sehen darf, werden durchsucht)
+const DIR_SEARCH_FIELDS = ['name' => 'Name', 'zip' => 'Postleitzahl', 'city' => 'Ort', 'street' => 'Straße', 'occupation' => 'Beruf', 'employer' => 'Arbeitgeber', 'hobbies' => 'Hobbys / Interessen',
+    'intro' => 'Das bin ich', 'groups' => 'Teilgruppen', 'funcs' => 'Funktionen', 'email' => 'E-Mail', 'phone' => 'Telefon'];
+
+/** Zerlegt die Suchbegriffe: durch Leerzeichen oder Komma getrennt, "in Anführungszeichen" = eine Wortgruppe. */
+function dir_search_terms(string $q): array
+{
+    preg_match_all('/"([^"]+)"|([^\s,;]+)/u', $q, $m, PREG_SET_ORDER);
+    $t = [];
+    foreach ($m as $x) { $w = trim($x[1] !== '' ? $x[1] : $x[2]); if ($w !== '') $t[] = $w; }
+    return array_slice(array_unique($t), 0, 12);
+}
+
+/** Trifft der Begriff den Text? Ohne * irgendwo im Text (ohne Rücksicht auf Groß/Klein); mit * (Platzhalter für beliebig viele Zeichen) auf ganze Wörter. */
+function dir_term_match(string $term, string $text): bool
+{
+    if (strpos($term, '*') === false) return mb_stripos($text, $term) !== false;
+    $re = '/(?<![\p{L}\p{N}])' . str_replace('\\*', '[\p{L}\p{N}]*', preg_quote($term, '/')) . '(?![\p{L}\p{N}])/iu';
+    return (bool)preg_match($re, $text);
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     md_csrf_check();
     $chosen = array_values(array_intersect(array_keys(DIR_COLUMNS), (array)($_POST['cols'] ?? [])));
@@ -58,6 +78,13 @@ foreach ($rows as $r) {
     foreach (($contactOf[$id] ?? []) as $k => $val) if ($see("contact.$k")) { $d['details'][MD_CONTACT_KINDS[$k] ?? $k] = $val; if (in_array($k, ['phone', 'mobile'], true) && $d['phone'] === '') $d['phone'] = $val; }
     foreach (['occupation' => 'Beruf', 'employer' => 'Arbeitgeber', 'hobbies' => 'Hobbys', 'interests' => 'Interessen', 'intro_text' => 'Das bin ich'] as $k => $label) if ($r[$k] && $see($k)) $d['details'][$label] = $r[$k];
     if ($r['birthdate'] && $see('birthdate')) $d['details']['Geburtstag'] = md_date($r['birthdate']);
+    $fz = [];
+    foreach (($addrOf[$id] ?? []) as $s => $a) if ($see("address.$s")) { $fz['zip'][] = $a['zip']; $fz['city'][] = $a['city']; $fz['street'][] = $a['street']; }
+    foreach (['occupation', 'employer', 'intro_text'] as $k) if ($r[$k] && $see($k)) $fz[$k === 'intro_text' ? 'intro' : $k][] = $r[$k];
+    foreach (['hobbies', 'interests'] as $k) if ($r[$k] && $see($k)) $fz['hobbies'][] = $r[$k];
+    foreach (($contactOf[$id] ?? []) as $k => $val) if (in_array($k, ['phone', 'mobile'], true) && $see("contact.$k")) $fz['phone'][] = $val;
+    $d['f'] = ['name' => $d['name'] . ' ' . $d['nick'], 'groups' => implode(' ', $d['groups']), 'funcs' => implode(' ', $d['funcs']), 'email' => $d['email']];
+    foreach ($fz as $k => $list) $d['f'][$k] = implode(' ', array_filter($list, fn($x) => $x !== null && $x !== ''));
     $d['hay'] = mb_strtolower($d['name'] . ' ' . $d['nick'] . ' ' . implode(' ', $d['groups']) . ' ' . implode(' ', $d['funcs']) . ' ' . implode(' ', $d['details']) . ' ' . $d['email']);
     $people[] = $d;
 }
@@ -71,6 +98,10 @@ $fCity = (string)($_GET['city'] ?? '');
 $fYear = (string)($_GET['year'] ?? '');
 $fLetter = mb_strtoupper(mb_substr((string)($_GET['letter'] ?? ''), 0, 1));
 $fPhoto = !empty($_GET['photo']);
+$sf = array_key_exists($_GET['sf'] ?? '', DIR_SEARCH_FIELDS) ? $_GET['sf'] : 'hobbies';
+$sq = trim((string)($_GET['sq'] ?? ''));
+$sAll = ($_GET['sm'] ?? '') === 'all';
+$sTerms = dir_search_terms($sq);
 $sort = in_array($_GET['sort'] ?? '', ['name', 'join', 'city'], true) ? $_GET['sort'] : 'name';
 $per = in_array((int)($_GET['per'] ?? 25), [25, 50, 100], true) ? (int)($_GET['per'] ?? 25) : 25;
 $page = max(1, (int)($_GET['page'] ?? 1));
@@ -79,7 +110,7 @@ $allGroups = $allFuncs = $allCities = $allYears = [];
 foreach ($people as $d) { $allGroups += $d['groups']; $allFuncs += $d['funcs']; foreach ($d['cities'] as $c) $allCities[$c] = $c; if ($d['join']) $allYears[substr($d['join'], 0, 4)] = substr($d['join'], 0, 4); }
 asort($allGroups); asort($allFuncs); ksort($allCities); krsort($allYears);
 
-$hit = array_values(array_filter($people, function ($d) use ($q, $fGroup, $fFunc, $fStatus, $fCity, $fYear, $fLetter, $fPhoto) {
+$hit = array_values(array_filter($people, function ($d) use ($q, $fGroup, $fFunc, $fStatus, $fCity, $fYear, $fLetter, $fPhoto, $sf, $sTerms, $sAll) {
     if ($q !== '' && mb_strpos($d['hay'], mb_strtolower($q)) === false) return false;
     if ($fGroup && !isset($d['groups'][$fGroup])) return false;
     if ($fFunc !== '' && !isset($d['funcs'][$fFunc])) return false;
@@ -88,6 +119,12 @@ $hit = array_values(array_filter($people, function ($d) use ($q, $fGroup, $fFunc
     if ($fYear !== '' && substr((string)$d['join'], 0, 4) !== $fYear) return false;
     if ($fLetter !== '' && mb_strtoupper(mb_substr($d['last'], 0, 1)) !== $fLetter) return false;
     if ($fPhoto && !$d['photos']) return false;
+    if ($sTerms) {   // gezielte Suche: ODER über die Begriffe, mit "alle" UND
+        $text = $d['f'][$sf] ?? '';
+        $n = 0;
+        foreach ($sTerms as $t) if (dir_term_match($t, $text)) $n++;
+        if ($sAll ? $n < count($sTerms) : $n === 0) return false;
+    }
     return true;
 }));
 usort($hit, function ($a, $b) use ($sort) {
@@ -103,12 +140,17 @@ $letters = [];
 foreach ($people as $d) $letters[mb_strtoupper(mb_substr($d['last'], 0, 1))] = true;
 ksort($letters);
 
-$keep = ['q' => $q, 'group' => $fGroup ?: '', 'func' => $fFunc, 'status' => $fStatus, 'city' => $fCity, 'year' => $fYear, 'letter' => $fLetter, 'photo' => $fPhoto ? 1 : '', 'sort' => $sort === 'name' ? '' : $sort, 'per' => $per === 25 ? '' : $per];
+$keep = ['q' => $q, 'group' => $fGroup ?: '', 'func' => $fFunc, 'status' => $fStatus, 'city' => $fCity, 'year' => $fYear, 'letter' => $fLetter, 'photo' => $fPhoto ? 1 : '', 'sq' => $sq, 'sf' => $sq !== '' ? $sf : '', 'sm' => ($sq !== '' && $sAll) ? 'all' : '', 'sort' => $sort === 'name' ? '' : $sort, 'per' => $per === 25 ? '' : $per];
 $url = fn(array $over = []) => 'directory.php' . (($qs = http_build_query(array_filter($over + $keep, fn($x) => $x !== '' && $x !== null))) !== '' ? '?' . $qs : '');
 
 md_header('Mitgliederverzeichnis', $me, 'directory');
 echo '<h1>Mitgliederverzeichnis</h1><p class="muted">' . ($seeAll ? 'Du siehst als Verwaltung alle Angaben. ' : 'Du siehst, was die Mitglieder für das Verzeichnis freigegeben haben. ') . count($people) . ' Mitglieder.</p>';
 echo '<form class="filters" method="get"><label class="grow">Suche<input name="q" value="' . h($q) . '" placeholder="Name, Ort, Beruf, Gruppe, Funktion …"></label>';
+echo '<fieldset class="dirsearch"><legend>Gezielt suchen</legend><label>in<select name="sf">';
+foreach (DIR_SEARCH_FIELDS as $k => $t) echo '<option value="' . $k . '"' . ($sf === $k ? ' selected' : '') . '>' . h($t) . '</option>';
+echo '</select></label><label class="grow">nach<input name="sq" value="' . h($sq) . '" placeholder="z. B. 42*  oder  Singen Gesang Chor"></label>'
+    . '<label class="check"><input type="checkbox" name="sm" value="all"' . ($sAll ? ' checked' : '') . '> alle Begriffe müssen vorkommen</label>'
+    . '<small class="muted">Mehrere Begriffe gelten als „oder“. * ist ein Platzhalter („42*“ = beginnt mit 42, „*chor“ = endet auf chor); eine Wortgruppe in „Anführungszeichen“.</small></fieldset>';
 $sel = function (string $name, string $label, array $opts, $cur, string $all = 'alle') {
     $o = '<label>' . h($label) . '<select name="' . $name . '"><option value="">' . h($all) . '</option>';
     foreach ($opts as $k => $t) $o .= '<option value="' . h((string)$k) . '"' . ((string)$cur === (string)$k && (string)$cur !== '' ? ' selected' : '') . '>' . h((string)$t) . '</option>';

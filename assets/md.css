@@ -277,3 +277,8 @@ ul.pwrules li.bad { color: var(--bad); } ul.pwrules li.bad::before { content: '‚
   .addr label, label.block { min-width: 0; }
   .addr input, .addr select, .addr textarea, label.block input, label.block select, label.block textarea { width: 100%; min-width: 0; box-sizing: border-box; }
 }
+
+/* Mitgliederverzeichnis: gezielte Suche in einem w√§hlbaren Feld */
+.filters .dirsearch { flex: 1 0 100%; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px 10px; margin: 0; }
+.filters .dirsearch legend { font-size: 12px; color: var(--muted); padding: 0 4px; }
+.filters .dirsearch small { flex: 1 0 100%; }
