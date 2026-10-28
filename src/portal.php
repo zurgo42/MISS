@@ -96,6 +96,6 @@ function md_portal_html(array $me): string
     $apps = md_portal_visible($me);
     if (!$apps) return '';
     $o = '<nav class="portal" aria-label="Weitere Anwendungen"><strong class="subname">Weitere Anwendungen:</strong>';
-    foreach ($apps as $a) $o .= '<a class="portal-app" href="' . h($a['url']) . '"><span class="ico">' . h($a['icon']) . '</span><span><strong>' . h($a['name']) . '</strong>' . ($a['desc'] !== '' ? '<small>' . h($a['desc']) . '</small>' : '') . '</span></a>';
+    foreach ($apps as $a) $o .= '<a class="portal-app" href="' . h($a['url']) . '"><span class="ico">' . h($a['icon']) . '</span> <span><strong>' . h($a['name']) . '</strong>' . ($a['desc'] !== '' ? ' <small>' . h($a['desc']) . '</small>' : '') . '</span></a> ';
     return $o . '</nav>';
 }
