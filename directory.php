@@ -146,11 +146,11 @@ $url = fn(array $over = []) => 'directory.php' . (($qs = http_build_query(array_
 md_header('Mitgliederverzeichnis', $me, 'directory');
 echo '<h1>Mitgliederverzeichnis</h1><p class="muted">' . ($seeAll ? 'Du siehst als Verwaltung alle Angaben. ' : 'Du siehst, was die Mitglieder für das Verzeichnis freigegeben haben. ') . count($people) . ' Mitglieder.</p>';
 echo '<form class="filters" method="get"><label class="grow">Suche<input name="q" value="' . h($q) . '" placeholder="Name, Ort, Beruf, Gruppe, Funktion …"></label>';
-echo '<fieldset class="dirsearch"><legend>Gezielt suchen</legend><label>in<select name="sf">';
+echo '<details class="dirsearch"' . ($sq !== '' ? ' open' : '') . '><summary>Gezielt suchen' . ($sq !== '' ? ' (aktiv)' : '') . '</summary><div class="dirsearch-body"><label>in<select name="sf">';
 foreach (DIR_SEARCH_FIELDS as $k => $t) echo '<option value="' . $k . '"' . ($sf === $k ? ' selected' : '') . '>' . h($t) . '</option>';
 echo '</select></label><label class="grow">nach<input name="sq" value="' . h($sq) . '" placeholder="z. B. 42*  oder  Singen Gesang Chor"></label>'
     . '<label class="check"><input type="checkbox" name="sm" value="all"' . ($sAll ? ' checked' : '') . '> alle Begriffe müssen vorkommen</label>'
-    . '<small class="muted">Mehrere Begriffe gelten als „oder“. * ist ein Platzhalter („42*“ = beginnt mit 42, „*chor“ = endet auf chor); eine Wortgruppe in „Anführungszeichen“.</small></fieldset>';
+    . '<small class="muted">Mehrere Begriffe gelten als „oder“. * ist ein Platzhalter („42*“ = beginnt mit 42, „*chor“ = endet auf chor); eine Wortgruppe in „Anführungszeichen“.</small></div></details>';
 $sel = function (string $name, string $label, array $opts, $cur, string $all = 'alle') {
     $o = '<label>' . h($label) . '<select name="' . $name . '"><option value="">' . h($all) . '</option>';
     foreach ($opts as $k => $t) $o .= '<option value="' . h((string)$k) . '"' . ((string)$cur === (string)$k && (string)$cur !== '' ? ' selected' : '') . '>' . h((string)$t) . '</option>';
