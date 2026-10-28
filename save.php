@@ -29,6 +29,24 @@ try {
             }
             if ($kind !== 'err') $msg = $n ? "$n Änderung(en) gespeichert." : 'Keine Änderungen.';
             break;
+        case 'all':
+            // Alle Kacheln mit gemeinsamem Speichern-Knopf: Profil (3 Gruppen), E-Mail, Adressen, Kontakt, Sichtbarkeiten
+            $fields = array_keys(array_filter(MD_PROFILE_FIELDS, fn($f) => in_array($f[2], ['Persönliche Daten', 'Beruf & Interessen', 'Vorstellung'], true)));
+            $n = md_save_profile($mid, $_POST, $aid, $via, $fields);
+            $n += md_save_addresses($mid, $_POST, $aid, $via) + md_save_contacts($mid, $_POST, $aid, $via) + md_save_visibility($mid, $_POST, $aid, $via);
+            if (isset($_POST['email'])) {
+                [$changed, $eerr] = md_change_email($mid, (string)$_POST['email'], $aid, $via);
+                if ($eerr) { $msg = $eerr; $kind = 'err'; } else $n += $changed;
+            }
+            // Einwilligung festhalten (Zeitpunkt im Änderungsprotokoll), solange der Wortlaut derselbe ist, nur einmal
+            if ($via === 'self' && $kind !== 'err') {
+                $ver = substr(sha1(MD_DIRECTORY_CONSENT), 0, 12);
+                if (!md_one("SELECT 1 AS x FROM md_changelog WHERE member_id = ? AND field_key = 'consent.directory' AND new_value = ?", [$mid, $ver])) {
+                    md_log_change($mid, 'consent.directory', null, $ver, $aid, 'self');
+                }
+            }
+            if ($kind !== 'err') $msg = $n ? "$n Änderung(en) gespeichert." : 'Keine Änderungen.';
+            break;
         case 'addresses':
             $n = md_save_addresses($mid, $_POST, $aid, $via) + md_save_visibility($mid, $_POST, $aid, $via);
             $msg = $n ? "$n Änderung(en) gespeichert." : 'Keine Änderungen.';

@@ -283,3 +283,7 @@ ul.pwrules li.bad { color: var(--bad); } ul.pwrules li.bad::before { content: 'â
 .filters .dirsearch summary { cursor: pointer; font-weight: 600; color: var(--brand); font-size: 14px; }
 .filters .dirsearch-body { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; padding: 8px 0 4px; }
 .filters .dirsearch small { flex: 1 0 100%; }
+
+/* Gemeinsamer Speichern-Knopf im Dashboard */
+.savecard { margin: 14px 0; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); }
+.savecard .consent { font-size: 13px; line-height: 1.5; margin: 0 0 10px; }

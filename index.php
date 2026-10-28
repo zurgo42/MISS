@@ -38,6 +38,8 @@ $hidden = fn(string $name) => $staff ? '<input type="hidden" name="member" value
 $acc = function (string $id, string $title, string $body, bool $open = false, string $sub = '', string $cls = ''): string {
     return '<details class="acc ' . $cls . '" id="' . h($id) . '"' . ($open ? ' open' : '') . '><summary>' . $title . ($sub !== '' ? '<span class="sub">' . $sub . '</span>' : '') . '</summary><div class="accbody">' . $body . '</div></details>';
 };
+// Felder der gemeinsam gespeicherten Kacheln zeigen auf das Formular "mainform" (Speichern-Knopf unter den Kacheln)
+$inMain = fn(string $html): string => preg_replace('/<(input|select|textarea)\b(?![^>]*\bform=)/', '<$1 form="mainform"', $html);
 $form = function (string $section, string $anchor, string $extra = '') use ($mid, $hidden): string {
     return '<input type="hidden" name="section" value="' . $section . '"><input type="hidden" name="anchor" value="' . $anchor . '">'
         . md_csrf_field() . $hidden('') . $extra;
@@ -129,14 +131,12 @@ $fieldRow = function (string $k, array $f) use ($p, $vmap): string {
     return $o . '</div>' . md_vis_toggle($k, $vmap) . '</div>';
 };
 ob_start();
-echo '<form method="post" action="save.php">' . $form('profile', 'personal', '<input type="hidden" name="group" value="Persönliche Daten">');
 echo '<div class="rowfields"><label>Anrede<select name="salutation">';
 foreach (MD_PROFILE_FIELDS['salutation'][4] as $opt) echo '<option' . ($opt === (string)($p['salutation'] ?? '') ? ' selected' : '') . '>' . h($opt) . '</option>';
 echo '</select></label><label>Titel<input name="title" value="' . h($p['title'] ?? '') . '"></label><span></span></div>';
 echo '<div class="field"><label for="f_email">E-Mail-Adresse</label><div class="inp"><input id="f_email" name="email" type="email" value="' . h($m['email']) . '" autocomplete="email"><span class="muted">Mit dieser Adresse meldest du dich an; Rechnungen und Nachrichten kommen hierhin.</span></div>' . md_vis_toggle('email', $vmap) . '</div>';
 foreach ($byGroup['Persönliche Daten'] as $k => $f) if (!in_array($k, ['salutation', 'title'], true)) echo $fieldRow($k, $f);
-echo '<button>Speichern</button></form>';
-$personalBlock = $acc('personal', 'Persönliche Daten: ' . h($m['first_name'] . ' ' . $m['last_name']), ob_get_clean());
+$personalBlock = $acc('personal', 'Persönliche Daten: ' . h($m['first_name'] . ' ' . $m['last_name']), $inMain(ob_get_clean()));
 
 // ---- Fotos
 ob_start();
@@ -159,30 +159,33 @@ $photosBlock = $acc('photos', 'Foto(s) für das Mitgliederverzeichnis', ob_get_c
 $groupBlocks = '';
 foreach (['Beruf & Interessen' => 'work', 'Vorstellung' => 'intro'] as $gname => $aid) {
     ob_start();
-    echo '<form method="post" action="save.php">' . $form('profile', $aid, '<input type="hidden" name="group" value="' . h($gname) . '">');
     foreach ($byGroup[$gname] as $k => $f) echo $fieldRow($k, $f);
-    echo '<button>Speichern</button></form>';
-    $groupBlocks .= $acc($aid, h($gname), ob_get_clean());
+    $groupBlocks .= $acc($aid, h($gname), $inMain(ob_get_clean()));
 }
 
 // ---- Adressen
 ob_start();
-echo '<form method="post" action="save.php">' . $form('addresses', 'addresses');
 foreach (MD_SLOTS as $sl) {
     $a = $addr[$sl] ?? [];
     echo '<fieldset><legend>Adresse ' . $sl . '</legend><div class="addr">';
     foreach (MD_ADDRESS_FIELDS as $f => $label) echo '<label>' . h($label) . '<input name="address_' . $sl . '_' . $f . '" value="' . h($a[$f] ?? '') . '"></label>';
     echo '</div><div class="row"><span></span>' . md_vis_toggle("address.$sl", $vmap) . '</div></fieldset>';
 }
-echo '<button>Speichern</button></form>';
-$addrBlock = $acc('addresses', 'Adressen', ob_get_clean());
+$addrBlock = $acc('addresses', 'Adressen', $inMain(ob_get_clean()));
 
 // ---- Kontakt
 ob_start();
-echo '<form method="post" action="save.php">' . $form('contacts', 'contacts');
 foreach (MD_CONTACT_KINDS as $k => $label) echo '<div class="field"><label for="c_' . $k . '">' . h($label) . '</label><div class="inp"><input id="c_' . $k . '" name="contact_' . $k . '" value="' . h($contacts[$k] ?? '') . '"></div>' . md_vis_toggle("contact.$k", $vmap) . '</div>';
-echo '<button>Speichern</button></form>';
-$contactBlock = $acc('contacts', 'Kontakt &amp; Social Media', ob_get_clean());
+$contactBlock = $acc('contacts', 'Kontakt &amp; Social Media', $inMain(ob_get_clean()));
+
+// ---- Gemeinsamer Speichern-Knopf für Persönliche Daten, Beruf & Interessen, Vorstellung, Adressen und Kontakt.
+// Die Felder stehen in den Kacheln und gehören über das Attribut form="mainform" zu diesem Formular (so lassen sich Fotos und Verwaltung mit eigenen Formularen dazwischen schalten).
+$saveBlock = '';
+if ($canEdit) {
+    $saveBlock = '<form id="mainform" class="savecard card" method="post" action="save.php">' . $form('all', 'personal')
+        . (!$staff ? '<p class="consent">' . h(MD_DIRECTORY_CONSENT) . '</p>' : '<p class="muted">Gilt für Persönliche Daten, Beruf &amp; Interessen, Vorstellung, Adressen und Kontakt.</p>')
+        . '<button>Alle Eingaben speichern</button></form>';
+}
 
 // ---- Vereinsdaten
 ob_start();
@@ -377,7 +380,7 @@ echo $headBlock;
 echo '<p class="toolbar"><button type="button" class="small secondary" id="toggleAll">Alle ein-/ausklappen</button></p>';
 if (!$termsOk) echo $termsBlock;
 echo $eventsBlock;
-echo '<fieldset class="roset"' . ($canEdit ? '' : ' disabled') . '>' . $personalBlock . $photosBlock . $groupBlocks . $addrBlock . $contactBlock . $clubBlock . $accessBlock . '</fieldset>';
+echo '<fieldset class="roset"' . ($canEdit ? '' : ' disabled') . '>' . $personalBlock . $photosBlock . $groupBlocks . $addrBlock . $contactBlock . $saveBlock . $clubBlock . $accessBlock . '</fieldset>';
 echo $financeBlock . $logBlock;
 if ($termsOk) echo $termsBlock;
 echo $privacyBlock;

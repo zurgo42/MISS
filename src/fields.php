@@ -33,6 +33,9 @@ const MD_PROFILE_FIELDS = [
     'wishes_text' => ['Was ich mir im Verein wünsche', 'textarea', 'Vorstellung', 'admin'],
 ];
 
+/** Einwilligung, die vor dem gemeinsamen Speichern-Knopf im Dashboard steht (wird mit Zeitpunkt im Änderungsprotokoll festgehalten). */
+const MD_DIRECTORY_CONSENT = 'Mit dem Speichern stimme ich ausdrücklich zu, dass Anrede, Titel, Vorname und Name im Mitgliederverzeichnis erscheinen. Ich willige ausdrücklich ein, dass meine hier eingegebenen persönlichen Daten für satzungsgemäße Zwecke verwendet werden und dass Angaben, bei denen ich die Sichtbarkeit freigegeben habe, im jeweils aktuellen Mitgliederverzeichnis erscheinen dürfen.';
+
 const MD_ADDRESS_FIELDS = ['label' => 'Bezeichnung', 'street' => 'Straße, Nr.', 'zip' => 'PLZ', 'city' => 'Ort', 'country' => 'Land'];
 
 const MD_CONTACT_KINDS = [
