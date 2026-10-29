@@ -12,7 +12,7 @@ if (!$election || empty($election['pdf_file']) || !empty($election['pdf_deleted_
     http_response_code(404);
     exit('Kein PDF-Sammeldruck vorhanden.');
 }
-$path = md_wabs_pdf_dir() . '/' . $election['pdf_file'];
+$path = md_wabs_storage_dir() . '/' . $election['pdf_file'];
 if (!is_file($path)) {
     http_response_code(404);
     exit('Die Datei wurde nicht gefunden.');

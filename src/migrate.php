@@ -48,6 +48,11 @@ const MD_MIGRATIONS = [
     ['md_wabs_elections', 'pdf_generated_at', 'DATETIME DEFAULT NULL'],
     ['md_wabs_elections', 'pdf_deleted_at', 'DATETIME DEFAULT NULL'],
     ['md_wabs_recipients', 'channel', "VARCHAR(10) NOT NULL DEFAULT 'mail'"],
+    ['md_wabs_elections', 'transferred_at', 'DATETIME DEFAULT NULL'],
+    ['md_wabs_elections', 'transfer_mode', 'VARCHAR(10) DEFAULT NULL'],
+    ['md_wabs_elections', 'csv_file', 'VARCHAR(255) DEFAULT NULL'],
+    ['md_wabs_elections', 'csv_generated_at', 'DATETIME DEFAULT NULL'],
+    ['md_wabs_elections', 'csv_deleted_at', 'DATETIME DEFAULT NULL'],
 ];
 
 /** Ergänzt fehlende Spalten. Gibt die Liste der ergänzten "tabelle.spalte" zurück. */

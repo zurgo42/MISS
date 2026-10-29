@@ -117,6 +117,7 @@ function md_wabs_requests_generate(int $electionId): array
 {
     $election = md_wabs_election_get($electionId);
     if (!$election) return [0, 0, 'Wahl nicht gefunden.'];
+    if (!empty($election['transferred_at'])) return [0, 0, 'Diese Wahl wurde bereits zum Wahlserver übertragen - neue Token würden dort nicht mehr ankommen.'];
     if (trim((string)($election['vote_base_url'] ?? '')) === '') return [0, 0, 'Bitte zuerst die Link-Basis-URL zum Wahlserver eintragen.'];
     $done = array_flip(array_map('intval', array_column(md_q('SELECT member_id FROM md_wabs_recipients WHERE election_id = ?', [$electionId]), 'member_id')));
     $queued = 0;
@@ -141,6 +142,7 @@ function md_wabs_request_retry(int $electionId, int $memberId): string
 {
     $election = md_wabs_election_get($electionId);
     if (!$election) return 'Wahl nicht gefunden.';
+    if (!empty($election['transferred_at'])) return 'Diese Wahl wurde bereits zum Wahlserver übertragen - ein neues Token würde dort nicht mehr ankommen.';
     if (trim((string)($election['vote_base_url'] ?? '')) === '') return 'Bitte zuerst die Link-Basis-URL zum Wahlserver eintragen.';
     $r = md_one("SELECT status FROM md_wabs_recipients WHERE election_id = ? AND member_id = ?", [$electionId, $memberId]);
     if (!$r || $r['status'] !== 'failed') return 'Für dieses Mitglied liegt kein Fehlschlag vor.';
@@ -206,7 +208,7 @@ function md_wabs_queue_send(int $electionId, int $limit = 50): array
 // ============================================
 
 /** Verzeichnis für die PDF-Sammeldrucke - außerhalb des Web-Dokumentenverzeichnisses, kein Direktzugriff über die URL (wie storage/mail). */
-function md_wabs_pdf_dir(): string
+function md_wabs_storage_dir(): string
 {
     $dir = MD_STORAGE_DIR . '/wabs';
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
@@ -262,6 +264,7 @@ function md_wabs_pdf_generate(int $electionId, int $by): array
 {
     $election = md_wabs_election_get($electionId);
     if (!$election) return [0, 'Wahl nicht gefunden.'];
+    if (!empty($election['transferred_at'])) return [0, 'Diese Wahl wurde bereits zum Wahlserver übertragen - neue Token würden dort nicht mehr ankommen.'];
     if (trim((string)($election['vote_base_url'] ?? '')) === '') return [0, 'Bitte zuerst die Link-Basis-URL zum Wahlserver eintragen.'];
     if (!empty($election['pdf_file']) && empty($election['pdf_deleted_at'])) {
         return [0, 'Es liegt noch ein nicht als gelöscht bestätigter PDF-Sammeldruck vor - bitte diesen zuerst abschließen.'];
@@ -282,7 +285,7 @@ function md_wabs_pdf_generate(int $electionId, int $by): array
     require_once $root . '/fpdf/fpdf.php';
     require_once $root . '/phpqrcode/qrlib.php';
 
-    $dir = md_wabs_pdf_dir();
+    $dir = md_wabs_storage_dir();
     $tmpQr = $dir . '/tmp-' . bin2hex(random_bytes(6)) . '.png';
     $pdf = new FPDF();
     foreach ($kandidaten as [$mid, $donor]) {
@@ -309,10 +312,173 @@ function md_wabs_pdf_delete(int $electionId, int $by): string
     if (!$election) return 'Wahl nicht gefunden.';
     if (empty($election['pdf_file'])) return 'Es liegt kein PDF-Sammeldruck vor.';
     if (!empty($election['pdf_deleted_at'])) return 'Dieser PDF-Sammeldruck wurde bereits als gelöscht bestätigt.';
-    $path = md_wabs_pdf_dir() . '/' . $election['pdf_file'];
+    $path = md_wabs_storage_dir() . '/' . $election['pdf_file'];
     if (is_file($path) && !@unlink($path)) return 'Die Datei konnte nicht gelöscht werden - bitte auf dem Server prüfen.';
     md_exec('UPDATE md_wabs_elections SET pdf_deleted_at = ? WHERE election_id = ?', [md_now(), $electionId]);
     md_exec('INSERT INTO md_changelog (member_id, field_key, old_value, new_value, changed_by, changed_via, changed_at) VALUES (?,?,?,?,?,?,?)',
         [$by, 'wabs.pdf_deleted', null, $election['pdf_file'] . ' (Wahl „' . $election['title'] . '“)', $by, 'admin', md_now()]);
+    return '';
+}
+
+// ============================================
+// PHASE 4: ÜBERTRAGUNG DER TOKEN-LISTE ZUM WAHLSERVER
+// Bei gleichem Server/gleicher Datenbank: direkte Übertragung in zwei schlanke
+// Zieltabellen (wabs_elections, wabs_tokens - Grundlage für den eigenständigen
+// Wahlserver aus Phase 5, der darauf aufbaut). Bei externem Server: CSV-Export
+// zum manuellen Import dort. In beiden Fällen wird die Token-Liste danach aus
+// MISS gelöscht - sie hat dort ihren Zweck erfüllt. Die Wahlserver-Verbindung
+// ist eine einzige, installationsweite Einstellung (nicht je Wahl), um den
+// Aufwand gering zu halten.
+// ============================================
+
+/** Zahl der aktuell noch gültigen (nicht gelöschten) Token dieser Wahl. */
+function md_wabs_tokens_count(int $electionId): int
+{
+    return (int)(md_one('SELECT COUNT(*) c FROM md_wabs_tokens WHERE election_id = ?', [$electionId])['c'] ?? 0);
+}
+
+/** Aktuelle Verbindungseinstellungen zum Wahlserver (Passwort entschlüsselt, leer wenn nicht gesetzt/entschlüsselbar). */
+function md_wabs_transfer_conf(): array
+{
+    return [
+        'mode' => md_setting('wabs.transfer_mode', ''),
+        'host' => md_setting('wabs.db_host', ''),
+        'port' => md_setting('wabs.db_port', '3306'),
+        'name' => md_setting('wabs.db_name', ''),
+        'user' => md_setting('wabs.db_user', ''),
+        'pass' => (string)(md_decrypt(md_setting('wabs.db_pass_enc', '')) ?? ''),
+    ];
+}
+
+/** Speichert die Verbindungseinstellungen zum Wahlserver. Das Passwort wird nur bei Eingabe überschrieben (leer = unverändert). */
+function md_wabs_transfer_conf_save(string $mode, string $host, string $port, string $name, string $user, string $pass): string
+{
+    if (!in_array($mode, ['direct', 'csv'], true)) return 'Bitte eine Übertragungsart wählen.';
+    if ($mode === 'direct' && ($host === '' || $name === '' || $user === '')) return 'Bitte Datenbankserver, Datenbankname und Benutzer angeben.';
+    foreach ([['wabs.transfer_mode', $mode, 'Übertragungsart für die WABS-Token-Liste (direct, csv)'],
+              ['wabs.db_host', $host, 'Wahlserver-Datenbank: Host'], ['wabs.db_port', $port !== '' ? $port : '3306', 'Wahlserver-Datenbank: Port'],
+              ['wabs.db_name', $name, 'Wahlserver-Datenbank: Datenbankname'], ['wabs.db_user', $user, 'Wahlserver-Datenbank: Benutzer']] as [$k, $v, $d]) {
+        if (md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$k])) md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', [$v, $k]);
+        else md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$k, $v, $d]);
+    }
+    if (trim($pass) !== '') {
+        $enc = md_encrypt($pass);
+        if ($enc === null) return 'Das Passwort kann nicht verschlüsselt werden: MD_ENCRYPTION_KEY fehlt in config.php (php tools/make_key.php).';
+        if (md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', ['wabs.db_pass_enc'])) md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', [$enc, 'wabs.db_pass_enc']);
+        else md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', ['wabs.db_pass_enc', $enc, 'Wahlserver-Datenbank: Passwort (verschlüsselt)']);
+    }
+    return '';
+}
+
+/** Öffnet die Verbindung zur Wahlserver-Datenbank. Wirft eine Exception bei Fehlern (Aufrufer fängt sie). */
+function md_wabs_transfer_db(array $conf): PDO
+{
+    $pdo = new PDO('mysql:host=' . $conf['host'] . ';port=' . ((int)$conf['port'] ?: 3306) . ';dbname=' . $conf['name'] . ';charset=utf8mb4', $conf['user'], $conf['pass']);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    return $pdo;
+}
+
+/** Stellt die beiden schlanken Zieltabellen auf dem Wahlserver sicher - Grundlage für Phase 5. */
+function md_wabs_transfer_ensure_schema(PDO $tdb): void
+{
+    $tdb->exec('CREATE TABLE IF NOT EXISTS wabs_elections (
+        election_id INT PRIMARY KEY, title VARCHAR(200) NOT NULL, start_at DATETIME NOT NULL, end_at DATETIME NOT NULL, transferred_at DATETIME NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+    $tdb->exec('CREATE TABLE IF NOT EXISTS wabs_tokens (
+        token_id INT PRIMARY KEY AUTO_INCREMENT, election_id INT NOT NULL, token_hash VARCHAR(64) NOT NULL UNIQUE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+}
+
+/**
+ * Überträgt die Token-Liste direkt in die konfigurierte Wahlserver-Datenbank
+ * (gleicher Server/gleiche Datenbank-Instanz) und löscht sie danach sofort aus
+ * MISS - die direkte, erfolgreich bestätigte Übertragung ersetzt hier den
+ * zweistufigen Bestätigungsschritt, den der CSV-Weg braucht. Gibt Fehlertext
+ * oder '' zurück.
+ */
+function md_wabs_transfer_direct(int $electionId, int $by): string
+{
+    $election = md_wabs_election_get($electionId);
+    if (!$election) return 'Wahl nicht gefunden.';
+    if (!empty($election['transferred_at'])) return 'Diese Wahl wurde bereits übertragen.';
+    $tokenCount = md_wabs_tokens_count($electionId);
+    if ($tokenCount === 0) return 'Es liegen keine Token zum Übertragen vor.';
+    $conf = md_wabs_transfer_conf();
+    if ($conf['mode'] !== 'direct') return 'Die direkte Übertragung ist nicht als Übertragungsart eingestellt.';
+
+    try {
+        $tdb = md_wabs_transfer_db($conf);
+    } catch (Throwable $e) {
+        return 'Verbindung zur Wahlserver-Datenbank fehlgeschlagen: ' . $e->getMessage();
+    }
+    try {
+        md_wabs_transfer_ensure_schema($tdb);
+        $tdb->beginTransaction();
+        $tdb->prepare('DELETE FROM wabs_elections WHERE election_id = ?')->execute([$electionId]);
+        $tdb->prepare('INSERT INTO wabs_elections (election_id, title, start_at, end_at, transferred_at) VALUES (?,?,?,?,?)')
+            ->execute([$electionId, $election['title'], $election['start_at'], $election['end_at'], md_now()]);
+        $ins = $tdb->prepare('INSERT IGNORE INTO wabs_tokens (election_id, token_hash) VALUES (?,?)');
+        foreach (md_q('SELECT token_hash FROM md_wabs_tokens WHERE election_id = ?', [$electionId]) as $t) {
+            $ins->execute([$electionId, $t['token_hash']]);
+        }
+        $tdb->commit();
+    } catch (Throwable $e) {
+        if ($tdb->inTransaction()) $tdb->rollBack();
+        return 'Übertragung fehlgeschlagen, es wurde nichts verändert: ' . $e->getMessage();
+    }
+
+    md_exec('DELETE FROM md_wabs_tokens WHERE election_id = ?', [$electionId]);
+    md_exec("UPDATE md_wabs_elections SET transferred_at = ?, transfer_mode = 'direct', status = 'uebertragen' WHERE election_id = ?", [md_now(), $electionId]);
+    md_exec('INSERT INTO md_changelog (member_id, field_key, old_value, new_value, changed_by, changed_via, changed_at) VALUES (?,?,?,?,?,?,?)',
+        [$by, 'wabs.tokens_transferred', null, $tokenCount . ' Token direkt übertragen (Wahl „' . $election['title'] . '“)', $by, 'admin', md_now()]);
+    return '';
+}
+
+/** Erzeugt die CSV-Datei mit der Token-Liste (nur Hashes) zum manuellen Import auf einem externen Wahlserver. Gibt [Dateiname, Fehler] zurück. */
+function md_wabs_transfer_csv_generate(int $electionId, int $by): array
+{
+    $election = md_wabs_election_get($electionId);
+    if (!$election) return ['', 'Wahl nicht gefunden.'];
+    if (!empty($election['transferred_at'])) return ['', 'Diese Wahl wurde bereits übertragen.'];
+    if (!empty($election['csv_file']) && empty($election['csv_deleted_at'])) return ['', 'Es liegt noch eine nicht als importiert bestätigte CSV-Datei vor - bitte diese zuerst abschließen.'];
+    $tokenCount = md_wabs_tokens_count($electionId);
+    if ($tokenCount === 0) return ['', 'Es liegen keine Token zum Übertragen vor.'];
+
+    $dir = md_wabs_storage_dir();
+    $filename = 'wahl-' . $electionId . '-tokenliste-' . date('Ymd-His') . '.csv';
+    $fh = fopen($dir . '/' . $filename, 'w');
+    if (!$fh) return ['', 'Die Datei konnte nicht angelegt werden.'];
+    fwrite($fh, "# election_id;{$electionId}\n# title;{$election['title']}\n# start_at;{$election['start_at']}\n# end_at;{$election['end_at']}\n");
+    fwrite($fh, "token_hash\n");
+    foreach (md_q('SELECT token_hash FROM md_wabs_tokens WHERE election_id = ?', [$electionId]) as $t) {
+        fwrite($fh, $t['token_hash'] . "\n");
+    }
+    fclose($fh);
+
+    md_exec('UPDATE md_wabs_elections SET csv_file = ?, csv_generated_at = ?, csv_deleted_at = NULL WHERE election_id = ?', [$filename, md_now(), $electionId]);
+    md_exec('INSERT INTO md_changelog (member_id, field_key, old_value, new_value, changed_by, changed_via, changed_at) VALUES (?,?,?,?,?,?,?)',
+        [$by, 'wabs.csv_generated', null, $filename . ' (' . $tokenCount . ' Token, Wahl „' . $election['title'] . '“)', $by, 'admin', md_now()]);
+    return [$filename, ''];
+}
+
+/**
+ * Bestätigt den erfolgreichen Import der CSV-Datei auf dem externen Wahlserver:
+ * löscht die Datei endgültig von der Festplatte und die Token-Liste aus MISS.
+ */
+function md_wabs_transfer_csv_confirm(int $electionId, int $by): string
+{
+    $election = md_wabs_election_get($electionId);
+    if (!$election) return 'Wahl nicht gefunden.';
+    if (empty($election['csv_file'])) return 'Es liegt keine Token-CSV vor.';
+    if (!empty($election['csv_deleted_at'])) return 'Diese CSV-Datei wurde bereits als gelöscht bestätigt.';
+    $path = md_wabs_storage_dir() . '/' . $election['csv_file'];
+    if (is_file($path) && !@unlink($path)) return 'Die Datei konnte nicht gelöscht werden - bitte auf dem Server prüfen.';
+
+    $tokenCount = md_wabs_tokens_count($electionId);
+    md_exec('DELETE FROM md_wabs_tokens WHERE election_id = ?', [$electionId]);
+    md_exec("UPDATE md_wabs_elections SET csv_deleted_at = ?, transferred_at = ?, transfer_mode = 'csv', status = 'uebertragen' WHERE election_id = ?", [md_now(), md_now(), $electionId]);
+    md_exec('INSERT INTO md_changelog (member_id, field_key, old_value, new_value, changed_by, changed_via, changed_at) VALUES (?,?,?,?,?,?,?)',
+        [$by, 'wabs.tokens_transferred', null, $tokenCount . ' Token per CSV übertragen, Datei gelöscht (Wahl „' . $election['title'] . '“)', $by, 'admin', md_now()]);
     return '';
 }

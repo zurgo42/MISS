@@ -31,6 +31,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($aktion === 'pdf_delete') {
         $err = md_wabs_pdf_delete($eid, (int)$me['member_id']);
         $ok = 'PDF-Datei gelöscht.';
+    } elseif ($aktion === 'save_transfer_conf') {
+        $err = md_wabs_transfer_conf_save((string)($_POST['mode'] ?? ''), (string)($_POST['host'] ?? ''), (string)($_POST['port'] ?? ''),
+            (string)($_POST['dbname'] ?? ''), (string)($_POST['dbuser'] ?? ''), (string)($_POST['dbpass'] ?? ''));
+        $ok = 'Wahlserver-Verbindung gespeichert.';
+    } elseif ($aktion === 'transfer_direct') {
+        $err = md_wabs_transfer_direct($eid, (int)$me['member_id']);
+        $ok = 'Token-Liste direkt zum Wahlserver übertragen und aus MISS gelöscht.';
+    } elseif ($aktion === 'csv_generate') {
+        [, $err] = md_wabs_transfer_csv_generate($eid, (int)$me['member_id']);
+        $ok = 'Token-CSV erzeugt.';
+    } elseif ($aktion === 'csv_confirm') {
+        $err = md_wabs_transfer_csv_confirm($eid, (int)$me['member_id']);
+        $ok = 'Import bestätigt, CSV-Datei und Token-Liste in MISS gelöscht.';
     }
     md_flash($err ?: $ok, $err ? 'err' : 'ok');
     header('Location: ' . md_url('admin/wabs.php' . ($eid ? '?election=' . $eid : '')));
@@ -57,6 +70,16 @@ if ($edit) {
         . '<label class="block">Bezeichnung<input name="title" placeholder="z. B. Wahl des Vorstands und der Kassenprüfer" required style="width:100%" maxlength="200"></label>'
         . '<div class="addr"><label>Start<input type="datetime-local" name="start_at" required></label><label>Ende<input type="datetime-local" name="end_at" required></label></div>'
         . '<button>Anlegen</button></form></section>';
+
+    $tconf = md_wabs_transfer_conf();
+    echo '<section class="card"><h2>Wahlserver-Verbindung</h2><p class="muted">Gilt für alle Wahlen. Bei gleichem Server/gleicher Datenbank-Instanz: direkte Übertragung. Bei einem externen Server: CSV-Export zum manuellen Import dort.</p>'
+        . '<form method="post">' . md_csrf_field() . '<input type="hidden" name="aktion" value="save_transfer_conf">'
+        . '<label class="check"><input type="radio" name="mode" value="direct"' . ($tconf['mode'] === 'direct' ? ' checked' : '') . '> Direkte Übertragung (gleicher Server/gleiche Datenbank)</label> '
+        . '<label class="check"><input type="radio" name="mode" value="csv"' . ($tconf['mode'] !== 'direct' ? ' checked' : '') . '> CSV-Export (externer Server)</label>'
+        . '<div class="addr"><label>Datenbankserver<input name="host" value="' . h($tconf['host']) . '" placeholder="z. B. localhost"></label><label>Port<input name="port" value="' . h($tconf['port']) . '" placeholder="3306"></label></div>'
+        . '<div class="addr"><label>Datenbankname<input name="dbname" value="' . h($tconf['name']) . '"></label><label>Benutzer<input name="dbuser" value="' . h($tconf['user']) . '"></label></div>'
+        . '<label class="block">Passwort <span class="muted">(leer lassen, um ein bereits gespeichertes Passwort unverändert zu lassen)</span><input type="password" name="dbpass" autocomplete="new-password"></label>'
+        . '<button>Speichern</button></form></section>';
 }
 
 if ($sel) {
@@ -103,6 +126,33 @@ if ($sel) {
                 . ($edit ? '<form method="post" style="display:inline"><input type="hidden" name="aktion" value="retry"><input type="hidden" name="election_id" value="' . (int)$sel['election_id'] . '"><input type="hidden" name="member_id" value="' . (int)$f['member_id'] . '">' . md_csrf_field() . '<button class="link">erneut versuchen</button></form>' : '') . '</td></tr>';
         }
         echo '</tbody></table>';
+    }
+
+    $tokenCount = md_wabs_tokens_count((int)$sel['election_id']);
+    echo '<h3>Übertragung zum Wahlserver</h3>';
+    if (!empty($sel['transferred_at'])) {
+        echo '<p>Übertragen am ' . h(date('d.m.Y H:i', strtotime($sel['transferred_at']))) . ' (' . h($sel['transfer_mode'] === 'direct' ? 'direkt in die Wahlserver-Datenbank' : 'per CSV-Export') . '). Die Token-Liste ist in MISS gelöscht.</p>';
+    } elseif ($tokenCount === 0) {
+        echo '<p class="muted">Noch keine Token vorhanden - erst Wahlaufforderungen per E-Mail/PDF erzeugen.</p>';
+    } else {
+        echo '<p>' . $tokenCount . ' gültige(s) Token bereit zur Übertragung.</p>';
+        if ($edit) {
+            if ($tconf['mode'] === 'direct') {
+                if ($tconf['host'] === '' || $tconf['name'] === '' || $tconf['user'] === '') {
+                    echo '<p class="muted">Bitte zuerst oben die Wahlserver-Verbindung vollständig eintragen.</p>';
+                } else {
+                    echo '<form method="post" onsubmit="return confirm(\'' . $tokenCount . ' Token direkt in die Wahlserver-Datenbank übertragen? Die Liste wird danach sofort aus MISS gelöscht.\')"><input type="hidden" name="aktion" value="transfer_direct"><input type="hidden" name="election_id" value="' . (int)$sel['election_id'] . '">' . md_csrf_field()
+                        . '<button>' . $tokenCount . ' Token direkt übertragen</button></form>';
+                }
+            } elseif (!empty($sel['csv_file']) && empty($sel['csv_deleted_at'])) {
+                echo '<p>Token-CSV vom ' . h(date('d.m.Y H:i', strtotime($sel['csv_generated_at']))) . ': <a href="admin/wabs_csv.php?election=' . (int)$sel['election_id'] . '">herunterladen</a></p>'
+                    . '<form method="post" onsubmit="return confirm(\'Erst bestätigen, wenn die CSV-Datei tatsächlich auf dem externen Wahlserver importiert wurde - die Datei wird dabei endgültig von der Festplatte entfernt und die Token-Liste aus MISS gelöscht.\')"><input type="hidden" name="aktion" value="csv_confirm"><input type="hidden" name="election_id" value="' . (int)$sel['election_id'] . '">' . md_csrf_field()
+                    . '<button>Importiert – CSV-Datei jetzt löschen</button></form>';
+            } else {
+                echo '<form method="post"><input type="hidden" name="aktion" value="csv_generate"><input type="hidden" name="election_id" value="' . (int)$sel['election_id'] . '">' . md_csrf_field()
+                    . '<button>Token-CSV erzeugen</button></form>';
+            }
+        }
     }
     echo '</section>';
 }

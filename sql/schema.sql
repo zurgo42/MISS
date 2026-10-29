@@ -617,7 +617,12 @@ CREATE TABLE IF NOT EXISTS md_wabs_elections (
     vote_base_url VARCHAR(255) DEFAULT NULL,       -- Basis-URL zum Wahlserver (Phase 2), siehe MD_MIGRATIONS für Bestandsinstallationen
     pdf_file VARCHAR(255) DEFAULT NULL,            -- Phase 3: Dateiname des aktuellen PDF-Sammeldrucks (storage/wabs/), solange nicht gelöscht
     pdf_generated_at DATETIME DEFAULT NULL,
-    pdf_deleted_at DATETIME DEFAULT NULL
+    pdf_deleted_at DATETIME DEFAULT NULL,
+    transferred_at DATETIME DEFAULT NULL,          -- Phase 4: Token-Liste erfolgreich zum Wahlserver übertragen
+    transfer_mode VARCHAR(10) DEFAULT NULL,         -- direct, csv
+    csv_file VARCHAR(255) DEFAULT NULL,             -- Phase 4: Dateiname der aktuellen Token-CSV (storage/wabs/), solange nicht gelöscht
+    csv_generated_at DATETIME DEFAULT NULL,
+    csv_deleted_at DATETIME DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- WABS Phase 2: anonyme Liste gültiger Token je Wahl - nur der Hash, nie der
