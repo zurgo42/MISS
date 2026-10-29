@@ -58,6 +58,8 @@ Dann `http://localhost:8080/login.php` und eine der 12 Figuren wählen (Max Must
 Die Demo-Daten entstehen deterministisch aus `tools/demo_build.php` (Datumsangaben beziehen sich auf den Tag des Aufrufs); die erzeugte Datei `tools/demo_data.json` liegt nicht im Repo (`.gitignore`) und wird bei Bedarf neu erzeugt. So sehen wir beide dieselben Fälle, ohne dass beim Pull Konflikte entstehen.
 Bewusste Sonderfälle: Lukas (alte Fassung der Bedingungen, offene Mahnung), Mia (keine Zustimmung, offene Erstattung, E-Mail fehlt), Karl (schriftliche Zustimmung), Rolf (ausgetreten, Zustimmung widerrufen), Hans/Anna (Übungsleiterpauschale).
 
+Nach einer Ausprobierphase lässt sich die Demo direkt im Browser auf diesen Stand zurücksetzen, ohne Kommandozeile: Administration → „🎭 Demo-Daten zurücksetzen" (nur sichtbar, solange `MD_DEMO_MODE=true`) - analog zur entsprechenden Funktion in der Sitzungsverwaltung.
+
 ## Einbindung in die Sitzungsverwaltung
 
 - Tabellen mit Präfix `md_`, Schema in `sql/schema.sql` (MySQL/MariaDB). `md_*.member_id` verweist auf `svmembers.member_id`.

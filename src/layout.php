@@ -37,6 +37,7 @@ function md_special_groups(?array $me): array
         'System' => array_filter([
             'privacy' => $can('privacy') ? ['admin/privacy.php', 'Datenschutz'] : null,
             'settings' => $can('settings', 'edit') ? ['admin/settings.php', 'Administration'] : null,
+            'demo_reset' => ($can('settings', 'edit') && defined('MD_DEMO_MODE') && MD_DEMO_MODE) ? ['admin/demo_reset.php', '🎭 Demo-Daten zurücksetzen'] : null,
         ]),
     ];
     return array_filter($g);

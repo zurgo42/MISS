@@ -214,3 +214,70 @@ function demo_seed_org(): void
     md_bank_account_save(null, ['label' => 'Spendenkonto', 'holder' => 'Förderverein Musterverein e. V.', 'iban' => 'DE89370400440532013000', 'bic' => 'COBADEFFXXX', 'bank' => 'Commerzbank', 'use_donation' => 1]);
     echo "Demo-Vereinskonten angelegt.\n";
 }
+
+/**
+ * Setzt die Demo (MD_DEMO_MODE=true, SQLite) auf einen jungfräulichen Stand zurück -
+ * direkt aus dem laufenden Admin-Bereich (admin/demo_reset.php), ohne Kommandozeile.
+ *
+ * Anders als tools/demo_setup.php wird die SQLite-Datei NICHT gelöscht/neu angelegt
+ * (das würde die bereits offene PDO-Verbindung des laufenden Requests verwaisen
+ * lassen) - stattdessen werden alle betroffenen Tabellen in der bestehenden
+ * Verbindung geleert und neu befüllt.
+ *
+ * Welche Tabellen geleert werden, wird zur Laufzeit ermittelt (svmembers,
+ * svressorts, alles mit Präfix md_) statt als feste Liste gepflegt zu werden -
+ * damit künftig hinzukommende Tabellen (wie die der WABS-Funktion) hier nie
+ * vergessen werden und von selbst in einen jungfräulichen Zustand kommen (auch
+ * ohne eigene Demo-Inhalte in demo_build()).
+ *
+ * Gibt die mitgeschriebene Textausgabe der aufgerufenen Demo-Hilfsfunktionen
+ * zurück (die schreiben traditionell per echo). Wirft eine RuntimeException bei
+ * einem Abbruchgrund (z. B. falscher Modus) - der Aufrufer zeigt sie an.
+ */
+function demo_reset_inplace(string $anchor = ''): string
+{
+    if (MD_DB_DRIVER !== 'sqlite' || !MD_DEMO_MODE) {
+        throw new RuntimeException('Nur im Demo-Modus möglich (MD_DB_DRIVER=sqlite, MD_DEMO_MODE=true) - das schützt echte Daten.');
+    }
+    $root = dirname(__DIR__);
+    require_once "$root/tools/demo_build.php";
+    $anchor = $anchor !== '' ? $anchor : date('Y-m-d');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $anchor)) throw new RuntimeException('Ungültiger Bezugstag.');
+
+    ob_start();
+    $pdo = md_db();
+    $data = demo_build($anchor);
+
+    $tables = array_column(md_q("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"), 'name');
+    $tables = array_values(array_filter($tables, fn($t) => $t === 'svmembers' || $t === 'svressorts' || str_starts_with($t, 'md_')));
+    $pdo->exec('PRAGMA foreign_keys = OFF');
+    foreach ($tables as $t) $pdo->exec("DELETE FROM `$t`");
+    // SQLites AUTOINCREMENT-Zaehler (sqlite_sequence) bleibt nach DELETE stehen - ohne
+    // diesen Reset wuerden neu vergebene IDs nicht mehr bei 1 beginnen, was die in
+    // demo_build() fest einprogrammierten Bezuege (z. B. Mitgliedsnummer <-> ID) durcheinanderbringt.
+    if (md_one("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'sqlite_sequence'")) $pdo->exec('DELETE FROM sqlite_sequence');
+    $pdo->exec('PRAGMA foreign_keys = ON');
+    echo count($tables) . " Tabelle(n) geleert.\n";
+
+    foreach (glob(MD_STORAGE_DIR . '/photos/*') ?: [] as $f) @unlink($f);
+    foreach (glob(MD_STORAGE_DIR . '/wabs/*') ?: [] as $f) @unlink($f);
+    foreach (glob(MD_STORAGE_DIR . '/mail/*') ?: [] as $f) @unlink($f);
+
+    $pdo->beginTransaction();
+    foreach (['svmembers', 'svressorts'] as $t) demo_insert($pdo, $t, $data[$t]);
+    foreach (DEMO_MD_TABLES as $t) demo_insert($pdo, $t, $data[$t]);
+    $pdo->commit();
+
+    demo_photos($pdo, $data['svmembers']);
+    echo 'md_permissions         ' . md_seed_permissions() . "\n";
+    md_dunning_seed();
+    demo_seed_sepa();
+    demo_seed_mail();
+    demo_seed_events();
+    demo_seed_lists_apply();
+    demo_seed_datev();
+    demo_seed_org();
+    demo_issue_receipts();
+    echo "Fertig (Bezugstag $anchor).\n";
+    return ob_get_clean();
+}

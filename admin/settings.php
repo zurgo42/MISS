@@ -205,6 +205,9 @@ $form = fn(string $action, string $inner, string $extra = '') => '<form method="
 md_header('Administration', $me, 'settings');
 md_show_flash();
 echo '<h1>Administration</h1><p class="muted">Hier stehen alle Angaben, die in jedem Verein anders heißen oder geregelt sind. <a href="#" onclick="document.querySelectorAll(\'details.acc\').forEach(function(d){d.open=!d.open});return false">Alle ein-/ausklappen</a></p>';
+if (defined('MD_DEMO_MODE') && MD_DEMO_MODE) {
+    echo '<div class="flash warn"><strong>🎭 Demo-Modus aktiv.</strong> Nach einer Ausprobierphase lässt sich das System jederzeit auf den ursprünglichen Demo-Stand zurücksetzen: <a href="admin/demo_reset.php">Demo-Daten zurücksetzen</a>.</div>';
+}
 
 // ---- Verein: Name, Anschrift, Impressum, Datenschutzerklärung, Fußzeile
 ob_start();
