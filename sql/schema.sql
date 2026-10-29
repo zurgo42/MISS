@@ -613,5 +613,42 @@ CREATE TABLE IF NOT EXISTS md_wabs_elections (
     end_at DATETIME NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'angelegt',
     created_by INT DEFAULT NULL,
+    created_at DATETIME NOT NULL,
+    vote_base_url VARCHAR(255) DEFAULT NULL        -- Basis-URL zum Wahlserver (Phase 2), siehe MD_MIGRATIONS für Bestandsinstallationen
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- WABS Phase 2: anonyme Liste gültiger Token je Wahl - nur der Hash, nie der
+-- Klartext, nie ein Mitgliedsbezug. Wird in Phase 4 zum Wahlserver übertragen
+-- und danach hier gelöscht; eine Zeile wird vorher gelöscht, wenn der Versand
+-- des zugehörigen Tokens fehlschlägt (siehe md_wabs_mail_queue).
+CREATE TABLE IF NOT EXISTS md_wabs_tokens (
+    token_id INT PRIMARY KEY AUTO_INCREMENT,
+    election_id INT NOT NULL,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- WABS Phase 2: wer wurde je Wahl schon für eine Wahlaufforderung berücksichtigt
+-- (erfolgreich oder fehlgeschlagen) - bewusst OHNE Token/Hash, nur um Doppelversand
+-- zu vermeiden und damit der Wahlausschuss Fehlschläge gezielt erneut anstoßen kann.
+CREATE TABLE IF NOT EXISTS md_wabs_recipients (
+    election_id INT NOT NULL,
+    member_id INT NOT NULL,
+    status VARCHAR(10) NOT NULL,                   -- queued, sent, failed
+    attempted_at DATETIME NOT NULL,
+    PRIMARY KEY (election_id, member_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- WABS Phase 2: Warteschlange der Token-Mails - bewusst NICHT md_mail_outbox (die
+-- ist als Versandnachweis gedacht). Jede Zeile wird nach dem Versandversuch sofort
+-- gelöscht, egal ob er erfolgreich war oder nicht (siehe md_wabs_queue_send()).
+CREATE TABLE IF NOT EXISTS md_wabs_mail_queue (
+    queue_id INT PRIMARY KEY AUTO_INCREMENT,
+    election_id INT NOT NULL,
+    member_id INT NOT NULL,
+    token_id INT NOT NULL,
+    to_email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
     created_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

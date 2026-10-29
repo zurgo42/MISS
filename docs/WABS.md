@@ -9,9 +9,17 @@ Mitglieder können sicher und anonym online wählen und abstimmen. Der Gesamtent
 - Solange eine Wahl läuft (Start ≤ jetzt ≤ Ende), erscheint auf dem Dashboard jedes Mitglieds ein Hinweisbanner mit Bezeichnung und Enddatum.
 - Bestehende Installationen bekommen die neue Funktion beim nächsten `php tools/install.php` additiv ergänzt (kein Neuanlegen nötig, nichts wird gelöscht).
 
+## Phase 2: Token-Erzeugung und Mailversand (fertig)
+
+- Pro aktivem Mitglied mit (gültiger) E-Mail-Adresse, das für diese Wahl noch nicht berücksichtigt wurde, erzeugt „Wahlaufforderungen erzeugen" ein kryptografisch sicheres Token (`bin2hex(random_bytes(24))`). In der dauerhaften, anonymen Token-Liste (`md_wabs_tokens`) steht **nur der SHA-256-Hash**, nie der Klartext und nie ein Mitgliedsbezug.
+- Die Wahlaufforderung (Link mit Klartext-Token) kommt in eine eigene Warteschlange (`md_wabs_mail_queue`, bewusst nicht die bestehende `md_mail_outbox`, die als Versandnachweis gedacht ist). „Jetzt senden" verschickt bis zu 100 Zeilen je Klick über den vorhandenen Mail-Transport (log/mail/SMTP, siehe [MAIL.md](MAIL.md)) und **löscht jede Zeile sofort nach dem Versandversuch** – egal ob er erfolgreich war oder nicht.
+- Erfolgreich versendet: Token bleibt gültig in der Liste, `md_wabs_recipients` (election_id, member_id, status – ohne Token/Hash) merkt sich nur, dass dieses Mitglied bereits berücksichtigt wurde (verhindert Doppelversand).
+- Fehlgeschlagen: das zugehörige Token wird sofort aus der Liste gelöscht (war nie zustellbar) und das Mitglied erscheint in einer Liste „Fehlgeschlagen – bitte einzeln erneut anstoßen". Es gibt **keinen automatischen Wiederholungsversuch** – der Wahlausschuss stößt je Mitglied gezielt ein komplett neues Token an.
+- Jede Wahl hat eine eigene Link-Basis-URL zum (künftigen) Wahlserver (`md_wabs_elections.vote_base_url`), die vor dem Erzeugen eingetragen werden muss.
+- Mitglieder ohne E-Mail-Adresse werden gezählt, aber noch nicht berücksichtigt – das folgt mit Phase 3.
+
 ## Noch nicht enthalten (geplante Phasen)
 
-- **Token-Erzeugung und Mailversand** (Phase 2): pro Mitglied mit E-Mail-Adresse ein zufälliges, kryptografisch sicheres Token, Reihenfolge gemischt. Eigene, nach erfolgreichem Versand *löschende* Warteschlange (bewusst nicht die bestehende `md_mail_outbox`, die als Versandnachweis gedacht ist). Fehlgeschlagener Versand wird nicht automatisch wiederholt – der Wahlausschuss stößt bei Bedarf ein neues Token für das betroffene Mitglied manuell an.
 - **PDF-Sammeldruck mit QR-Code** (Phase 3) für Mitglieder ohne E-Mail-Adresse, mit FPDF und phpqrcode (beide als fertige Dateien im Serververzeichnis, kein Composer). Pflicht-Löschung der PDF-Datei nach Druck/Versand, protokolliert.
 - **Übertragung zum Wahlserver** (Phase 4): bei gleichem Server direkte Übertragung, bei externem Server CSV-Export/Import. Danach Löschung der Tokenliste in MISS.
 - **WABS-Grundgerüst** (Phase 5, eigenständige Anwendung unter `mv/WABS` im VERA/MV-Repo): eigenes schlankes Login nur für die beiden vorher festgelegten Wahlausschuss-Mitglieder, kein SSO zu MISS.

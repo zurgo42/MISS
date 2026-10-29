@@ -43,6 +43,7 @@ const MD_MIGRATIONS = [
     ['md_profiles', 'anonymized_at', 'DATETIME DEFAULT NULL'],
     ['md_member_functions', 'aktiv_level', 'INT DEFAULT NULL'],
     ['md_member_functions', 'ressort_id', 'INT DEFAULT NULL'],
+    ['md_wabs_elections', 'vote_base_url', 'VARCHAR(255) DEFAULT NULL'],
 ];
 
 /** Ergänzt fehlende Spalten. Gibt die Liste der ergänzten "tabelle.spalte" zurück. */
