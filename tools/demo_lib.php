@@ -323,10 +323,39 @@ function demo_reset_inplace_mysql(string $anchor = ''): string
     if (count($idmap) < 12) throw new RuntimeException('Es fehlen Demo-Mitglieder (' . count($idmap) . ' von 12 gefunden) - zuerst die Demo der Sitzungsverwaltung laden.');
     if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) throw new RuntimeException('md_functions ist leer - zuerst php tools/install.php ausführen.');
 
+    // Fehlende Funktionen additiv ergaenzen (z. B. eine neu hinzugekommene wie "WA" fuer
+    // WABS), genau wie tools/install.php es taete - ohne dass dafuer extra die
+    // Kommandozeile noetig waere. Bestehende Funktionen (auch umbenannte/deaktivierte)
+    // bleiben unangetastet.
+    $newFunctions = 0;
+    foreach (MD_DEFAULT_FUNCTIONS as [$code, $name, $lvl]) {
+        if (md_one('SELECT 1 FROM md_functions WHERE code = ?', [$code])) continue;
+        md_exec('INSERT INTO md_functions (code, name, sv_aktiv_level) VALUES (?,?,?)', [$code, $name, $lvl]);
+        $newFunctions++;
+    }
+
     ob_start();
+    if ($newFunctions) echo "$newFunctions neue Funktion(en) ergänzt.\n";
     $data = demo_build($anchor);
     $added = demo_ensure_extra_members($data['svmembers'], $idmap);
     echo $added ? "$added fehlende(s) Demo-Mitglied(er) in svmembers ergänzt.\n" : "svmembers vollständig, nichts ergänzt.\n";
+
+    // demo_build() nimmt an, dass md_functions.function_id genau der Position in
+    // MD_DEFAULT_FUNCTIONS entspricht (1, 2, 3, ...) - das stimmt nur auf einer frisch
+    // installierten Tabelle. Da md_functions hier (anders als bei der SQLite-Demo)
+    // bewusst nicht geleert/neu angelegt wird, kann die tatsächliche ID (gewachsene
+    // Installation, Funktionen über die Administration hinzugefügt, ...) abweichen -
+    // deshalb hier auf die wirklichen IDs aus der Datenbank umgerechnet. Code, der dort
+    // (trotz obiger Ergänzung) nicht existiert, wird übersprungen statt die Fremdschlüssel-
+    // Prüfung scheitern zu lassen.
+    $codeByAssumedId = array_column(MD_DEFAULT_FUNCTIONS, 0);
+    $realIdByCode = array_column(md_q('SELECT function_id, code FROM md_functions'), 'function_id', 'code');
+    $data['md_member_functions'] = array_values(array_filter(array_map(function ($mf) use ($codeByAssumedId, $realIdByCode) {
+        $code = $codeByAssumedId[$mf['function_id'] - 1] ?? null;
+        if ($code === null || !isset($realIdByCode[$code])) return null;
+        $mf['function_id'] = (int)$realIdByCode[$code];
+        return $mf;
+    }, $data['md_member_functions'])));
 
     $real = [];
     try {
