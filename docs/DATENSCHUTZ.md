@@ -5,6 +5,14 @@ Menü **Datenschutz** (Recht „Datenschutz“ ansehen/bearbeiten, siehe `docs/R
 > **Hinweis:** Die Fristen und Abläufe sind technische Voreinstellungen, keine Rechtsberatung. Aufbewahrungsfristen (z. B. für Buchungsbelege und Spendenbescheinigungen),
 > Auskunftsinhalte und Löschkonzept bitte mit Steuerberater und Datenschutzbeauftragten des Vereins abstimmen und danach unter *Datenschutz → Fristen* einstellen.
 
+## Einwilligung zum Mitgliederverzeichnis und zur Datenverwendung
+
+Das Dashboard hat einen gemeinsamen Knopf **Alle Eingaben speichern** (Persönliche Daten, Beruf & Interessen, Vorstellung, Adressen, Kontakt). Direkt davor steht die Einwilligung (Konstante `MD_DIRECTORY_CONSENT` in `src/fields.php`): Anrede, Titel, Vorname und Name erscheinen im Mitgliederverzeichnis, die eingegebenen Daten werden für satzungsgemäße Zwecke verwendet, und Angaben mit freigegebener Sichtbarkeit erscheinen im jeweils aktuellen Mitgliederverzeichnis.
+
+**Warum es zusätzlich einen Hinweis beim Login gibt:** Die Einwilligung wird beim Speichern erteilt. Daten können aber schon vorliegen, ohne dass das Mitglied sie je selbst gespeichert hat, zum Beispiel aus einer **Datenübernahme** (Import aus einer früheren Mitgliederverwaltung) oder weil die Verwaltung sie erfasst hat. Für diese Daten fehlt die Einwilligung zum aktuellen Wortlaut. Deshalb zeigt das Dashboard jedem Mitglied einen Hinweis mit dem Grund und dem Knopf **Einwilligung bestätigen**, bis sie vorliegt. Der Hinweis erscheint auch bei Mitgliedern, die den Nutzungsbedingungen noch nicht zugestimmt haben, weil Daten aus der Übernahme schon vorhanden sein können. Er erscheint nicht, wenn die Verwaltung Daten eines Mitglieds ansieht (die Einwilligung kann nur das Mitglied selbst geben).
+
+Nachweis: Zeitpunkt und Wortlaut-Kennung (Hash des Textes) stehen im Änderungsprotokoll (`md_changelog`, Feld `consent.directory`). Wird der Text `MD_DIRECTORY_CONSENT` geändert, ändert sich die Kennung, und alle Mitglieder werden erneut gefragt.
+
 ## Auskunft (Art. 15 DSGVO)
 
 Jedes Mitglied kann seine Daten jederzeit selbst abrufen (Dashboard → *Meine Daten*), auch ohne Zustimmung zu den Nutzungsbedingungen:

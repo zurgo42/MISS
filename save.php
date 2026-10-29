@@ -5,7 +5,7 @@ $actor = md_require_login();
 md_csrf_check();
 $section = (string)($_POST['section'] ?? '');
 // Ohne Zustimmung zu den Nutzungsbedingungen kann man nichts ändern (außer eben zustimmen bzw. widerrufen)
-if (!in_array($section, ['consent', 'consent_revoke', 'privacy_request'], true) && !md_consent_ok((int)$actor['member_id'])) {
+if (!in_array($section, ['consent', 'consent_revoke', 'privacy_request', 'directory_consent'], true) && !md_consent_ok((int)$actor['member_id'])) {
     md_flash('Ändern ist erst nach der Zustimmung zu den Nutzungsbedingungen möglich.', 'warn');
     header('Location: ' . md_url('index.php#terms'));
     exit;
