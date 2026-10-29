@@ -40,12 +40,15 @@ try {
             }
             // Einwilligung festhalten (Zeitpunkt im Änderungsprotokoll), solange der Wortlaut derselbe ist, nur einmal
             if ($via === 'self' && $kind !== 'err') {
-                $ver = substr(sha1(MD_DIRECTORY_CONSENT), 0, 12);
-                if (!md_one("SELECT 1 AS x FROM md_changelog WHERE member_id = ? AND field_key = 'consent.directory' AND new_value = ?", [$mid, $ver])) {
-                    md_log_change($mid, 'consent.directory', null, $ver, $aid, 'self');
-                }
+                if (!md_directory_consent_given($mid)) md_log_change($mid, 'consent.directory', null, md_directory_consent_version(), $aid, 'self');
             }
             if ($kind !== 'err') $msg = $n ? "$n Änderung(en) gespeichert." : 'Keine Änderungen.';
+            break;
+        case 'directory_consent':
+            // Einwilligung über den Hinweis auf dem Dashboard, ohne Daten zu ändern
+            if ($via !== 'self') { http_response_code(403); exit('Nur für die eigenen Daten.'); }
+            if (!md_directory_consent_given($mid)) md_log_change($mid, 'consent.directory', null, md_directory_consent_version(), $aid, 'self');
+            $msg = 'Danke, deine Einwilligung ist dokumentiert.';
             break;
         case 'addresses':
             $n = md_save_addresses($mid, $_POST, $aid, $via) + md_save_visibility($mid, $_POST, $aid, $via);

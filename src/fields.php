@@ -36,6 +36,18 @@ const MD_PROFILE_FIELDS = [
 /** Einwilligung, die vor dem gemeinsamen Speichern-Knopf im Dashboard steht (wird mit Zeitpunkt im Änderungsprotokoll festgehalten). */
 const MD_DIRECTORY_CONSENT = 'Mit dem Speichern stimme ich ausdrücklich zu, dass Anrede, Titel, Vorname und Name im Mitgliederverzeichnis erscheinen. Ich willige ausdrücklich ein, dass meine hier eingegebenen persönlichen Daten für satzungsgemäße Zwecke verwendet werden und dass Angaben, bei denen ich die Sichtbarkeit freigegeben habe, im jeweils aktuellen Mitgliederverzeichnis erscheinen dürfen.';
 
+/** Kennung des Wortlauts; ändert sich der Text, wird die Einwilligung neu abgefragt. */
+function md_directory_consent_version(): string
+{
+    return substr(sha1(MD_DIRECTORY_CONSENT), 0, 12);
+}
+
+/** Hat das Mitglied dem aktuellen Wortlaut schon zugestimmt (Eintrag im Änderungsprotokoll)? */
+function md_directory_consent_given(int $member): bool
+{
+    return (bool)md_one("SELECT 1 AS x FROM md_changelog WHERE member_id = ? AND field_key = 'consent.directory' AND new_value = ?", [$member, md_directory_consent_version()]);
+}
+
 const MD_ADDRESS_FIELDS = ['label' => 'Bezeichnung', 'street' => 'Straße, Nr.', 'zip' => 'PLZ', 'city' => 'Ort', 'country' => 'Land'];
 
 const MD_CONTACT_KINDS = [

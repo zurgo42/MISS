@@ -369,6 +369,15 @@ if (!$staff) {
 // ======================================================================= Ausgabe
 md_header('Dashboard', $actor, 'dashboard');
 md_show_flash();
+// Einmaliger Hinweis, solange die Einwilligung zum aktuellen Wortlaut fehlt (nach dem Login auf dem Dashboard)
+if (!$staff && $ownConsent && !md_directory_consent_given($mid)) {
+    echo '<div class="flash warn consentnote"><strong>Bitte bestätige deine Einwilligung zur Datenverwendung.</strong>'
+        . '<p><em>Grund:</em> Die Vereinsverwaltung holt für das Mitgliederverzeichnis und die Verwendung deiner Daten eine ausdrückliche Einwilligung nach der DSGVO ein. '
+        . 'Sie fehlt bei dir noch, weil du deine Angaben seit dieser Regelung nicht gespeichert hast. Du kannst sie jederzeit widerrufen, indem du Angaben löschst oder die Sichtbarkeit zurücknimmst.</p>'
+        . '<p class="consent">' . h(MD_DIRECTORY_CONSENT) . '</p>'
+        . '<form method="post" action="save.php">' . $form('directory_consent', 'personal') . '<button>Einwilligung bestätigen</button> '
+        . '<span class="muted">oder unten Angaben prüfen und „Alle Eingaben speichern“ wählen.</span></form></div>';
+}
 if (!$staff) echo md_portal_html($actor);
 if ($staff) {
     echo '<div class="flash warn">Verwaltungsmodus: ' . ($canEdit ? 'Du bearbeitest' : 'Du siehst (nur lesend)') . ' die Daten von <strong>' . h($m['first_name'] . ' ' . $m['last_name'])
