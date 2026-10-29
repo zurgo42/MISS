@@ -59,7 +59,7 @@ function md_wabs_eligible_members(): array
                    AND (p.leave_date IS NULL OR p.leave_date >= ?) ORDER BY s.last_name, s.first_name", [date('Y-m-d')]);
 }
 
-/** Zahlen für die Anzeige: bereits versendet/fehlgeschlagen/wartend, sowie (noch) nicht berücksichtigt mit/ohne E-Mail. */
+/** Zahlen für die Anzeige: bereits versendet/fehlgeschlagen/wartend, sowie (noch) nicht berücksichtigt mit/ohne E-Mail (ohne E-Mail zusätzlich danach, ob eine Postanschrift vorliegt). */
 function md_wabs_requests_summary(int $electionId): array
 {
     $byStatus = ['sent' => 0, 'failed' => 0, 'queued' => 0];
@@ -69,15 +69,18 @@ function md_wabs_requests_summary(int $electionId): array
     $done = array_column(md_q('SELECT member_id FROM md_wabs_recipients WHERE election_id = ?', [$electionId]), 'member_id');
     $doneMap = array_flip(array_map('intval', $done));
     $offenMitMail = 0;
-    $offenOhneMail = 0;
+    $offenOhneMailMitAdresse = 0;
+    $unreachable = 0;
     foreach (md_wabs_eligible_members() as $m) {
-        if (isset($doneMap[(int)$m['member_id']])) continue;
-        if (md_mail_address_of((int)$m['member_id'])) $offenMitMail++;
-        else $offenOhneMail++;
+        $mid = (int)$m['member_id'];
+        if (isset($doneMap[$mid])) continue;
+        if (md_mail_address_of($mid)) { $offenMitMail++; continue; }
+        if (md_donor($mid)) $offenOhneMailMitAdresse++;
+        else $unreachable++;
     }
     return ['sent' => $byStatus['sent'], 'failed' => $byStatus['failed'], 'queued_recipients' => $byStatus['queued'],
         'queue_rows' => (int)(md_one('SELECT COUNT(*) c FROM md_wabs_mail_queue WHERE election_id = ?', [$electionId])['c'] ?? 0),
-        'offen_mit_mail' => $offenMitMail, 'offen_ohne_mail' => $offenOhneMail];
+        'offen_mit_mail' => $offenMitMail, 'offen_ohne_mail' => $offenOhneMailMitAdresse, 'unreachable' => $unreachable];
 }
 
 /** Namen der Mitglieder, deren Wahlaufforderung fehlgeschlagen ist (für die "erneut versuchen"-Liste). */
@@ -192,4 +195,124 @@ function md_wabs_queue_send(int $electionId, int $limit = 50): array
         else { $bad++; $first = $first ?: $err; }
     }
     return [$ok, $bad, $first];
+}
+
+// ============================================
+// PHASE 3: PDF-SAMMELDRUCK MIT QR-CODE
+// Für Mitglieder ohne E-Mail-Adresse, aber mit Postanschrift. FPDF und phpqrcode
+// liegen bewusst NICHT im Repo, sondern als fertige Dateien zwei Ebenen über dem
+// Anwendungsverzeichnis (gemeinsam mit den Geschwisteranwendungen VERA/KONA
+// nutzbar) - siehe docs/WABS.md.
+// ============================================
+
+/** Verzeichnis für die PDF-Sammeldrucke - außerhalb des Web-Dokumentenverzeichnisses, kein Direktzugriff über die URL (wie storage/mail). */
+function md_wabs_pdf_dir(): string
+{
+    $dir = MD_STORAGE_DIR . '/wabs';
+    if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+        throw new RuntimeException("Ordner $dir kann nicht angelegt werden.");
+    }
+    return $dir;
+}
+
+/** Leerer String, wenn FPDF und phpqrcode gefunden wurden, sonst eine Fehlermeldung mit dem erwarteten Pfad. */
+function md_wabs_pdf_libs_missing(): string
+{
+    $root = dirname(__DIR__, 2);
+    if (!is_file($root . '/fpdf/fpdf.php')) return "FPDF wurde nicht gefunden (erwartet unter $root/fpdf/fpdf.php).";
+    if (!is_file($root . '/phpqrcode/qrlib.php')) return "phpqrcode wurde nicht gefunden (erwartet unter $root/phpqrcode/qrlib.php).";
+    return '';
+}
+
+/**
+ * FPDFs Kernschriften (Arial/Helvetica usw.) verstehen kein UTF-8, sondern CP1252
+ * (Windows-1252) - ohne diese Umwandlung werden Umlaute und typografische
+ * Anführungszeichen als Mojibake ausgegeben.
+ */
+function md_wabs_pdf_text(string $s): string
+{
+    return iconv('UTF-8', 'CP1252//TRANSLIT', $s);
+}
+
+/** Eine Seite des PDF-Sammeldrucks: Anschrift, Erklärtext mit Link, QR-Code. */
+function md_wabs_pdf_add_page(FPDF $pdf, array $election, array $donor, string $voteUrl, string $qrFile): void
+{
+    $pdf->AddPage();
+    $pdf->SetFont('Arial', '', 11);
+    $pdf->SetXY(20, 50);
+    $pdf->MultiCell(90, 6, md_wabs_pdf_text($donor['name'] . "\n" . implode("\n", $donor['lines'])));
+    $pdf->SetFont('Arial', 'B', 14);
+    $pdf->SetXY(20, 95);
+    $pdf->MultiCell(170, 8, md_wabs_pdf_text('Wahlaufforderung: ' . $election['title']));
+    $pdf->SetFont('Arial', '', 11);
+    $pdf->SetXY(20, 115);
+    $pdf->MultiCell(170, 6, md_wabs_pdf_text(md_wabs_invitation_text($election, $voteUrl)));
+    $pdf->Image($qrFile, 140, 190, 40, 40);
+}
+
+/**
+ * Erzeugt für alle aktiven Mitglieder ohne E-Mail-Adresse, aber mit Postanschrift, die
+ * für diese Wahl noch nicht berücksichtigt wurden, je ein Token und eine Seite im
+ * PDF-Sammeldruck. Mitglieder ohne jede Erreichbarkeit (weder E-Mail noch Anschrift)
+ * werden nur gezählt (siehe md_wabs_requests_summary(): "unreachable"). Solange ein
+ * vorheriger Sammeldruck nicht als gelöscht bestätigt ist, wird nichts Neues erzeugt.
+ * Gibt [Anzahl Seiten, Fehler] zurück.
+ */
+function md_wabs_pdf_generate(int $electionId, int $by): array
+{
+    $election = md_wabs_election_get($electionId);
+    if (!$election) return [0, 'Wahl nicht gefunden.'];
+    if (trim((string)($election['vote_base_url'] ?? '')) === '') return [0, 'Bitte zuerst die Link-Basis-URL zum Wahlserver eintragen.'];
+    if (!empty($election['pdf_file']) && empty($election['pdf_deleted_at'])) {
+        return [0, 'Es liegt noch ein nicht als gelöscht bestätigter PDF-Sammeldruck vor - bitte diesen zuerst abschließen.'];
+    }
+    if ($missing = md_wabs_pdf_libs_missing()) return [0, $missing];
+
+    $done = array_flip(array_map('intval', array_column(md_q('SELECT member_id FROM md_wabs_recipients WHERE election_id = ?', [$electionId]), 'member_id')));
+    $kandidaten = [];
+    foreach (md_wabs_eligible_members() as $m) {
+        $mid = (int)$m['member_id'];
+        if (isset($done[$mid]) || md_mail_address_of($mid)) continue;
+        $donor = md_donor($mid);
+        if ($donor) $kandidaten[] = [$mid, $donor];
+    }
+    if (!$kandidaten) return [0, 'Keine Mitglieder zu berücksichtigen (ohne E-Mail-Adresse, aber mit Postanschrift).'];
+
+    $root = dirname(__DIR__, 2);
+    require_once $root . '/fpdf/fpdf.php';
+    require_once $root . '/phpqrcode/qrlib.php';
+
+    $dir = md_wabs_pdf_dir();
+    $tmpQr = $dir . '/tmp-' . bin2hex(random_bytes(6)) . '.png';
+    $pdf = new FPDF();
+    foreach ($kandidaten as [$mid, $donor]) {
+        [, $raw] = md_wabs_token_issue($electionId);
+        $voteUrl = $election['vote_base_url'] . '/vote.php?token=' . $raw;
+        QRcode::png($voteUrl, $tmpQr, QR_ECLEVEL_M, 5, 2);
+        md_wabs_pdf_add_page($pdf, $election, $donor, $voteUrl, $tmpQr);
+        @unlink($tmpQr);
+        md_exec('INSERT INTO md_wabs_recipients (election_id, member_id, status, channel, attempted_at) VALUES (?,?,?,?,?)',
+            [$electionId, $mid, 'sent', 'pdf', md_now()]);
+    }
+    $filename = 'wahl-' . $electionId . '-anschreiben-' . date('Ymd-His') . '.pdf';
+    $pdf->Output($dir . '/' . $filename, 'F');
+    md_exec('UPDATE md_wabs_elections SET pdf_file = ?, pdf_generated_at = ?, pdf_deleted_at = NULL WHERE election_id = ?', [$filename, md_now(), $electionId]);
+    md_exec('INSERT INTO md_changelog (member_id, field_key, old_value, new_value, changed_by, changed_via, changed_at) VALUES (?,?,?,?,?,?,?)',
+        [$by, 'wabs.pdf_generated', null, $filename . ' (' . count($kandidaten) . ' Seiten, Wahl „' . $election['title'] . '“)', $by, 'admin', md_now()]);
+    return [count($kandidaten), ''];
+}
+
+/** Löscht den PDF-Sammeldruck endgültig von der Festplatte (Pflicht nach Druck/Versand) und protokolliert das. */
+function md_wabs_pdf_delete(int $electionId, int $by): string
+{
+    $election = md_wabs_election_get($electionId);
+    if (!$election) return 'Wahl nicht gefunden.';
+    if (empty($election['pdf_file'])) return 'Es liegt kein PDF-Sammeldruck vor.';
+    if (!empty($election['pdf_deleted_at'])) return 'Dieser PDF-Sammeldruck wurde bereits als gelöscht bestätigt.';
+    $path = md_wabs_pdf_dir() . '/' . $election['pdf_file'];
+    if (is_file($path) && !@unlink($path)) return 'Die Datei konnte nicht gelöscht werden - bitte auf dem Server prüfen.';
+    md_exec('UPDATE md_wabs_elections SET pdf_deleted_at = ? WHERE election_id = ?', [md_now(), $electionId]);
+    md_exec('INSERT INTO md_changelog (member_id, field_key, old_value, new_value, changed_by, changed_via, changed_at) VALUES (?,?,?,?,?,?,?)',
+        [$by, 'wabs.pdf_deleted', null, $election['pdf_file'] . ' (Wahl „' . $election['title'] . '“)', $by, 'admin', md_now()]);
+    return '';
 }

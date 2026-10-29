@@ -25,6 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($aktion === 'retry') {
         $err = md_wabs_request_retry($eid, (int)($_POST['member_id'] ?? 0));
         $ok = 'Neue Wahlaufforderung eingereiht.';
+    } elseif ($aktion === 'generate_pdf') {
+        [$pages, $err] = md_wabs_pdf_generate($eid, (int)$me['member_id']);
+        $ok = $pages . ' Seite(n) im PDF-Sammeldruck erzeugt.';
+    } elseif ($aktion === 'pdf_delete') {
+        $err = md_wabs_pdf_delete($eid, (int)$me['member_id']);
+        $ok = 'PDF-Datei gelöscht.';
     }
     md_flash($err ?: $ok, $err ? 'err' : 'ok');
     header('Location: ' . md_url('admin/wabs.php' . ($eid ? '?election=' . $eid : '')));
@@ -65,11 +71,12 @@ if ($sel) {
         echo '<p>Link-Basis-URL: ' . h($sel['vote_base_url'] ?: '(noch nicht eingetragen)') . '</p>';
     }
     echo '<table><tbody>'
-        . '<tr><td>Bereits versendet</td><td class="r">' . (int)$sum['sent'] . '</td></tr>'
-        . '<tr><td>Fehlgeschlagen</td><td class="r">' . (int)$sum['failed'] . '</td></tr>'
+        . '<tr><td>Bereits versendet/zugestellt</td><td class="r">' . (int)$sum['sent'] . '</td></tr>'
+        . '<tr><td>Fehlgeschlagen (nur E-Mail)</td><td class="r">' . (int)$sum['failed'] . '</td></tr>'
         . '<tr><td>In der Warteschlange</td><td class="r">' . (int)$sum['queue_rows'] . '</td></tr>'
         . '<tr><td>Noch nicht berücksichtigt, mit E-Mail-Adresse</td><td class="r">' . (int)$sum['offen_mit_mail'] . '</td></tr>'
-        . '<tr><td>Ohne E-Mail-Adresse (Phase 3: PDF-Sammeldruck)</td><td class="r">' . (int)$sum['offen_ohne_mail'] . '</td></tr>'
+        . '<tr><td>Noch nicht berücksichtigt, ohne E-Mail (mit Postanschrift, für PDF-Sammeldruck)</td><td class="r">' . (int)$sum['offen_ohne_mail'] . '</td></tr>'
+        . ($sum['unreachable'] > 0 ? '<tr><td>Weder E-Mail noch Postanschrift hinterlegt – nicht erreichbar</td><td class="r">' . (int)$sum['unreachable'] . '</td></tr>' : '')
         . '</tbody></table>';
     if ($edit) {
         if ($sum['offen_mit_mail'] > 0) {
@@ -79,6 +86,14 @@ if ($sel) {
         if ($sum['queue_rows'] > 0) {
             echo '<form method="post"><input type="hidden" name="aktion" value="send"><input type="hidden" name="election_id" value="' . (int)$sel['election_id'] . '">' . md_csrf_field()
                 . '<button>' . (int)$sum['queue_rows'] . ' wartende Wahlaufforderung(en) jetzt senden</button></form>';
+        }
+        if (!empty($sel['pdf_file']) && empty($sel['pdf_deleted_at'])) {
+            echo '<p>PDF-Sammeldruck vom ' . h(date('d.m.Y H:i', strtotime($sel['pdf_generated_at']))) . ': <a href="admin/wabs_pdf.php?election=' . (int)$sel['election_id'] . '">herunterladen/drucken</a></p>'
+                . '<form method="post" onsubmit="return confirm(\'Erst bestätigen, wenn der Sammeldruck tatsächlich gedruckt und verschickt wurde - die Datei wird dabei endgültig von der Festplatte entfernt.\')"><input type="hidden" name="aktion" value="pdf_delete"><input type="hidden" name="election_id" value="' . (int)$sel['election_id'] . '">' . md_csrf_field()
+                . '<button>Gedruckt und verschickt – PDF-Datei jetzt löschen</button></form>';
+        } elseif ($sum['offen_ohne_mail'] > 0) {
+            echo '<form method="post" onsubmit="return confirm(\'Für ' . (int)$sum['offen_ohne_mail'] . ' Mitglied(er) je ein neues Token erzeugen und eine Seite im PDF-Sammeldruck anlegen?\')"><input type="hidden" name="aktion" value="generate_pdf"><input type="hidden" name="election_id" value="' . (int)$sel['election_id'] . '">' . md_csrf_field()
+                . '<button>PDF-Sammeldruck für ' . (int)$sum['offen_ohne_mail'] . ' Mitglied(er) erzeugen</button></form>';
         }
     }
     if ($failed) {

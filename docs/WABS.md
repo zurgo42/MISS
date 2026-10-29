@@ -18,9 +18,16 @@ Mitglieder können sicher und anonym online wählen und abstimmen. Der Gesamtent
 - Jede Wahl hat eine eigene Link-Basis-URL zum (künftigen) Wahlserver (`md_wabs_elections.vote_base_url`), die vor dem Erzeugen eingetragen werden muss.
 - Mitglieder ohne E-Mail-Adresse werden gezählt, aber noch nicht berücksichtigt – das folgt mit Phase 3.
 
+## Phase 3: PDF-Sammeldruck mit QR-Code (fertig)
+
+- Für aktive Mitglieder ohne E-Mail-Adresse, aber mit hinterlegter Postanschrift, erzeugt „PDF-Sammeldruck erzeugen" je ein Token (gleiche sichere Erzeugung wie bei Phase 2) und eine Seite in einer gemeinsamen PDF-Datei (Anschrift, Erklärtext mit Link, QR-Code des Links). Mitglieder ohne jede Erreichbarkeit (weder E-Mail noch Anschrift) werden nur gezählt ("nicht erreichbar") und tauchen in keiner Liste zum Versand auf.
+- **FPDF und phpqrcode liegen bewusst nicht im Repo**, sondern als fertige Dateien zwei Verzeichnisebenen über der Anwendung (`<Serverwurzel>/fpdf/fpdf.php` und `<Serverwurzel>/phpqrcode/qrlib.php`, gemeinsam nutzbar mit den Geschwisteranwendungen VERA/KONA) - ohne sie meldet „PDF-Sammeldruck erzeugen" einen klaren Fehler statt eines Serverfehlers. phpqrcode braucht außerdem ein beschreibbares Unterverzeichnis `cache/` neben `qrlib.php`.
+- **Wichtig für eigene Erweiterungen:** FPDFs Kernschriften verstehen kein UTF-8, nur CP1252 (Windows-1252) - jeder Text, der an FPDF übergeben wird, muss vorher durch `md_wabs_pdf_text()` (intern `iconv('UTF-8', 'CP1252//TRANSLIT', …)`), sonst werden Umlaute/Anführungszeichen zu Mojibake.
+- Die fertige Datei liegt in `storage/wabs/` (kein Direktzugriff über die URL, Auslieferung nur über `admin/wabs_pdf.php` mit Rechteprüfung) und wird erst neu erzeugt, wenn die vorherige über „Gedruckt und verschickt – PDF-Datei jetzt löschen" **endgültig von der Festplatte entfernt** wurde (Pflicht-Löschung laut Anforderung). Erzeugen und Löschen werden im Änderungsprotokoll (`md_changelog`, Feld `wabs.pdf_generated`/`wabs.pdf_deleted`) vermerkt - ohne Namen der betroffenen Mitglieder, nur Dateiname und Seitenzahl.
+- Mitglieder, die per PDF berücksichtigt wurden, stehen (wie bei Mail) in `md_wabs_recipients`, hier mit `channel = 'pdf'`.
+
 ## Noch nicht enthalten (geplante Phasen)
 
-- **PDF-Sammeldruck mit QR-Code** (Phase 3) für Mitglieder ohne E-Mail-Adresse, mit FPDF und phpqrcode (beide als fertige Dateien im Serververzeichnis, kein Composer). Pflicht-Löschung der PDF-Datei nach Druck/Versand, protokolliert.
 - **Übertragung zum Wahlserver** (Phase 4): bei gleichem Server direkte Übertragung, bei externem Server CSV-Export/Import. Danach Löschung der Tokenliste in MISS.
 - **WABS-Grundgerüst** (Phase 5, eigenständige Anwendung unter `mv/WABS` im VERA/MV-Repo): eigenes schlankes Login nur für die beiden vorher festgelegten Wahlausschuss-Mitglieder, kein SSO zu MISS.
 - **Wahl-/Abstimmungsinhalte** (Phase 6): Kategorie Wahl (Ämter mit Kandidaten) und Kategorie Abstimmung (Anträge mit Ja/Nein/Enthaltung).

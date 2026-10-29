@@ -614,7 +614,10 @@ CREATE TABLE IF NOT EXISTS md_wabs_elections (
     status VARCHAR(20) NOT NULL DEFAULT 'angelegt',
     created_by INT DEFAULT NULL,
     created_at DATETIME NOT NULL,
-    vote_base_url VARCHAR(255) DEFAULT NULL        -- Basis-URL zum Wahlserver (Phase 2), siehe MD_MIGRATIONS für Bestandsinstallationen
+    vote_base_url VARCHAR(255) DEFAULT NULL,       -- Basis-URL zum Wahlserver (Phase 2), siehe MD_MIGRATIONS für Bestandsinstallationen
+    pdf_file VARCHAR(255) DEFAULT NULL,            -- Phase 3: Dateiname des aktuellen PDF-Sammeldrucks (storage/wabs/), solange nicht gelöscht
+    pdf_generated_at DATETIME DEFAULT NULL,
+    pdf_deleted_at DATETIME DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- WABS Phase 2: anonyme Liste gültiger Token je Wahl - nur der Hash, nie der
@@ -635,6 +638,7 @@ CREATE TABLE IF NOT EXISTS md_wabs_recipients (
     election_id INT NOT NULL,
     member_id INT NOT NULL,
     status VARCHAR(10) NOT NULL,                   -- queued, sent, failed
+    channel VARCHAR(10) NOT NULL DEFAULT 'mail',   -- mail, pdf (Phase 3)
     attempted_at DATETIME NOT NULL,
     PRIMARY KEY (election_id, member_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
