@@ -281,3 +281,100 @@ function demo_reset_inplace(string $anchor = ''): string
     echo "Fertig (Bezugstag $anchor).\n";
     return ob_get_clean();
 }
+
+/**
+ * Setzt die Demo (MD_DEMO_MODE=true, MySQL - gemeinsame Datenbank mit der
+ * Sitzungsverwaltung, "Weg A" in docs/DEMO.md) auf einen jungfräulichen Stand
+ * zurück - direkt aus dem laufenden Admin-Bereich, ohne Kommandozeile.
+ *
+ * Entspricht inhaltlich tools/demo_load.php --reset, aber als aufrufbare
+ * Funktion für admin/demo_reset.php statt CLI-Skript. svmembers und
+ * svressorts werden NICHT verändert (gehören der Sitzungsverwaltung) - nur
+ * fehlende Demo-Mitglieder DEMO0013 ff. werden ergänzt, genau wie beim
+ * ursprünglichen Laden. md_functions und md_settings werden wie bei
+ * demo_load.php bewusst NICHT geleert (bleiben über mehrere Resets stabil -
+ * eigene Einstellungen/Funktionsänderungen während einer Ausprobierphase
+ * gehen so nicht bei jedem Reset verloren). Alle anderen md_-Tabellen
+ * (inklusive WABS, dort gibt es keine Demo-Inhalte - sie bleiben nach dem
+ * Reset einfach leer) werden per information_schema ermittelt statt als
+ * feste Liste gepflegt, damit künftig hinzukommende Tabellen nie vergessen
+ * werden.
+ */
+function demo_reset_inplace_mysql(string $anchor = ''): string
+{
+    if (MD_DB_DRIVER !== 'mysql' || !MD_DEMO_MODE) {
+        throw new RuntimeException('Nur im Demo-Modus möglich (MD_DEMO_MODE=true) - das schützt echte Daten.');
+    }
+    $root = dirname(__DIR__);
+    require_once "$root/tools/demo_build.php";
+    $anchor = $anchor !== '' ? $anchor : date('Y-m-d');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $anchor)) throw new RuntimeException('Ungültiger Bezugstag.');
+
+    $pdo = md_db();
+    $others = md_q("SELECT membership_number, first_name, last_name FROM svmembers WHERE membership_number NOT LIKE 'DEMO%' OR membership_number IS NULL ORDER BY member_id");
+    if ($others) {
+        throw new RuntimeException('svmembers enthält ' . count($others) . ' Mitglied(er) außerhalb der Demo (DEMO%) - zur Sicherheit abgebrochen. '
+            . 'Das ist nur die Demo der Sitzungsverwaltung (12+ Figuren DEMO0001 ff.)? Dann bei ihr zuerst "Alles löschen und neu aufbauen" ausführen.');
+    }
+    $idmap = [];
+    foreach (md_q("SELECT member_id, membership_number FROM svmembers WHERE membership_number LIKE 'DEMO%'") as $r) {
+        $idmap[(int)substr($r['membership_number'], 4)] = (int)$r['member_id'];
+    }
+    if (count($idmap) < 12) throw new RuntimeException('Es fehlen Demo-Mitglieder (' . count($idmap) . ' von 12 gefunden) - zuerst die Demo der Sitzungsverwaltung laden.');
+    if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) throw new RuntimeException('md_functions ist leer - zuerst php tools/install.php ausführen.');
+
+    ob_start();
+    $data = demo_build($anchor);
+    $added = demo_ensure_extra_members($data['svmembers'], $idmap);
+    echo $added ? "$added fehlende(s) Demo-Mitglied(er) in svmembers ergänzt.\n" : "svmembers vollständig, nichts ergänzt.\n";
+
+    $real = [];
+    try {
+        foreach (md_q('SELECT ID, Ressort FROM svressorts') as $r) $real[mb_strtolower($r['Ressort'])] = (int)$r['ID'];
+    } catch (Throwable $e) {
+        // keine Ressortliste vorhanden - Ressortbezug bleibt dann leer
+    }
+    $demoRes = array_column($data['svressorts'], 'Ressort', 'ID');
+    foreach ($data['md_member_functions'] as &$mf) $mf['ressort_id'] = $mf['ressort_id'] ? ($real[mb_strtolower($demoRes[$mf['ressort_id']] ?? '')] ?? null) : null;
+    unset($mf);
+
+    $all = array_column(md_q("SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE 'md\\_%'"), 'TABLE_NAME');
+    $tables = array_values(array_diff($all, ['md_functions', 'md_settings']));
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+    foreach ($tables as $t) $pdo->exec("DELETE FROM `$t`");
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+    echo count($tables) . " Tabelle(n) geleert (md_functions/md_settings bleiben erhalten).\n";
+
+    foreach (glob(MD_STORAGE_DIR . '/photos/*') ?: [] as $f) @unlink($f);
+    foreach (glob(MD_STORAGE_DIR . '/wabs/*') ?: [] as $f) @unlink($f);
+    foreach (glob(MD_STORAGE_DIR . '/mail/*') ?: [] as $f) @unlink($f);
+
+    $pdo->beginTransaction();
+    foreach (array_diff(DEMO_MD_TABLES, ['md_functions', 'md_settings']) as $t) demo_insert($pdo, $t, $data[$t], $idmap);
+    $pdo->commit();
+
+    demo_photos($pdo, $data['svmembers'], $idmap);
+    foreach ($data['md_settings'] as $st) {
+        if (!md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$st['setting_key']])) {
+            md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$st['setting_key'], $st['setting_value'], $st['description']]);
+        }
+    }
+    // md_permissions ist eine md_-Tabelle wie jede andere und wurde oben mitgeleert (Rechte sollen beim
+    // Zuruecksetzen wieder dem sauberen Default entsprechen) - deshalb hier neu saeen, anders als bei
+    // md_functions/md_settings, die bewusst unangetastet bleiben. md_seed_permissions() merkt sich bereits
+    // gesaete Bereiche in md_settings ("perm_areas_seeded") - genau dieser Schluessel bleibt (wie alle
+    // md_settings) beim Zuruecksetzen unangetastet und wuerde sonst eine erneute Seedung verhindern, obwohl
+    // md_permissions gerade geleert wurde. Deshalb hier explizit zuruecksetzen.
+    md_exec("DELETE FROM md_settings WHERE setting_key = 'perm_areas_seeded'");
+    echo 'md_permissions         ' . md_seed_permissions() . "\n";
+    md_dunning_seed();
+    demo_seed_sepa($idmap);
+    demo_seed_mail($idmap);
+    demo_seed_events($idmap);
+    demo_seed_lists_apply($idmap);
+    demo_seed_datev($idmap);
+    demo_seed_org();
+    demo_issue_receipts($idmap);
+    echo "Fertig (Bezugstag $anchor).\n";
+    return ob_get_clean();
+}

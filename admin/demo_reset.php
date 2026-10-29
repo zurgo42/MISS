@@ -2,9 +2,11 @@
 /**
  * admin/demo_reset.php - setzt die Demo (MD_DEMO_MODE=true) direkt aus dem
  * Admin-Bereich auf einen jungfräulichen Stand zurück, ohne Kommandozeile
- * (siehe tools/demo_lib.php: demo_reset_inplace()). Gedacht für eine
- * Ausprobierphase, die immer wieder von vorn beginnen soll - analog zur
- * entsprechenden Funktion in der Sitzungsverwaltung (KONA).
+ * (siehe tools/demo_lib.php: demo_reset_inplace() für SQLite,
+ * demo_reset_inplace_mysql() für MySQL/gemeinsame Datenbank mit der
+ * Sitzungsverwaltung). Gedacht für eine Ausprobierphase, die immer wieder
+ * von vorn beginnen soll - analog zur entsprechenden Funktion in der
+ * Sitzungsverwaltung (KONA).
  *
  * Nur im Demo-Modus erreichbar - auf einer echten Installation (MD_DEMO_MODE=false)
  * meldet diese Seite 404, unabhängig von Rechten.
@@ -16,6 +18,7 @@ if (!defined('MD_DEMO_MODE') || !MD_DEMO_MODE) {
 }
 $me = md_require_perm('settings', 'edit');
 require_once __DIR__ . '/../tools/demo_lib.php';
+$mysql = MD_DB_DRIVER === 'mysql';
 
 $log = '';
 $err = '';
@@ -25,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $err = 'Zum Zurücksetzen bitte ZURÜCKSETZEN eintippen.';
     } else {
         try {
-            $log = demo_reset_inplace((string)($_POST['anchor'] ?? ''));
+            $log = $mysql ? demo_reset_inplace_mysql((string)($_POST['anchor'] ?? '')) : demo_reset_inplace((string)($_POST['anchor'] ?? ''));
         } catch (Throwable $e) {
             $err = $e->getMessage();
         }
@@ -35,8 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 md_header('Demo-Daten zurücksetzen', $me, 'demo_reset');
 md_show_flash();
 echo '<h1>🎭 Demo-Daten zurücksetzen</h1>';
-echo '<div class="card"><p><strong>Nur in dieser Demo-Instanz sichtbar</strong> (MD_DEMO_MODE=true). Setzt <strong>alle</strong> Mitglieder-, Finanz-, Wahl- und sonstigen Daten auf den ursprünglichen Demo-Stand zurück - nützlich nach einer Ausprobierphase, wenn wieder ein frisches System gebraucht wird.</p>'
-    . '<p>Dabei werden sämtliche Tabellen geleert und mit den immer gleichen, frei erfundenen Demo-Daten neu befüllt (12 Hauptfiguren Max Mustermann … Rolf Ehemals plus weitere Mitglieder, wie in der Sitzungsverwaltung). Unwiderruflich: alles, was seit der letzten Einrichtung geändert wurde, ist danach weg.</p></div>';
+echo '<div class="card"><p><strong>Nur in dieser Demo-Instanz sichtbar</strong> (MD_DEMO_MODE=true). Setzt die Mitglieder-, Finanz-, Wahl- und sonstigen Daten auf den ursprünglichen Demo-Stand zurück - nützlich nach einer Ausprobierphase, wenn wieder ein frisches System gebraucht wird.</p>';
+if ($mysql) {
+    echo '<p>Diese Installation teilt sich die Datenbank mit der Sitzungsverwaltung (MySQL): <code>svmembers</code>/<code>svressorts</code> sowie die Funktionen- und Rechtetabellen bleiben unangetastet - nur fehlende Demo-Mitglieder werden ergänzt. Alle übrigen Daten (Profile, Finanzen, Wahl und Abstimmung, …) werden geleert und mit den immer gleichen, frei erfundenen Demo-Daten neu befüllt (12 Hauptfiguren Max Mustermann … Rolf Ehemals, wie in der Sitzungsverwaltung).</p>';
+} else {
+    echo '<p>Dabei werden sämtliche Tabellen geleert und mit den immer gleichen, frei erfundenen Demo-Daten neu befüllt (12 Hauptfiguren Max Mustermann … Rolf Ehemals plus weitere Mitglieder, wie in der Sitzungsverwaltung).</p>';
+}
+echo '<p>Unwiderruflich: alles, was seit der letzten Einrichtung geändert wurde, ist danach weg.</p></div>';
 
 if ($err) echo '<div class="flash err">' . h($err) . '</div>';
 if ($log) {

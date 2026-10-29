@@ -12,6 +12,8 @@ Es gibt zwei Wege. Beide laden die Demo der Sitzungsverwaltung (12 Figuren `DEMO
 
 Ob in der Datenbank etwas Wichtiges liegt, entscheidest du. Wenn ja: Weg B oder vorher einen Export (phpMyAdmin → Exportieren).
 
+Nach der ersten Einrichtung lässt sich MISS danach jederzeit im Browser zurücksetzen (Administration → „🎭 Demo-Daten zurücksetzen", nur bei `MD_DEMO_MODE=true` sichtbar) - ohne Kommandozeile, inhaltlich wie `php tools/demo_load.php --reset`: `svmembers`/`svressorts` und damit die 12 Figuren der Sitzungsverwaltung bleiben unangetastet, nur die Daten von MISS selbst (Profile, Finanzen, Wahl und Abstimmung, …) werden geleert und neu befüllt. Bricht sicherheitshalber ab, wenn `svmembers` Mitglieder außerhalb der Demo (`DEMO%`) enthält.
+
 ---
 
 # Weg A: vorhandene Datenbank verwenden
