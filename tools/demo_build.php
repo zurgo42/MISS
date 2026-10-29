@@ -158,7 +158,8 @@ function demo_build(string $anchor): array
            [7, 'RL', ($Y - 12) . '-10-01', null, 17, 2], [9, 'RL', ($Y - 5) . '-01-01', null, 14, 3],
            [10, 'FP', ($Y - 3) . '-05-01', null, 3, null], [11, 'AD', ($Y - 4) . '-04-01', null, 10, null], [5, 'MB', ($Y - 2) . '-01-01', null, null, null],
            [12, 'Vo', ($Y - 12) . '-05-01', ($Y - 3) . '-04-30', null, null], [12, 'Vx', ($Y - 3) . '-05-01', null, 0, null],
-           [3, 'PL', ($Y - 6) . '-01-01', ($Y - 3) . '-12-31', null, null], [7, 'JT', ($Y - 3) . '-01-01', null, 12, 5]];
+           [3, 'PL', ($Y - 6) . '-01-01', ($Y - 3) . '-12-31', null, null], [7, 'JT', ($Y - 3) . '-01-01', null, 12, 5],
+           [6, 'WA', ($Y - 1) . '-01-01', null, null, null]];
     $memberFunctions = array_map(fn($x) => ['member_id' => $x[0], 'function_id' => $fid[$x[1]] + 1, 'valid_from' => $x[2], 'valid_to' => $x[3], 'aktiv_level' => $x[4], 'ressort_id' => $x[5], 'note' => null], $mf);
 
     // Finanzen: [Mitglied, Art, Betrag €, Datum, Fällig, Bezahlt, Status, Beschreibung, Beleg]

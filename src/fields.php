@@ -128,4 +128,5 @@ const MD_DEFAULT_FUNCTIONS = [
     ['RL', 'Ressortleitung', 15], ['PL', 'Projektleitung', 12], ['MB', 'Mitgliederbetreuung', 9], ['Ka', 'Kassenführung', 9],
     ['FP', 'Finanzprüfung', 3], ['AD', 'Technischer Admin', 18], ['Vx', 'Ehemaliges Vorstandsmitglied', 0], ['JT', 'Organisator Jahrestreffen', 12],
     ['TM', 'Teamleitung', 11], ['Orga', 'Hilfsfunktion Antragstellung', 9], ['Rx', 'Ehemalige Ressortleitung', 0], ['Xx', 'Früher berechtigtes Mitglied', 0],
+    ['WA', 'Wahlausschuss', 0],
 ];

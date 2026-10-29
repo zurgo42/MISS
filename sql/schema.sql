@@ -602,3 +602,16 @@ CREATE TABLE IF NOT EXISTS md_bank_accounts (
     use_donation INT NOT NULL DEFAULT 0,           -- 1 = Spendenkonto (genau eines)
     active INT NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- WABS (Wahl und Abstimmung): vom Wahlausschuss angelegte Wahlen. Phase 1 nur
+-- Titel/Zeitraum; status begleitet die späteren Phasen (Token-Versand, Übertragung
+-- zum Wahlserver, Ende) ohne weitere Schemaänderung, da nur ein freier Text.
+CREATE TABLE IF NOT EXISTS md_wabs_elections (
+    election_id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL,
+    start_at DATETIME NOT NULL,
+    end_at DATETIME NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'angelegt',
+    created_by INT DEFAULT NULL,
+    created_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

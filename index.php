@@ -378,6 +378,9 @@ if (!$staff && !md_directory_consent_given($mid)) {   // auch ohne Zustimmung zu
         . '<form method="post" action="save.php">' . $form('directory_consent', 'personal') . '<button>Einwilligung bestätigen</button> '
         . '<span class="muted">oder unten Angaben prüfen und „Alle Eingaben speichern“ wählen.</span></form></div>';
 }
+if ($running = md_wabs_election_running()) {
+    echo '<div class="flash warn">🗳️ Aktuell läuft die Wahl „' . h($running['title']) . '“ – noch bis ' . h(date('d.m.Y H:i', strtotime($running['end_at']))) . ' Uhr.</div>';
+}
 if (!$staff) echo md_portal_html($actor);
 if ($staff) {
     echo '<div class="flash warn">Verwaltungsmodus: ' . ($canEdit ? 'Du bearbeitest' : 'Du siehst (nur lesend)') . ' die Daten von <strong>' . h($m['first_name'] . ' ' . $m['last_name'])

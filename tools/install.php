@@ -62,10 +62,13 @@ if ($problems) exit("\nFehler beim Anlegen – bitte Meldungen prüfen.\n");
 // 3. Schema auf den neuesten Stand bringen (nur Ergänzungen) und Grunddaten
 $added = md_migrate_schema();
 if ($added) $say('Spalten ergänzt: ' . implode(', ', $added));
-if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) {
-    foreach (MD_DEFAULT_FUNCTIONS as [$code, $name, $lvl]) md_exec('INSERT INTO md_functions (code, name, sv_aktiv_level) VALUES (?,?,?)', [$code, $name, $lvl]);
-    $say('Funktionen eingetragen: ' . count(MD_DEFAULT_FUNCTIONS));
+$newFunctions = 0;
+foreach (MD_DEFAULT_FUNCTIONS as [$code, $name, $lvl]) {
+    if (md_one('SELECT 1 FROM md_functions WHERE code = ?', [$code])) continue;
+    md_exec('INSERT INTO md_functions (code, name, sv_aktiv_level) VALUES (?,?,?)', [$code, $name, $lvl]);
+    $newFunctions++;
 }
+if ($newFunctions) $say('Funktionen eingetragen: ' . $newFunctions);
 $n = md_seed_permissions();
 if ($n) $say("Rechtetabelle mit Voreinstellung gefüllt ($n Einträge, änderbar unter Einstellungen).");
 $n = md_dunning_seed();

@@ -23,6 +23,7 @@ const MD_AREAS = [
     'privacy'   => ['Datenschutz: Auskunft, Anfragen, Löschfristen', ['none', 'view', 'edit']],
     'import'    => ['CSV-Import Mitglieder', ['none', 'edit']],
     'settings'  => ['Administration: Vereinsangaben, Konten, Mitgliedsarten, Funktionen, Rechte', ['none', 'edit']],
+    'wahl'      => ['Wahl und Abstimmung (WABS): Wahlen anlegen, Wahlaufforderungen versenden', ['none', 'view', 'edit']],
 ];
 const MD_PERM_LEVELS = ['none' => 'keine', 'view' => 'ansehen', 'edit' => 'bearbeiten'];
 const MD_PERM_RANK = ['none' => 0, 'view' => 1, 'edit' => 2];
@@ -48,6 +49,7 @@ function md_default_permissions(): array
         ['Ka', 'members', 'view'], ['Ka', 'finance', 'edit'],
         ['FP', 'members', 'view'], ['FP', 'finance', 'view'], ['FP', 'terms', 'view'],
         ['AD', 'members', 'view'], ['AD', 'settings', 'edit'],
+        ['WA', 'wahl', 'edit'],
     ];
 }
 

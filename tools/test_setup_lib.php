@@ -66,8 +66,9 @@ function md_ts_schema(): array
     md_run_sql_file($pdo, dirname(__DIR__) . '/sql/schema.sql');
     $added = md_migrate_schema();
     $log[] = 'Tabellen angelegt/geprüft' . ($added ? '; Spalten ergänzt: ' . implode(', ', $added) : '') . '.';
-    if (!(int)md_one('SELECT COUNT(*) c FROM md_functions')['c']) {
-        foreach (MD_DEFAULT_FUNCTIONS as [$code, $name, $lvl]) md_exec('INSERT INTO md_functions (code, name, sv_aktiv_level) VALUES (?,?,?)', [$code, $name, $lvl]);
+    foreach (MD_DEFAULT_FUNCTIONS as [$code, $name, $lvl]) {
+        if (md_one('SELECT 1 FROM md_functions WHERE code = ?', [$code])) continue;
+        md_exec('INSERT INTO md_functions (code, name, sv_aktiv_level) VALUES (?,?,?)', [$code, $name, $lvl]);
     }
     if ($n = md_seed_permissions()) $log[] = "Rechtetabelle gefüllt ($n Einträge).";
     if ($n = md_dunning_seed()) $log[] = "Mahnstufen angelegt ($n).";

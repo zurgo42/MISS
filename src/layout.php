@@ -31,6 +31,9 @@ function md_special_groups(?array $me): array
             'mail' => $can('mail') ? ['admin/mail.php', 'E-Mail-Ausgang'] : null,
             'lists' => $can('mail') ? ['admin/lists.php', 'Verteiler'] : null,
         ]),
+        'Wahl' => array_filter([
+            'wabs' => $can('wahl') ? ['admin/wabs.php', 'Wahl und Abstimmung'] : null,
+        ]),
         'System' => array_filter([
             'privacy' => $can('privacy') ? ['admin/privacy.php', 'Datenschutz'] : null,
             'settings' => $can('settings', 'edit') ? ['admin/settings.php', 'Administration'] : null,
