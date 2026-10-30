@@ -63,6 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $err = md_wabs_transfer_conf_save((string)($_POST['mode'] ?? ''), (string)($_POST['host'] ?? ''), (string)($_POST['port'] ?? ''),
             (string)($_POST['dbname'] ?? ''), (string)($_POST['dbuser'] ?? ''), (string)($_POST['dbpass'] ?? ''));
         $ok = 'Wahlserver-Verbindung gespeichert.';
+        // Wurden Zugänge bereits VOR der (richtigen) Verbindung festgelegt, blieb die
+        // Übertragung damals wirkungslos (md_wabs_committee_sync() prüft die Verbindung
+        // selbst, siehe dort) - deshalb hier nachholen, sobald die Verbindung (wieder)
+        // passt, ohne dass dafür Benutzername/Passwort erneut eingegeben werden müssten.
+        if ($err === '') { $err = md_wabs_committee_sync(); if ($err !== '') $ok = ''; }
+    } elseif ($aktion === 'committee_resync') {
+        $err = md_wabs_committee_sync();
+        $ok = $err === '' ? 'Zugänge zum Wahlserver übertragen.' : '';
     } elseif ($aktion === 'transfer_direct') {
         $err = md_wabs_transfer_direct($eid, (int)$me['member_id']);
         $ok = 'Token-Liste direkt zum Wahlserver übertragen und aus MISS gelöscht.';
@@ -110,6 +118,7 @@ echo '</tbody></table></section>';
 $committee = md_wabs_committee_members();
 $myWa = null;
 foreach ($committee as $c) if ((int)$c['member_id'] === (int)$me['member_id']) { $myWa = $c; break; }
+$tconf = md_wabs_transfer_conf();
 if ($committee) {
     echo '<section class="card"><h2>Zugang zum eigenständigen Wahlserver</h2>'
         . '<p class="muted">Der Wahlausschuss legt hier selbst fest, wer von euch beiden Zugang zum eigenständigen Wahlserver bekommt (eigenes Login dort, unabhängig von MISS). Die ersten zwei, die sich ankreuzen, sind die Gewählten - ihr könnt euch jederzeit selbst abwählen, dann muss jemand anderes übernehmen.</p>';
@@ -130,6 +139,11 @@ if ($committee) {
             . '<label class="block">Passwort' . md_password_rules_html() . '<input type="password" name="password" autocomplete="new-password" required></label>'
             . '<button>' . ($myWa['is_external'] ? 'Aktualisieren' : 'Mich als einen der beiden externen Zugänge festlegen') . '</button></form>';
     }
+    if ($edit && $tconf['mode'] === 'direct' && md_wabs_committee_external_count() > 0) {
+        echo '<form method="post" style="margin-top:8px"><input type="hidden" name="aktion" value="committee_resync">' . md_csrf_field()
+            . '<button class="link">Zugänge erneut zum Wahlserver übertragen</button></form>'
+            . '<p class="muted">Hilft, wenn die Wahlserver-Verbindung erst NACH dem Festlegen eines Zugangs eingetragen wurde - dann kam die Übertragung damals nicht an.</p>';
+    }
     echo '</section>';
 }
 
@@ -139,7 +153,6 @@ if ($edit) {
         . '<div class="addr"><label>Start<input type="datetime-local" name="start_at" required></label><label>Ende<input type="datetime-local" name="end_at" required></label></div>'
         . '<button>Anlegen</button></form></section>';
 
-    $tconf = md_wabs_transfer_conf();
     echo '<section class="card"><h2>Wahlserver-Verbindung</h2><p class="muted">Gilt für alle Wahlen. Bei gleichem Server/gleicher Datenbank-Instanz: direkte Übertragung. Bei einem externen Server: CSV-Export zum manuellen Import dort.</p>'
         . '<form method="post">' . md_csrf_field() . '<input type="hidden" name="aktion" value="save_transfer_conf">'
         . '<label class="check"><input type="radio" name="mode" value="direct"' . ($tconf['mode'] === 'direct' ? ' checked' : '') . '> Direkte Übertragung (gleicher Server/gleiche Datenbank)</label> '
