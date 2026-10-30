@@ -2,6 +2,8 @@
 
 Mitglieder können sicher und anonym online wählen und abstimmen. Der Gesamtentwurf ist in mehrere Phasen aufgeteilt; dieses Dokument wird mit jeder Phase erweitert.
 
+**Standardmäßig aus.** Anders als die übrigen Funktionen von MISS ist WABS auf jeder Installation zunächst deaktiviert (Einstellung `wabs.enabled`, Default `0`) - Online-Wahlen passen nicht zu jeder Vereinsordnung. Freischalten unter Administration → „Wahl und Abstimmung" (siehe `md_wabs_enabled()` in `src/wabs.php`). Die Demo hat WABS zur Veranschaulichung von vornherein freigeschaltet. Solange deaktiviert - oder solange die WABS-Tabellen auf einer bestehenden Installation noch fehlen (vor dem nächsten `php tools/install.php`) - bleibt die Seite auf den Freischalt-Schalter beschränkt, und das Dashboard zeigt keinen Wahl-Hinweis; alle übrigen Seiten funktionieren unverändert, auch ganz ohne die WABS-Tabellen.
+
 ## Phase 1: Wahlen anlegen (fertig)
 
 - Neue Funktion **Wahlausschuss** (Code `WA`) im Funktionen-/Rechte-Modell (siehe [RECHTE.md](RECHTE.md)), neuer Bereich *wahl* mit Stufen keine/ansehen/bearbeiten. Voreinstellung: Wahlausschuss bekommt *bearbeiten*.

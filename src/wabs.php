@@ -7,6 +7,23 @@ declare(strict_types=1);
  * PDF/QR-Sammeldruck und Übertragung zum Wahlserver folgen in späteren Phasen.
  */
 
+/**
+ * Ist WABS für diese Installation freigeschaltet? Default aus (anders als bei
+ * den übrigen Funktionen von MISS) - Online-Wahlen sind nicht jeder Vereins-
+ * ordnung angemessen, deshalb ausdrücklich pro Installation einschalten
+ * (admin/wabs.php). Prüft zusätzlich, ob die WABS-Tabellen überhaupt existieren
+ * (md_table_exists(), siehe src/migrate.php) - auf einer Installation, die
+ * "php tools/install.php" seit der Einführung von WABS noch nicht erneut
+ * ausgeführt hat, bleibt WABS so ohne Fehler einfach unsichtbar, statt mit
+ * "Tabelle nicht gefunden" abzustürzen. Alle Aufrufer, die WABS-Tabellen lesen
+ * oder schreiben, müssen zuerst diese Funktion prüfen (siehe admin/wabs.php,
+ * index.php).
+ */
+function md_wabs_enabled(): bool
+{
+    return md_setting('wabs.enabled', '0') === '1' && md_table_exists('md_wabs_elections');
+}
+
 /** Alle Wahlen, neueste zuerst. */
 function md_wabs_elections(): array
 {

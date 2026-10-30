@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../src/bootstrap.php';
 $me = md_require_perm('wahl', 'view');
 $edit = md_can($me, 'wahl', 'edit');
+$tablesExist = md_table_exists('md_wabs_elections');
+$enabled = md_wabs_enabled();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     md_csrf_check();
@@ -12,10 +14,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // committee_set/committee_unset sind Selbstbedienung für Wahlausschuss-Mitglieder
     // (siehe md_wabs_committee_set()) und brauchen deshalb nicht das Recht "wahl:bearbeiten" -
     // die Funktion wirkt ohnehin nur auf die eigene Zeile und prüft die WA-Funktion selbst.
-    if (!in_array($aktion, ['committee_set', 'committee_unset'], true) && !$edit) {
+    if (!in_array($aktion, ['committee_set', 'committee_unset', 'toggle_enabled'], true) && !$edit) {
         http_response_code(403); exit('Dafür fehlt die Berechtigung.');
     }
-    if ($aktion === 'committee_set') {
+    if ($aktion === 'toggle_enabled') {
+        if (!$edit) { http_response_code(403); exit('Dafür fehlt die Berechtigung.'); }
+        if (!$tablesExist) {
+            $err = 'Die WABS-Tabellen fehlen noch - bitte zuerst "php tools/install.php" (bzw. bei der Demo tools/demo_setup.php) ausführen.';
+        } else {
+            $val = !empty($_POST['value']) ? '1' : '0';
+            if (md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', ['wabs.enabled'])) md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', [$val, 'wabs.enabled']);
+            else md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', ['wabs.enabled', $val, 'WABS (Wahl und Abstimmung) freigeschaltet']);
+            $ok = $val === '1' ? 'WABS ist jetzt aktiviert.' : 'WABS ist jetzt deaktiviert.';
+        }
+    } elseif (!$enabled) {
+        // Tabellen fehlen oder die Installation hat WABS (noch) nicht freigeschaltet -
+        // alle anderen Aktionen würden auf WABS-Tabellen zugreifen, die es dann evtl. gar
+        // nicht gibt (siehe md_wabs_enabled()).
+        $err = 'WABS ist nicht aktiviert.';
+    } elseif ($aktion === 'committee_set') {
         $err = md_wabs_committee_set($me, true, (string)($_POST['username'] ?? ''), (string)($_POST['password'] ?? ''));
         $ok = 'Zugang zum Wahlserver gespeichert.';
     } elseif ($aktion === 'committee_unset') {
@@ -61,13 +78,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$elections = md_wabs_elections();
-$selId = (int)($_GET['election'] ?? 0);
-$sel = $selId ? md_wabs_election_get($selId) : null;
-
 md_header('Wahl und Abstimmung', $me, 'wabs');
 md_show_flash();
 echo '<h1>Wahl und Abstimmung (WABS)</h1><p class="muted">Hier legt der Wahlausschuss eine Wahl an und stößt die Wahlaufforderung (Token per E-Mail) an. Mitglieder ohne E-Mail-Adresse und die Übertragung zum Wahlserver folgen in weiteren Schritten.</p>';
+
+if ($edit) {
+    if (!$tablesExist) {
+        echo '<div class="flash warn">Die WABS-Tabellen fehlen noch. Bitte zuerst <code>php tools/install.php</code> (bzw. bei der Demo <code>tools/demo_setup.php</code>) ausführen, um WABS nutzen zu können.</div>';
+    } else {
+        echo '<div class="card"><form method="post"><input type="hidden" name="aktion" value="toggle_enabled">' . md_csrf_field()
+            . '<label class="check"><input type="checkbox" name="value" value="1" data-autosubmit' . ($enabled ? ' checked' : '') . '> WABS für diese Installation freischalten</label>'
+            . ($enabled ? '' : '<p class="muted">Solange nicht freigeschaltet, ist diese Seite auf diesen Schalter beschränkt - keine Wahlen, keine Mitglieder-Hinweise auf dem Dashboard.</p>') . '</form></div>';
+    }
+} elseif (!$enabled) {
+    echo '<p class="muted">WABS ist für diese Installation nicht freigeschaltet.</p>';
+}
+
+if (!$enabled) { md_footer(); exit; }
+
+$elections = md_wabs_elections();
+$selId = (int)($_GET['election'] ?? 0);
+$sel = $selId ? md_wabs_election_get($selId) : null;
 
 echo '<section class="card"><h2>Angelegte Wahlen</h2><table><thead><tr><th>Bezeichnung</th><th>Start</th><th>Ende</th><th>Status</th><th></th></tr></thead><tbody>';
 foreach ($elections as $e) {
