@@ -661,3 +661,17 @@ CREATE TABLE IF NOT EXISTS md_wabs_mail_queue (
     body TEXT NOT NULL,
     created_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- WABS Phase 5: der Wahlausschuss legt hier selbst fest, welche zwei seiner
+-- Mitglieder (Funktion WA) Zugang zum eigenständigen Wahlserver bekommen (eigenes
+-- Login dort, kein SSO zu MISS) und vergibt sich dort selbst Benutzername/Passwort.
+-- Nur der Passwort-Hash verlässt MISS (gleiche Übertragung wie die Token-Liste in
+-- Phase 4, siehe md_wabs_committee_sync()) - das Klartext-Passwort wird nirgends
+-- gespeichert.
+CREATE TABLE IF NOT EXISTS md_wabs_committee_access (
+    member_id INT PRIMARY KEY,
+    is_external INT NOT NULL DEFAULT 0,
+    external_username VARCHAR(100) DEFAULT NULL,
+    external_password_hash VARCHAR(255) DEFAULT NULL,
+    updated_at DATETIME DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

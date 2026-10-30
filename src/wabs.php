@@ -482,3 +482,123 @@ function md_wabs_transfer_csv_confirm(int $electionId, int $by): string
         [$by, 'wabs.tokens_transferred', null, $tokenCount . ' Token per CSV übertragen, Datei gelöscht (Wahl „' . $election['title'] . '“)', $by, 'admin', md_now()]);
     return '';
 }
+
+// ============================================
+// PHASE 5: ZUGANG ZUM EIGENSTÄNDIGEN WAHLSERVER (WABS-GRUNDGERÜST)
+// Der Wahlausschuss legt selbst fest, welche zwei seiner Mitglieder (Funktion WA)
+// Zugang zum eigenständigen Wahlserver (mv/WABS, eigenes Login, kein SSO zu MISS)
+// bekommen, und vergibt sich dort selbst Benutzername/Passwort - ganz ohne
+// Administrationsaufwand. Die ersten zwei, die sich hier ankreuzen, sind die
+// Gewählten; wer sich abwählt, gibt den Platz sofort frei. Nur der Passwort-HASH
+// verlässt MISS (gleiche Übertragung wie die Token-Liste aus Phase 4, siehe
+// md_wabs_committee_sync()) - das Klartext-Passwort wird nirgends gespeichert.
+// ============================================
+
+const MD_WABS_COMMITTEE_MAX_EXTERNAL = 2;
+
+/** Hat dieses Mitglied aktuell (gültigkeitsgeprüft) die Funktion Wahlausschuss (WA)? */
+function md_wabs_is_committee_member(int $memberId): bool
+{
+    $today = date('Y-m-d');
+    return (bool)md_one("SELECT 1 FROM md_member_functions mf JOIN md_functions f ON f.function_id = mf.function_id
+                          WHERE mf.member_id = ? AND f.code = 'WA' AND f.active = 1
+                            AND (mf.valid_from IS NULL OR mf.valid_from <= ?) AND (mf.valid_to IS NULL OR mf.valid_to >= ?)",
+        [$memberId, $today, $today]);
+}
+
+/** Alle aktuellen Wahlausschuss-Mitglieder mit ihrem evtl. vorhandenen Zugang zum Wahlserver. */
+function md_wabs_committee_members(): array
+{
+    $today = date('Y-m-d');
+    return md_q("SELECT s.member_id, s.first_name, s.last_name, a.is_external, a.external_username, a.updated_at
+                 FROM md_member_functions mf JOIN md_functions f ON f.function_id = mf.function_id
+                 JOIN svmembers s ON s.member_id = mf.member_id
+                 LEFT JOIN md_wabs_committee_access a ON a.member_id = s.member_id
+                 WHERE f.code = 'WA' AND f.active = 1
+                   AND (mf.valid_from IS NULL OR mf.valid_from <= ?) AND (mf.valid_to IS NULL OR mf.valid_to >= ?)
+                 ORDER BY s.last_name, s.first_name", [$today, $today]);
+}
+
+/** Zahl der aktuell festgelegten externen Zugänge (höchstens MD_WABS_COMMITTEE_MAX_EXTERNAL). */
+function md_wabs_committee_external_count(): int
+{
+    return (int)(md_one('SELECT COUNT(*) c FROM md_wabs_committee_access WHERE is_external = 1')['c'] ?? 0);
+}
+
+/**
+ * Setzt oder löscht den eigenen Zugang zum Wahlserver - nur für sich selbst, kein
+ * Admin-Override: das Wahlausschuss-Mitglied bestimmt und sichert sein Passwort
+ * selbst. Höchstens MD_WABS_COMMITTEE_MAX_EXTERNAL gleichzeitig, Benutzername muss
+ * eindeutig sein, Passwort unterliegt denselben Regeln wie bei der eigenen
+ * MISS-Anmeldung (siehe md_password_error()). Überträgt bei Erfolg sofort zum
+ * Wahlserver (siehe md_wabs_committee_sync()); ein Fehler dabei verhindert nicht
+ * das lokale Speichern, kommt aber als Hinweis zurück.
+ */
+function md_wabs_committee_set(array $me, bool $external, string $username, string $password): string
+{
+    $memberId = (int)$me['member_id'];
+    if (!md_wabs_is_committee_member($memberId)) return 'Nur aktuelle Wahlausschuss-Mitglieder können ihren Zugang zum Wahlserver verwalten.';
+
+    if (!$external) {
+        md_exec('DELETE FROM md_wabs_committee_access WHERE member_id = ?', [$memberId]);
+        return md_wabs_committee_sync();
+    }
+
+    $username = trim($username);
+    if ($username === '') return 'Bitte einen Benutzernamen angeben.';
+    $perr = md_password_error($password, $me);
+    if ($perr !== '') return $perr;
+    $already = md_one('SELECT * FROM md_wabs_committee_access WHERE member_id = ?', [$memberId]);
+    if (!($already && $already['is_external']) && md_wabs_committee_external_count() >= MD_WABS_COMMITTEE_MAX_EXTERNAL) {
+        return 'Es sind bereits ' . MD_WABS_COMMITTEE_MAX_EXTERNAL . ' externe Zugänge festgelegt - zuerst muss sich jemand abwählen.';
+    }
+    if (md_one('SELECT 1 FROM md_wabs_committee_access WHERE external_username = ? AND member_id <> ?', [$username, $memberId])) {
+        return 'Dieser Benutzername ist schon vergeben - bitte einen anderen wählen.';
+    }
+
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+    if ($already) {
+        md_exec('UPDATE md_wabs_committee_access SET is_external = 1, external_username = ?, external_password_hash = ?, updated_at = ? WHERE member_id = ?',
+            [$username, $hash, md_now(), $memberId]);
+    } else {
+        md_exec('INSERT INTO md_wabs_committee_access (member_id, is_external, external_username, external_password_hash, updated_at) VALUES (?,1,?,?,?)',
+            [$memberId, $username, $hash, md_now()]);
+    }
+    return md_wabs_committee_sync();
+}
+
+/**
+ * Überträgt den aktuellen Bestand (höchstens zwei externe Zugänge) vollständig zur
+ * Wahlserver-Datenbank - wie bei der Token-Übertragung wird dort immer der gesamte
+ * Inhalt ersetzt, nie nur einzelne Zeilen geändert. Nur bei direkter Übertragungsart
+ * (CSV-Übertragung für diese Zugänge ist noch nicht eingerichtet); ohne direkte
+ * Verbindung bleibt die lokale Änderung trotzdem gespeichert, nur eben noch nicht
+ * übertragen. Gibt '' bei Erfolg oder fehlender direkter Verbindung zurück, sonst
+ * eine Fehlermeldung.
+ */
+function md_wabs_committee_sync(): string
+{
+    $conf = md_wabs_transfer_conf();
+    if ($conf['mode'] !== 'direct' || $conf['host'] === '' || $conf['name'] === '' || $conf['user'] === '') return '';
+    try {
+        $tdb = md_wabs_transfer_db($conf);
+    } catch (Throwable $e) {
+        return 'Gespeichert, aber die Übertragung zum Wahlserver ist fehlgeschlagen: ' . $e->getMessage();
+    }
+    try {
+        $tdb->exec('CREATE TABLE IF NOT EXISTS wabs_committee_users (
+            user_id INT PRIMARY KEY AUTO_INCREMENT, username VARCHAR(100) NOT NULL UNIQUE, password_hash VARCHAR(255) NOT NULL, updated_at DATETIME NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+        $tdb->beginTransaction();
+        $tdb->exec('DELETE FROM wabs_committee_users');
+        $ins = $tdb->prepare('INSERT INTO wabs_committee_users (username, password_hash, updated_at) VALUES (?,?,?)');
+        foreach (md_q('SELECT external_username, external_password_hash, updated_at FROM md_wabs_committee_access WHERE is_external = 1') as $r) {
+            $ins->execute([$r['external_username'], $r['external_password_hash'], $r['updated_at']]);
+        }
+        $tdb->commit();
+    } catch (Throwable $e) {
+        if ($tdb->inTransaction()) $tdb->rollBack();
+        return 'Gespeichert, aber die Übertragung zum Wahlserver ist fehlgeschlagen: ' . $e->getMessage();
+    }
+    return '';
+}

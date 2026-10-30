@@ -5,12 +5,23 @@ $edit = md_can($me, 'wahl', 'edit');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     md_csrf_check();
-    if (!$edit) { http_response_code(403); exit('Dafür fehlt die Berechtigung.'); }
     $aktion = (string)($_POST['aktion'] ?? 'create');
     $eid = (int)($_POST['election_id'] ?? 0);
     $ok = '';
     $err = '';
-    if ($aktion === 'create') {
+    // committee_set/committee_unset sind Selbstbedienung für Wahlausschuss-Mitglieder
+    // (siehe md_wabs_committee_set()) und brauchen deshalb nicht das Recht "wahl:bearbeiten" -
+    // die Funktion wirkt ohnehin nur auf die eigene Zeile und prüft die WA-Funktion selbst.
+    if (!in_array($aktion, ['committee_set', 'committee_unset'], true) && !$edit) {
+        http_response_code(403); exit('Dafür fehlt die Berechtigung.');
+    }
+    if ($aktion === 'committee_set') {
+        $err = md_wabs_committee_set($me, true, (string)($_POST['username'] ?? ''), (string)($_POST['password'] ?? ''));
+        $ok = 'Zugang zum Wahlserver gespeichert.';
+    } elseif ($aktion === 'committee_unset') {
+        $err = md_wabs_committee_set($me, false, '', '');
+        $ok = 'Zugang zum Wahlserver entfernt.';
+    } elseif ($aktion === 'create') {
         $err = md_wabs_election_create((string)($_POST['title'] ?? ''), (string)($_POST['start_at'] ?? ''), (string)($_POST['end_at'] ?? ''), (int)$me['member_id']);
         $ok = 'Wahl angelegt.';
     } elseif ($aktion === 'set_url') {
@@ -64,6 +75,32 @@ foreach ($elections as $e) {
 }
 if (!$elections) echo '<tr><td colspan="5" class="muted">Noch keine Wahl angelegt.</td></tr>';
 echo '</tbody></table></section>';
+
+$committee = md_wabs_committee_members();
+$myWa = null;
+foreach ($committee as $c) if ((int)$c['member_id'] === (int)$me['member_id']) { $myWa = $c; break; }
+if ($committee) {
+    echo '<section class="card"><h2>Zugang zum eigenständigen Wahlserver</h2>'
+        . '<p class="muted">Der Wahlausschuss legt hier selbst fest, wer von euch beiden Zugang zum eigenständigen Wahlserver bekommt (eigenes Login dort, unabhängig von MISS). Die ersten zwei, die sich ankreuzen, sind die Gewählten - ihr könnt euch jederzeit selbst abwählen, dann muss jemand anderes übernehmen.</p>';
+    echo '<table><thead><tr><th>Wahlausschuss-Mitglied</th><th>Externer Zugang</th><th>Benutzername</th></tr></thead><tbody>';
+    foreach ($committee as $c) {
+        echo '<tr><td>' . h($c['first_name'] . ' ' . $c['last_name']) . ((int)$c['member_id'] === (int)$me['member_id'] ? ' <span class="muted">(ich)</span>' : '') . '</td>'
+            . '<td>' . ($c['is_external'] ? 'ja' : 'nein') . '</td><td>' . h($c['external_username'] ?? '') . '</td></tr>';
+    }
+    echo '</tbody></table>';
+    if ($myWa) {
+        if ($myWa['is_external']) {
+            echo '<form method="post" onsubmit="return confirm(\'Wirklich abwählen? Der Zugang zum Wahlserver wird dann sofort entfernt.\')"><input type="hidden" name="aktion" value="committee_unset">' . md_csrf_field()
+                . '<button>Mich abwählen (Zugang entfernen)</button></form>'
+                . '<p class="muted">Benutzername/Passwort ändern: unten einfach erneut eintragen und speichern.</p>';
+        }
+        echo '<form method="post"><input type="hidden" name="aktion" value="committee_set">' . md_csrf_field()
+            . '<label class="block">Benutzername für den Wahlserver<input name="username" value="' . h($myWa['external_username'] ?? '') . '" maxlength="100" required></label>'
+            . '<label class="block">Passwort' . md_password_rules_html() . '<input type="password" name="password" autocomplete="new-password" required></label>'
+            . '<button>' . ($myWa['is_external'] ? 'Aktualisieren' : 'Mich als einen der beiden externen Zugänge festlegen') . '</button></form>';
+    }
+    echo '</section>';
+}
 
 if ($edit) {
     echo '<section class="card"><h2>Neue Wahl anlegen</h2><form method="post">' . md_csrf_field() . '<input type="hidden" name="aktion" value="create">'
