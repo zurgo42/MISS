@@ -69,6 +69,7 @@ require_once __DIR__ . '/apply.php';
 require_once __DIR__ . '/datev.php';
 require_once __DIR__ . '/org.php';
 require_once __DIR__ . '/portal.php';
+require_once __DIR__ . '/vera_sso.php';
 require_once __DIR__ . '/migrate.php';
 require_once __DIR__ . '/import.php';
 require_once __DIR__ . '/finance.php';
