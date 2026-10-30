@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $err = md_wabs_pdf_delete($eid, (int)$me['member_id']);
         $ok = 'PDF-Datei gelöscht.';
     } elseif ($aktion === 'save_transfer_conf') {
-        $err = md_wabs_transfer_conf_save((string)($_POST['mode'] ?? ''), (string)($_POST['host'] ?? ''), (string)($_POST['port'] ?? ''),
+        $err = md_wabs_transfer_conf_save((string)($_POST['mode'] ?? ''), !empty($_POST['same_db']), (string)($_POST['host'] ?? ''), (string)($_POST['port'] ?? ''),
             (string)($_POST['dbname'] ?? ''), (string)($_POST['dbuser'] ?? ''), (string)($_POST['dbpass'] ?? ''));
         $ok = 'Wahlserver-Verbindung gespeichert.';
         // Wurden Zugänge bereits VOR der (richtigen) Verbindung festgelegt, blieb die
@@ -139,7 +139,7 @@ if ($committee) {
             . '<label class="block">Passwort' . md_password_rules_html() . '<input type="password" name="password" autocomplete="new-password" required></label>'
             . '<button>' . ($myWa['is_external'] ? 'Aktualisieren' : 'Mich als einen der beiden externen Zugänge festlegen') . '</button></form>';
     }
-    if ($edit && $tconf['mode'] === 'direct' && md_wabs_committee_external_count() > 0) {
+    if ($edit && md_wabs_transfer_direct_ready($tconf) && md_wabs_committee_external_count() > 0) {
         echo '<form method="post" style="margin-top:8px"><input type="hidden" name="aktion" value="committee_resync">' . md_csrf_field()
             . '<button class="link">Zugänge erneut zum Wahlserver übertragen</button></form>'
             . '<p class="muted">Hilft, wenn die Wahlserver-Verbindung erst NACH dem Festlegen eines Zugangs eingetragen wurde - dann kam die Übertragung damals nicht an.</p>';
@@ -156,10 +156,14 @@ if ($edit) {
     echo '<section class="card"><h2>Wahlserver-Verbindung</h2><p class="muted">Gilt für alle Wahlen. Bei gleichem Server/gleicher Datenbank-Instanz: direkte Übertragung. Bei einem externen Server: CSV-Export zum manuellen Import dort.</p>'
         . '<form method="post">' . md_csrf_field() . '<input type="hidden" name="aktion" value="save_transfer_conf">'
         . '<label class="check"><input type="radio" name="mode" value="direct"' . ($tconf['mode'] === 'direct' ? ' checked' : '') . '> Direkte Übertragung (gleicher Server/gleiche Datenbank)</label> '
-        . '<label class="check"><input type="radio" name="mode" value="csv"' . ($tconf['mode'] !== 'direct' ? ' checked' : '') . '> CSV-Export (externer Server)</label>'
-        . '<div class="addr"><label>Datenbankserver<input name="host" value="' . h($tconf['host']) . '" placeholder="z. B. localhost"></label><label>Port<input name="port" value="' . h($tconf['port']) . '" placeholder="3306"></label></div>'
+        . '<label class="check"><input type="radio" name="mode" value="csv"' . ($tconf['mode'] !== 'direct' ? ' checked' : '') . '> CSV-Export (externer Server)</label>';
+    if (MD_DB_DRIVER === 'mysql') {
+        echo '<label class="check"><input type="checkbox" name="same_db" value="1"' . ($tconf['same_db'] ? ' checked' : '') . '> Der Wahlserver ist dieselbe Datenbank wie MISS selbst - keine Angaben nötig, MISS kennt seine eigene Verbindung schon</label>';
+    }
+    echo '<div class="addr"><label>Datenbankserver<input name="host" value="' . h($tconf['host']) . '" placeholder="z. B. localhost"></label><label>Port<input name="port" value="' . h($tconf['port']) . '" placeholder="3306"></label></div>'
         . '<div class="addr"><label>Datenbankname<input name="dbname" value="' . h($tconf['name']) . '"></label><label>Benutzer<input name="dbuser" value="' . h($tconf['user']) . '"></label></div>'
         . '<label class="block">Passwort <span class="muted">(leer lassen, um ein bereits gespeichertes Passwort unverändert zu lassen)</span><input type="password" name="dbpass" autocomplete="new-password"></label>'
+        . ($tconf['mode'] === 'csv' ? '' : '<p class="muted">Datenbankserver/-name/Benutzer/Passwort werden ignoriert, wenn oben „gleiche Datenbank wie MISS“ angekreuzt ist.</p>')
         . '<button>Speichern</button></form></section>';
 }
 
@@ -219,7 +223,7 @@ if ($sel) {
         echo '<p>' . $tokenCount . ' gültige(s) Token bereit zur Übertragung.</p>';
         if ($edit) {
             if ($tconf['mode'] === 'direct') {
-                if ($tconf['host'] === '' || $tconf['name'] === '' || $tconf['user'] === '') {
+                if (!md_wabs_transfer_direct_ready($tconf)) {
                     echo '<p class="muted">Bitte zuerst oben die Wahlserver-Verbindung vollständig eintragen.</p>';
                 } else {
                     echo '<form method="post" onsubmit="return confirm(\'' . $tokenCount . ' Token direkt in die Wahlserver-Datenbank übertragen? Die Liste wird danach sofort aus MISS gelöscht.\')"><input type="hidden" name="aktion" value="transfer_direct"><input type="hidden" name="election_id" value="' . (int)$sel['election_id'] . '">' . md_csrf_field()

@@ -359,6 +359,7 @@ function md_wabs_transfer_conf(): array
 {
     return [
         'mode' => md_setting('wabs.transfer_mode', ''),
+        'same_db' => md_setting('wabs.same_db', '0') === '1',
         'host' => md_setting('wabs.db_host', ''),
         'port' => md_setting('wabs.db_port', '3306'),
         'name' => md_setting('wabs.db_name', ''),
@@ -367,29 +368,56 @@ function md_wabs_transfer_conf(): array
     ];
 }
 
-/** Speichert die Verbindungseinstellungen zum Wahlserver. Das Passwort wird nur bei Eingabe überschrieben (leer = unverändert). */
-function md_wabs_transfer_conf_save(string $mode, string $host, string $port, string $name, string $user, string $pass): string
+/** Ist die direkte Übertragung tatsächlich einsatzbereit (gleiche Datenbank wie MISS oder vollständige eigene Angaben)? */
+function md_wabs_transfer_direct_ready(array $conf): bool
+{
+    return $conf['mode'] === 'direct' && ($conf['same_db'] || ($conf['host'] !== '' && $conf['name'] !== '' && $conf['user'] !== ''));
+}
+
+/**
+ * Speichert die Verbindungseinstellungen zum Wahlserver. Das Passwort wird nur bei
+ * Eingabe überschrieben (leer = unverändert). $sameDb = Wahlserver ist dieselbe
+ * Datenbank wie MISS selbst (häufigster Fall bei "direkter Übertragung", siehe
+ * md_wabs_transfer_db()) - dann sind Host/Datenbankname/Benutzer/Passwort
+ * überflüssig, MISS kennt seine eigene Verbindung bereits (MD_DB_HOST usw. in
+ * config.php) und baut keine zweite Verbindung auf, sondern nutzt die eigene.
+ */
+function md_wabs_transfer_conf_save(string $mode, bool $sameDb, string $host, string $port, string $name, string $user, string $pass): string
 {
     if (!in_array($mode, ['direct', 'csv'], true)) return 'Bitte eine Übertragungsart wählen.';
-    if ($mode === 'direct' && ($host === '' || $name === '' || $user === '')) return 'Bitte Datenbankserver, Datenbankname und Benutzer angeben.';
-    foreach ([['wabs.transfer_mode', $mode, 'Übertragungsart für die WABS-Token-Liste (direct, csv)'],
+    if ($mode === 'direct' && $sameDb && MD_DB_DRIVER !== 'mysql') return '„Gleiche Datenbank wie MISS“ ist nur möglich, wenn MISS selbst mit MySQL läuft.';
+    if ($mode === 'direct' && !$sameDb && ($host === '' || $name === '' || $user === '')) return 'Bitte Datenbankserver, Datenbankname und Benutzer angeben (oder „gleiche Datenbank wie MISS“ ankreuzen).';
+    if ($sameDb) { $host = ''; $name = ''; $user = ''; $pass = ''; }
+    foreach ([['wabs.transfer_mode', $mode, 'Übertragungsart für die WABS-Token-Liste (direct, csv)'], ['wabs.same_db', $sameDb ? '1' : '0', 'Wahlserver ist dieselbe Datenbank wie MISS selbst'],
               ['wabs.db_host', $host, 'Wahlserver-Datenbank: Host'], ['wabs.db_port', $port !== '' ? $port : '3306', 'Wahlserver-Datenbank: Port'],
               ['wabs.db_name', $name, 'Wahlserver-Datenbank: Datenbankname'], ['wabs.db_user', $user, 'Wahlserver-Datenbank: Benutzer']] as [$k, $v, $d]) {
         if (md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', [$k])) md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', [$v, $k]);
         else md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', [$k, $v, $d]);
     }
-    if (trim($pass) !== '') {
+    if (!$sameDb && trim($pass) !== '') {
         $enc = md_encrypt($pass);
         if ($enc === null) return 'Das Passwort kann nicht verschlüsselt werden: MD_ENCRYPTION_KEY fehlt in config.php (php tools/make_key.php).';
         if (md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', ['wabs.db_pass_enc'])) md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', [$enc, 'wabs.db_pass_enc']);
         else md_exec('INSERT INTO md_settings (setting_key, setting_value, description) VALUES (?,?,?)', ['wabs.db_pass_enc', $enc, 'Wahlserver-Datenbank: Passwort (verschlüsselt)']);
+    } elseif ($sameDb && md_one('SELECT 1 FROM md_settings WHERE setting_key = ?', ['wabs.db_pass_enc'])) {
+        md_exec('UPDATE md_settings SET setting_value = ? WHERE setting_key = ?', ['', 'wabs.db_pass_enc']);
     }
     return '';
 }
 
-/** Öffnet die Verbindung zur Wahlserver-Datenbank. Wirft eine Exception bei Fehlern (Aufrufer fängt sie). */
+/**
+ * Öffnet die Verbindung zur Wahlserver-Datenbank. Bei "gleiche Datenbank wie MISS"
+ * (siehe md_wabs_transfer_conf_save()) wird keine zweite Verbindung aufgebaut,
+ * sondern die bereits offene Verbindung von MISS selbst zurückgegeben - Host,
+ * Datenbankname, Benutzer und Passwort kennt MISS ja schon aus der eigenen
+ * config.php. Wirft eine Exception bei Fehlern (Aufrufer fängt sie).
+ */
 function md_wabs_transfer_db(array $conf): PDO
 {
+    if ($conf['same_db']) {
+        if (MD_DB_DRIVER !== 'mysql') throw new RuntimeException('„Gleiche Datenbank wie MISS“ ist nur mit MySQL möglich.');
+        return md_db();
+    }
     $pdo = new PDO('mysql:host=' . $conf['host'] . ';port=' . ((int)$conf['port'] ?: 3306) . ';dbname=' . $conf['name'] . ';charset=utf8mb4', $conf['user'], $conf['pass']);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -596,7 +624,7 @@ function md_wabs_committee_set(array $me, bool $external, string $username, stri
 function md_wabs_committee_sync(): string
 {
     $conf = md_wabs_transfer_conf();
-    if ($conf['mode'] !== 'direct' || $conf['host'] === '' || $conf['name'] === '' || $conf['user'] === '') return '';
+    if (!md_wabs_transfer_direct_ready($conf)) return '';
     try {
         $tdb = md_wabs_transfer_db($conf);
     } catch (Throwable $e) {
