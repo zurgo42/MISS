@@ -59,11 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $notes = md_portal_save((array)($_POST['app'] ?? []), $aid);
             foreach ($notes as $n) md_flash($n, 'err');
             if (!$notes) md_flash('Weitere Anwendungen gespeichert.');
-        } elseif ($act === 'vera_sso') {
-            $err = md_vera_sso_conf_save(!empty($_POST['aktiv']), !empty($_POST['same_db']), (string)($_POST['host'] ?? ''), (string)($_POST['port'] ?? ''),
-                (string)($_POST['dbname'] ?? ''), (string)($_POST['dbuser'] ?? ''), (string)($_POST['dbpass'] ?? ''));
-            if ($err) md_flash($err, 'err');
-            else { md_log_change($aid, 'settings', 'VERA-Kopplung', 'geändert', $aid, 'self'); md_flash('VERA-Kopplung gespeichert.'); }
         } elseif ($act === 'logo' || $act === 'logo_remove') {
             $oldFile = md_setting('club.logo_file', '');
             $new = '';
@@ -353,22 +348,6 @@ foreach (md_portal_apps() as $a) {
 }
 echo '</tbody></table><p class="muted">„Funktionsträger“: Mitglieder mit einer aktuell gültigen Funktion (außer ehemaligen); die Verwaltung sieht auch diese Einträge. „Nur Verwaltung“: Admins, Vorstand und Geschäftsführung sowie alle mit dem Recht „Mitglieder ansehen“.</p><button>Speichern</button></form>';
 echo $acc('portal', 'Weitere Anwendungen (KONA, VERA, KAND …)', ob_get_clean());
-
-// ---- VERA-Kopplung (Durchlässigkeit): Mitgliedsnummer beim Klick auf den VERA-Knopf automatisch übertragen
-ob_start();
-$vconf = md_vera_sso_conf();
-echo '<p class="muted">Ohne gemeinsames vorgelagertes SSO (Mensa) bleibt die Anmeldung beim Wechsel zu VERA sonst auf der Strecke - VERA zeigt dann seine eigene Anmeldeseite. Mit dieser Kopplung legt MISS beim Klick auf den VERA-Knopf direkt einen Anmelde-Token in VERAs Datenbank an (dasselbe Verfahren wie VERAs eigener Anmeldelink per Mail) - die Person landet dort sofort angemeldet. Voraussetzung: VERA erkennt die MISS-Mitgliedsnummer (z. B. weil beide dieselbe svmembers-Tabelle teilen).</p>'
-    . '<form method="post">' . md_csrf_field() . '<input type="hidden" name="action" value="vera_sso">'
-    . '<label class="check"><input type="checkbox" name="aktiv" value="1"' . ($vconf['aktiv'] ? ' checked' : '') . '> Mitgliedsnummer beim Wechsel zu VERA automatisch übertragen</label>';
-if (MD_DB_DRIVER === 'mysql') {
-    echo '<label class="check"><input type="checkbox" name="same_db" value="1"' . ($vconf['same_db'] ? ' checked' : '') . '> VERA ist dieselbe Datenbank wie MISS selbst - keine Angaben nötig, MISS kennt seine eigene Verbindung schon</label>';
-}
-echo '<div class="addr"><label>Datenbankserver<input name="host" value="' . h($vconf['host']) . '" placeholder="z. B. localhost"></label><label>Port<input name="port" value="' . h($vconf['port']) . '" placeholder="3306"></label></div>'
-    . '<div class="addr"><label>Datenbankname<input name="dbname" value="' . h($vconf['name']) . '"></label><label>Benutzer<input name="dbuser" value="' . h($vconf['user']) . '"></label></div>'
-    . '<label class="block">Passwort <span class="muted">(leer lassen, um ein bereits gespeichertes Passwort unverändert zu lassen)</span><input type="password" name="dbpass" autocomplete="new-password"></label>'
-    . '<p class="muted">Datenbankserver/-name/Benutzer/Passwort werden ignoriert, wenn oben „gleiche Datenbank wie MISS“ angekreuzt ist.</p>'
-    . '<button>Speichern</button></form>';
-echo $acc('vera_sso', 'VERA-Kopplung (Anmeldung automatisch übertragen)', ob_get_clean());
 
 // ---- Allgemein
 ob_start();
