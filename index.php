@@ -175,7 +175,16 @@ $addrBlock = $acc('addresses', 'Adressen', $inMain(ob_get_clean()));
 
 // ---- Kontakt
 ob_start();
-foreach (MD_CONTACT_KINDS as $k => $label) echo '<div class="field"><label for="c_' . $k . '">' . h($label) . '</label><div class="inp"><input id="c_' . $k . '" name="contact_' . $k . '" value="' . h($contacts[$k] ?? '') . '"></div>' . md_vis_toggle("contact.$k", $vmap) . '</div>';
+$veraHinweis = vera_aktiv();
+foreach (MD_CONTACT_KINDS as $k => $label) {
+    $visLabel = 'im Verzeichnis sichtbar';
+    $visTitle = null;
+    if ($veraHinweis && in_array($k, ['phone', 'mobile'], true)) {
+        $visLabel = 'im Verzeichnis und auf der VERA-Visitenkarte sichtbar';
+        $visTitle = 'Andere Mitglieder sehen diese Angabe im Mitgliederverzeichnis - und jede Person, die den VERA-Mitgliedsausweis (QR-Code) dieses Mitglieds scannt, auch ohne eigene Anmeldung';
+    }
+    echo '<div class="field"><label for="c_' . $k . '">' . h($label) . '</label><div class="inp"><input id="c_' . $k . '" name="contact_' . $k . '" value="' . h($contacts[$k] ?? '') . '"></div>' . md_vis_toggle("contact.$k", $vmap, $visLabel, false, $visTitle) . '</div>';
+}
 $contactBlock = $acc('contacts', 'Kontakt &amp; Social Media', $inMain(ob_get_clean()));
 
 // ---- Gemeinsamer Speichern-Knopf für Persönliche Daten, Beruf & Interessen, Vorstellung, Adressen und Kontakt.

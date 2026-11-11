@@ -145,10 +145,10 @@ function md_show_flash(): void
 }
 
 /** Sichtbarkeit im Mitgliederverzeichnis: ja/nein (Verwaltung sieht ohnehin alles). */
-function md_vis_toggle(string $key, array $vmap, string $label = 'im Verzeichnis sichtbar', bool $auto = false): string
+function md_vis_toggle(string $key, array $vmap, string $label = 'im Verzeichnis sichtbar', bool $auto = false, ?string $title = null): string
 {
     $name = 'vis_' . str_replace('.', '__', $key);
-    return '<label class="vis" title="Andere Mitglieder sehen diese Angabe im Mitgliederverzeichnis"><input type="hidden" name="' . h($name) . '" value="me"><input type="checkbox" name="' . h($name) . '" value="all"'
+    return '<label class="vis" title="' . h($title ?? 'Andere Mitglieder sehen diese Angabe im Mitgliederverzeichnis') . '"><input type="hidden" name="' . h($name) . '" value="me"><input type="checkbox" name="' . h($name) . '" value="all"'
         . (($vmap[$key] ?? 'me') === 'all' ? ' checked' : '') . ($auto ? ' onchange="this.form.submit()"' : '') . '> ' . h($label) . '</label>';
 }
 

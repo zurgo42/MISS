@@ -47,3 +47,9 @@ Läuft **nicht** automatisch im Hintergrund (keine Trigger auf Zahlungen oder St
 - Alle übrigen: bezahlter Beitrag, MISS-Status `aktiv` → **Stimmberechtigt**.
 
 Keine der 12 Demo-Figuren ist minderjährig - um den Fall „Teilnahmeberechtigt (ohne Stimmrecht)" zu sehen, testweise ein hohes Mindestalter eintragen (z. B. 99) und neu berechnen; das betrifft dann vorübergehend alle. Für den Fall „Status unbekannt" (VERA-seitig, falls `svmembers.status` noch nie berechnet wurde) einfach ein frisch angelegtes Testmitglied verwenden, bevor „Jetzt berechnen" das erste Mal läuft.
+
+## Telefonnummer auf der VERA-Visitenkarte
+
+Unabhängig vom Status liest VERAs elektronischer Mitgliedsausweis für die Visitenkarte (Name/Telefon/Mail) die Telefonnummer aus MISS' Kontaktverwaltung (`md_contacts`, Kind `phone`/`mobile`) - **nur**, wenn das Mitglied sie im eigenen Profil (Bereich „Kontakt & Social Media") auf „im Verzeichnis sichtbar" gestellt hat (Standard: nicht sichtbar). Dafür ist in MISS nichts Neues zu bauen - das Eingabefeld und der Sichtbarkeits-Schalter sind Teil des normalen Profilformulars.
+
+Ist unter **Administration → Weitere Anwendungen** ein eingeschalteter Portal-Eintrag für VERA hinterlegt (`vera_aktiv()` in `src/vera.php`), weist der Sichtbarkeits-Schalter bei Telefon/Mobil zusätzlich darauf hin, dass „im Verzeichnis sichtbar" jetzt auch die VERA-Visitenkarte betrifft - also für jede Person gilt, die den Ausweis-QR-Code scannt, nicht nur für angemeldete MISS-Mitglieder.

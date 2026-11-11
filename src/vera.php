@@ -53,6 +53,25 @@ const VERA_STATUS_WERTE = [
     'Teilnahmeberechtigt (ohne Stimmrecht)', 'Stimmberechtigt', 'Gesperrt', 'Ausgetreten',
 ];
 
+/**
+ * Ist VERA laut Portal-Eintrag (siehe portal.php, Admin-Bereich "Weitere
+ * Anwendungen") für dieses Mitglied eingeschaltet? Dient als Hinweis an
+ * passenden Stellen (z. B. Sichtbarkeit der Telefonnummer, siehe index.php),
+ * dass "im Verzeichnis sichtbar" jetzt auch die VERA-Visitenkarte betrifft -
+ * kein echter Nachweis einer geteilten Datenbank, nur ein Indiz: Vereine, die
+ * svmembers mit VERA teilen, tragen den Portal-Knopf typischerweise ohnehin
+ * ein.
+ */
+function vera_aktiv(): bool
+{
+    foreach (md_portal_apps() as $a) {
+        if ($a['key'] === 'vera' && $a['on']) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function vera_stichtag(): string
 {
     $v = trim(md_setting('vera.stichtag', ''));
