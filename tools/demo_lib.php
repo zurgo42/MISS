@@ -278,6 +278,7 @@ function demo_reset_inplace(string $anchor = ''): string
     demo_seed_datev();
     demo_seed_org();
     demo_issue_receipts();
+    echo 'VERA-Status: ' . vera_status_alle_berechnen(null, 'demo') . " Mitglied(er) berechnet.\n";
     echo "Fertig (Bezugstag $anchor).\n";
     return ob_get_clean();
 }
@@ -404,6 +405,7 @@ function demo_reset_inplace_mysql(string $anchor = ''): string
     demo_seed_datev($idmap);
     demo_seed_org();
     demo_issue_receipts($idmap);
+    echo 'VERA-Status: ' . vera_status_alle_berechnen(null, 'demo') . " Mitglied(er) berechnet.\n";
     echo "Fertig (Bezugstag $anchor).\n";
     return ob_get_clean();
 }

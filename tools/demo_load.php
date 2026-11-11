@@ -64,4 +64,5 @@ demo_seed_lists_apply($idmap);
 demo_seed_datev($idmap);
 demo_seed_org();
 demo_issue_receipts($idmap);
+echo 'VERA-Status: ' . vera_status_alle_berechnen(null, 'demo') . " Mitglied(er) berechnet.\n";
 echo "\nFertig. Demo-Anmeldung (MD_DEMO_MODE): " . md_url('login.php') . "\n";

@@ -18,6 +18,7 @@ function md_special_groups(?array $me): array
             'apply' => $can('members') ? ['admin/applications.php', 'Mitglied werden' . ($open ? " ($open)" : '')] : null,
             'import' => $can('import', 'edit') ? ['admin/import.php', 'CSV-Import'] : null,
             'terms' => $can('terms') ? ['admin/terms.php', 'Nutzungsbedingungen'] : null,
+            'vera' => $can('members') ? ['admin/vera.php', 'Stimmberechtigung (VERA)'] : null,
         ]),
         'Finanzen' => array_filter([
             'finance' => $can('finance') ? ['admin/finance.php', 'Kasse'] : null,

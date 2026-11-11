@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS md_profiles (
     hold_reason VARCHAR(255) DEFAULT NULL,
     purged_at DATETIME DEFAULT NULL,               -- Stufe 1: Profildaten nach Austritt gelöscht
     anonymized_at DATETIME DEFAULT NULL,           -- Stufe 2: nach Ablauf der Aufbewahrungsfristen vollständig anonymisiert
+    vera_override VARCHAR(50) DEFAULT NULL,        -- manuell gesetzter VERA-Status (siehe src/vera.php) - NULL = automatische Berechnung
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES svmembers(member_id) ON DELETE CASCADE

@@ -47,4 +47,5 @@ demo_seed_lists_apply();
 demo_seed_datev();
 demo_seed_org();
 demo_issue_receipts();
+echo 'VERA-Status: ' . vera_status_alle_berechnen(null, 'demo') . " Mitglied(er) berechnet.\n";
 echo "Start: php -S localhost:8080  →  http://localhost:8080/login.php\n";

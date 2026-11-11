@@ -74,6 +74,7 @@ require_once __DIR__ . '/import.php';
 require_once __DIR__ . '/finance.php';
 require_once __DIR__ . '/terms.php';
 require_once __DIR__ . '/wabs.php';
+require_once __DIR__ . '/vera.php';
 require_once __DIR__ . '/layout.php';
 
 if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {

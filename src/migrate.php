@@ -53,6 +53,13 @@ const MD_MIGRATIONS = [
     ['md_wabs_elections', 'csv_file', 'VARCHAR(255) DEFAULT NULL'],
     ['md_wabs_elections', 'csv_generated_at', 'DATETIME DEFAULT NULL'],
     ['md_wabs_elections', 'csv_deleted_at', 'DATETIME DEFAULT NULL'],
+    // VERA-Stimmberechtigung (siehe src/vera.php, docs/VERA.md): svmembers.status wird
+    // nur angelegt, wenn die Tabelle schon existiert (siehe md_migrate_schema() unten) -
+    // svmembers selbst legt MISS nie an, das bleibt Aufgabe der Sitzungsverwaltung.
+    ['svmembers', 'status', 'VARCHAR(50) DEFAULT NULL'],
+    // Manuelle Übersteuerung: einer der sieben VERA-Werte, oder NULL = automatische
+    // Berechnung (siehe vera_status_alle_berechnen()).
+    ['md_profiles', 'vera_override', 'VARCHAR(50) DEFAULT NULL'],
 ];
 
 /** Ergänzt fehlende Spalten. Gibt die Liste der ergänzten "tabelle.spalte" zurück. */

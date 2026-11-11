@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS svmembers (
     is_active INT DEFAULT 1,
     is_confidential INT DEFAULT NULL,
     password_hash VARCHAR(255) DEFAULT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) DEFAULT NULL                -- Stimmberechtigung für VERA (Versammlungsorganisation), siehe src/vera.php
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Ressortliste der Sitzungsverwaltung (nur Demo)
