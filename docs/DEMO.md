@@ -4,7 +4,7 @@ Es gibt zwei Wege. Beide laden die Demo der Sitzungsverwaltung (12 Figuren `DEMO
 
 | | Weg A: vorhandene Datenbank | Weg B: eigene Demo-Datenbank |
 |---|---|---|
-| Datenbank | die bestehende Entwicklungsdatenbank (z. B. `k126904_div`) | neue Datenbank `md_demo` |
+| Datenbank | die bestehende Entwicklungsdatenbank (z. B. `k126904_go`) | neue Datenbank `md_demo` |
 | Sitzungsverwaltung | die vorhandene Installation | eine zweite Kopie mit eigener `config.php` |
 | Vorhandene Daten | werden durch den Demo-Import der Sitzungsverwaltung **gelöscht** (Meeting-Daten und Mitglieder, ausgenommen einzelne Testkonten) | bleiben unberührt |
 | Aufwand | gering | höher |
@@ -66,11 +66,11 @@ Dann `http://localhost/MISS/login.php` und eine Figur wählen. Zurücksetzen: `t
 
 # Weg B: eigene Demo-Datenbank `md_demo`
 
-Die bestehende Entwicklungsdatenbank (`k126904_div`) bleibt unberührt.
+Die bestehende Entwicklungsdatenbank (`k126904_go`) bleibt unberührt.
 
 > **Achtung:** `tools/demo_import.php` der Sitzungsverwaltung **löscht alle Daten der Datenbank**, auf die ihre `config.php` zeigt.
 > Deshalb läuft die Demo in einer **eigenen Kopie** der Sitzungsverwaltung mit eigener `config.php`. Vor dem Import immer Schritt 3 (Kontrolle) ausführen.
-> Zur Sicherheit vorher in phpMyAdmin `k126904_div` exportieren (Reiter „Exportieren“).
+> Zur Sicherheit vorher in phpMyAdmin `k126904_go` exportieren (Reiter „Exportieren“).
 
 ## 1. Leere Datenbank anlegen
 
@@ -81,7 +81,7 @@ phpMyAdmin (`http://localhost/phpmyadmin`) → „Neu“ → Name `md_demo`, Kol
 Ordner `D:\xampp\htdocs\Sitzungsverwaltung` komplett kopieren nach `D:\xampp\htdocs\Sitzungsverwaltung_demo`.
 In `Sitzungsverwaltung_demo\config.php` ändern:
 
-- Datenbankname: `md_demo` (in der lokalen Zweigstelle der Datei steht bisher `define('DB_NAME', 'k126904_div');`)
+- Datenbankname: `md_demo` (in der lokalen Zweigstelle der Datei steht bisher `define('DB_NAME', 'k126904_go');`)
 - `define('DEMO_MODE_ENABLED', true);`
 
 ## 3. Kontrolle: zeigt die Kopie wirklich auf `md_demo`?
