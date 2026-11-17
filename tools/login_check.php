@@ -2,8 +2,8 @@
 /**
  * login_check.php – erklärt, warum eine Anmeldung nicht klappt (zeigt nichts Geheimes: nur die Art des Passwort-Hashes).
  *
- *   php tools/login_check.php dr.hm@gmx.de            Konto prüfen
- *   php tools/login_check.php dr.hm@gmx.de "Passwort" zusätzlich das Passwort prüfen
+ *   php tools/login_check.php max@example.com            Konto prüfen
+ *   php tools/login_check.php max@example.com "Passwort" zusätzlich das Passwort prüfen
  */
 if (PHP_SAPI !== 'cli') exit('nur per Kommandozeile');
 require_once dirname(__DIR__) . '/src/bootstrap.php';
