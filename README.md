@@ -74,3 +74,11 @@ Nach einer Ausprobierphase lässt sich die Demo direkt im Browser auf diesen Sta
 - SEPA-Lastschrift, E-Mail-Versand der Schreiben, DATEV-Importprofil (später, mit echter Beispieldatei).
 - Übungsleiter-Freibetrag steht in `md_settings.ueb_freibetrag_cents` (Voreinstellung 3.300 €); bitte jährlich prüfen.
 - Datenschutz: Löschkonzept mit dem Verein abstimmen (Fristen, Sicherungen, Daten in der Sitzungsverwaltung), siehe docs/DATENSCHUTZ.md.
+
+## Lizenz
+
+Copyright (C) 2026 Hermann Meier
+
+MISS ist freie Software: Sie können es unter den Bedingungen der **GNU Affero General Public License** (Version 3, siehe Datei `LICENSE`)
+weitergeben und/oder verändern. Es wird in der Hoffnung bereitgestellt, nützlich zu sein, aber **ohne jede Gewährleistung**.
+Wer MISS verändert und anderen als Webanwendung zur Verfügung stellt, muss den geänderten Quelltext ebenfalls unter dieser Lizenz zugänglich machen.
