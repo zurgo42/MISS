@@ -105,7 +105,7 @@ Ergebnis: 12 Mitglieder `DEMO0001` bis `DEMO0012` (E-Mail `max@example.com` usw.
 
 ```
 cd /d D:\xampp\htdocs
-git clone https://github.com/zurgo42/Mitgliederverwaltung.git MISS_demo
+git clone https://github.com/zurgo42/MISS.git MISS_demo
 copy MISS\config.php MISS_demo\config.php
 ```
 In `MISS_demo\config.php` ändern: `MD_DB_NAME` = `'md_demo'`, `MD_LOGIN_URL` = `'/Sitzungsverwaltung_demo/login.php'`, `MD_DEMO_MODE` = `true`, `MD_SV_MODE` = `'standalone'`.

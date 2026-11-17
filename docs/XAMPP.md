@@ -12,7 +12,7 @@ C:\xampp\htdocs\MISS      <- neu
 
 ```
 cd C:\xampp\htdocs
-git clone https://github.com/zurgo42/Mitgliederverwaltung.git MISS
+git clone https://github.com/zurgo42/MISS.git MISS
 ```
 (Wenn der Ordner schon Dateien enthält: den Ordner umbenennen und neu klonen, die eigenen Dateien danach prüfen.)
 

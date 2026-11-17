@@ -39,7 +39,7 @@ Schritt für Schritt in [docs/XAMPP.md](docs/XAMPP.md). Kurzfassung:
 
 ```
 cd C:\xampp\htdocs
-git clone https://github.com/zurgo42/Mitgliederverwaltung.git MISS
+git clone https://github.com/zurgo42/MISS.git MISS
 cd MISS
 copy config.example.php config.php        (Datenbankzugang eintragen)
 C:\xampp\php\php.exe tools\install.php --check

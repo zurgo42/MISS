@@ -27,7 +27,7 @@ Ob die PHP-Erweiterungen vorhanden sind, zeigt im Hosting-Panel meist „PHP-Inf
 ## 3. Schritt für Schritt
 
 ### 3.1 Code holen und hochladen
-1. Auf GitHub (Repository `zurgo42/Mitgliederverwaltung`, Zweig `main`): **Code → Download ZIP** und entpacken. (Mit SSH alternativ: `git clone https://github.com/zurgo42/Mitgliederverwaltung.git MISS-Test`.)
+1. Auf GitHub (Repository `zurgo42/MISS`, Zweig `main`): **Code → Download ZIP** und entpacken. (Mit SSH alternativ: `git clone https://github.com/zurgo42/MISS.git MISS-Test`.)
 2. Den **Inhalt** des entpackten Ordners per FTP in das Zielverzeichnis hochladen (so, dass `index.php` direkt im Zielverzeichnis liegt).
 3. Prüfen, dass die Sperren greifen – diese Adressen müssen **„Forbidden“/403** liefern:
    `…/config.example.php` · `…/src/db.php` · `…/sql/schema.sql` · `…/storage/` · `…/tools/install.php`
